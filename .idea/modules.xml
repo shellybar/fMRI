@@ -10,6 +10,9 @@
       <module fileurl="file://$PROJECT_DIR$/common/exceptions/exceptions.iml" filepath="$PROJECT_DIR$/common/exceptions/exceptions.iml" />
       <module fileurl="file://$PROJECT_DIR$/fMRI.iml" filepath="$PROJECT_DIR$/fMRI.iml" />
       <module fileurl="file://$PROJECT_DIR$/common/log/log.iml" filepath="$PROJECT_DIR$/common/log/log.iml" />
+      <module fileurl="file://$PROJECT_DIR$/unit-execution/unit-execution.iml" filepath="$PROJECT_DIR$/unit-execution/unit-execution.iml" />
+      <module fileurl="file://$PROJECT_DIR$/unit-execution/unit-execution-api/unit-execution-api.iml" filepath="$PROJECT_DIR$/unit-execution/unit-execution-api/unit-execution-api.iml" />
+      <module fileurl="file://$PROJECT_DIR$/unit-execution/unit-execution-impl/unit-execution-impl.iml" filepath="$PROJECT_DIR$/unit-execution/unit-execution-impl/unit-execution-impl.iml" />
     </modules>
   </component>
 </project>
