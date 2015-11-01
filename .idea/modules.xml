@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/dispatcher/dispatcher.iml" filepath="$PROJECT_DIR$/dispatcher/dispatcher.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fMRI.iml" filepath="$PROJECT_DIR$/fMRI.iml" />
+      <module fileurl="file://$PROJECT_DIR$/dispatcher/queue-manager/queue-manager.iml" filepath="$PROJECT_DIR$/dispatcher/queue-manager/queue-manager.iml" />
+      <module fileurl="file://$PROJECT_DIR$/dispatcher/queue-manager/queue-manager-api/queue-manager-api.iml" filepath="$PROJECT_DIR$/dispatcher/queue-manager/queue-manager-api/queue-manager-api.iml" />
+      <module fileurl="file://$PROJECT_DIR$/dispatcher/queue-manager/queue-manager-impl/queue-manager-impl.iml" filepath="$PROJECT_DIR$/dispatcher/queue-manager/queue-manager-impl/queue-manager-impl.iml" />
+    </modules>
+  </component>
+</project>
