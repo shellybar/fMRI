@@ -3,12 +3,13 @@ package edu.tau.eng.neuroscience.mri.dispatcher;
 import edu.tau.eng.neuroscience.mri.common.Machine;
 
 /**
- * Created by regevr on 11/1/2015.
+ * Manages machines' performance, availability, units persistence
+ * and all other machine management tasks.
  */
 public interface MachinesManager {
 
     /**
-     * @return Available Machine to run analysis
+     * @return available Machine to run analysis
      */
     Machine getMachine();
 

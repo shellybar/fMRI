@@ -1,7 +1,8 @@
 package edu.tau.eng.neuroscience.mri.common;
 
 /**
- * Created by regevr on 11/1/2015.
+ * MachineStatistics encapsulated all performance metrics of a machine
+ * (e.g., CPU average consumption).
  */
 public interface MachineStatistics {
 }

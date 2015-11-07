@@ -1,7 +1,8 @@
 package edu.tau.eng.neuroscience.mri.common;
 
 /**
- * Created by regevr on 11/1/2015.
+ * Machine holds all required information regarding the physical/virtual machine
+ * on which units are running.
  */
 public interface Machine {
 }
