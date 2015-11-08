@@ -6,8 +6,10 @@ import edu.tau.eng.neuroscience.mri.common.Task;
 
 /**
  * ExecutionProxy is the link between the management layer (i.e. the dispatcher)
- * and the execution layer. It passes requests from the dispatcher to the machines
+ * and the execution layer. It passes requests (HTTP) from the dispatcher to the machines
  * running the different units.
+ * Called by the MachinesManager in order to execute a task on the machine itself
+ * and calls the MachineController for this purpose.
  */
 public interface ExecutionProxy {
 

@@ -4,11 +4,11 @@ import edu.tau.eng.neuroscience.mri.common.MachineStatistics;
 import edu.tau.eng.neuroscience.mri.common.Unit;
 
 /**
- * MachineManager is run on each machine and manages the units running on it.
- * Every request to the machine passes through the MachineManager and it
+ * MachineController is run on each machine and manages the units running on it.
+ * Every request to the machine passes through the MachineController and it
  * communicates with the ExecutionProxy via HTTP
  */
-public interface MachineManager {
+public interface MachineController {
 
     /**
      * The machine may gather performance metrics throughout its runtime or per request.

@@ -17,7 +17,7 @@ public interface FlowVerificator {
      * Receives a request for an analysis flow, verifies its validity and
      * passes it on to the QueueManager. If the flow is not valid, a new flow is suggested
      * (may be viewed as a negotiation between the user and the system).
-     * @param units is the oredered list of units to run in this analysis as requested by the user.
+     * @param units is the ordered list of units to run in this analysis as requested by the user.
      * @return a List of Units; if the flow units is valid, the returned value would be the same
      * List (by reference). Otherwise, the returned value is a suggested reordering of the flow.
      * @throws DispatcherException if no valid order can be computed for the given list of units.

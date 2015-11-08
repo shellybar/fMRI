@@ -6,7 +6,7 @@ import edu.tau.eng.neuroscience.mri.common.Unit;
 /**
  * Created by regevr on 11/7/2015.
  */
-public class MachineManagerImpl implements MachineManager {
+public class MachineControllerImpl implements MachineController {
 
     @Override
     public MachineStatistics getStatistics() {

@@ -5,4 +5,7 @@ package edu.tau.eng.neuroscience.mri.common;
  * on which units are running.
  */
 public interface Machine {
+
+    MachineStatistics getMachineStatistics(int id);
+
 }

@@ -5,10 +5,10 @@ import org.junit.Test;
 /**
  * Created by regevr on 11/7/2015.
  */
-public class MachineManagerImplTest {
+public class MachineControllerImplTest {
 
     @Test
-    void testGetStatistics() {
+    public void testGetStatistics() {
 
     }
 
