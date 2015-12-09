@@ -1,0 +1,11 @@
+<!ELEMENT unit (description?, parameters?, prerequisites?)>
+<!ELEMENT description (#PCDATA)>
+<!ELEMENT parameters (file-parameter*, string-parameter*)>
+<!ELEMENT string-parameter (name, display)>
+<!ELEMENT file-parameter (name, display)>
+<!ELEMENT name (#PCDATA)>
+<!ELEMENT display (#PCDATA)>
+<!ELEMENT prerequisites (prerequisite+)>
+<!ELEMENT prerequisite EMPTY>
+
+<!ATTLIST unit id CDATA #REQUIRED>

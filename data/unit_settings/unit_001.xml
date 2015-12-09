@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--<!DOCTYPE unit SYSTEM "unit.dtd">-->
+
+<unit id="1">
+    <description>Reads a file and writes the same file to a new location</description>
+    <parameters>
+        <file-parameter>
+            <name>srcFile</name>
+            <display>Source file path</display>
+        </file-parameter>
+        <file-parameter>
+            <name>destFile</name>
+            <display>Destination file path</display>
+        </file-parameter>
+    </parameters>
+</unit>

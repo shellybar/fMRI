@@ -10,6 +10,6 @@ public interface Unit {
      * a unique identifier of the unit as saved in the configuration files or DB.
      * @return the unit's id.
      */
-    int getUnitId();
+    int getId();
 
 }

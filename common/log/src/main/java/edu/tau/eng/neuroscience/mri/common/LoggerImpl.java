@@ -1,14 +1,16 @@
 package edu.tau.eng.neuroscience.mri.common;
 
+import edu.tau.eng.neuroscience.mri.constants.SystemConstants;
+
 import java.io.File;
+
 
 public class LoggerImpl implements Logger {
 
     private org.apache.logging.log4j.Logger logger;
 
     static {
-        String logDir = System.getenv("LOG_DIR");
-        File logDirFile = (logDir == null)? new File(System.getenv("TEMP"), "mri/logs") : new File(logDir);
+        File logDirFile = new File(SystemConstants.BASE_DIR, "logs");
         if (System.getProperty("log.directory") == null) {
             System.setProperty("log.directory", logDirFile.getAbsolutePath());
         }

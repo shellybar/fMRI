@@ -2,6 +2,7 @@ package edu.tau.eng.neuroscience.mri.dispatcher;
 
 import edu.tau.eng.neuroscience.mri.common.DispatcherException;
 import edu.tau.eng.neuroscience.mri.common.Unit;
+import edu.tau.eng.neuroscience.mri.common.Context;
 
 import java.util.List;
 
@@ -22,6 +23,6 @@ public interface FlowVerificator {
      * List (by reference). Otherwise, the returned value is a suggested reordering of the flow.
      * @throws DispatcherException if no valid order can be computed for the given list of units.
      */
-    List<Unit> startAnalysis(List<Unit> units) throws DispatcherException;
+    List<Unit> startAnalysis(Context context, List<Unit> units) throws DispatcherException;
 
 }
