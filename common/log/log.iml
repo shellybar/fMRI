@@ -11,5 +11,6 @@
     <orderEntry type="library" name="log4j-api-2.4.1" level="project" />
     <orderEntry type="library" name="log4j-core-2.4.1" level="project" />
     <orderEntry type="library" name="slf4j-api-1.7.13" level="project" />
+    <orderEntry type="module" module-name="constants" />
   </component>
 </module>
