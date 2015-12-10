@@ -1,7 +1,5 @@
 package edu.tau.eng.neuroscience.mri.machine;
 
-import edu.tau.eng.neuroscience.mri.common.*;
-
 
 public class MachineControllerImpl implements MachineController {
 

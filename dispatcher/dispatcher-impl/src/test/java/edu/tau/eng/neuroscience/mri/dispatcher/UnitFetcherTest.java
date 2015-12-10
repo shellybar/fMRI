@@ -1,8 +1,8 @@
 package edu.tau.eng.neuroscience.mri.dispatcher;
 
-import edu.tau.eng.neuroscience.mri.common.BaseUnit;
-import edu.tau.eng.neuroscience.mri.common.FileUnitParameter;
-import edu.tau.eng.neuroscience.mri.common.StringUnitParameter;
+import edu.tau.eng.neuroscience.mri.common.datatypes.BaseUnit;
+import edu.tau.eng.neuroscience.mri.common.datatypes.FileUnitParameter;
+import edu.tau.eng.neuroscience.mri.common.datatypes.StringUnitParameter;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

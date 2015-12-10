@@ -1,8 +1,9 @@
 package edu.tau.eng.neuroscience.mri.dispatcher;
 
-import edu.tau.eng.neuroscience.mri.common.Machine;
-import edu.tau.eng.neuroscience.mri.common.MachineStatistics;
-import edu.tau.eng.neuroscience.mri.common.Task;
+
+import edu.tau.eng.neuroscience.mri.common.datatypes.Machine;
+import edu.tau.eng.neuroscience.mri.common.datatypes.MachineStatistics;
+import edu.tau.eng.neuroscience.mri.common.datatypes.Task;
 
 /**
  * ExecutionProxy is the link between the management layer (i.e. the dispatcher)

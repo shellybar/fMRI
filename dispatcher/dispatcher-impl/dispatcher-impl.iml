@@ -10,9 +10,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="dispatcher-api" />
-    <orderEntry type="module" module-name="datatypes" />
-    <orderEntry type="module" module-name="log" />
-    <orderEntry type="module-library" scope="TEST">
+    <orderEntry type="module-library">
       <library name="JUnit4">
         <CLASSES>
           <root url="jar://$APPLICATION_HOME_DIR$/lib/junit-4.11.jar!/" />
@@ -24,6 +22,6 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="powermock-mockito-1.6" level="project" />
-    <orderEntry type="module" module-name="constants" />
+    <orderEntry type="module" module-name="common" />
   </component>
 </module>

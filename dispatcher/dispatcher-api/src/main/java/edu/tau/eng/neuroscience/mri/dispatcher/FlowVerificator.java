@@ -1,8 +1,9 @@
 package edu.tau.eng.neuroscience.mri.dispatcher;
 
-import edu.tau.eng.neuroscience.mri.common.DispatcherException;
-import edu.tau.eng.neuroscience.mri.common.Unit;
-import edu.tau.eng.neuroscience.mri.common.Context;
+
+import edu.tau.eng.neuroscience.mri.common.datatypes.Context;
+import edu.tau.eng.neuroscience.mri.common.datatypes.Unit;
+import edu.tau.eng.neuroscience.mri.common.exceptions.DispatcherException;
 
 import java.util.List;
 

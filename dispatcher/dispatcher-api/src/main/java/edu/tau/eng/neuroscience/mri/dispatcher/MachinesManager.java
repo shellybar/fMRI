@@ -1,6 +1,6 @@
 package edu.tau.eng.neuroscience.mri.dispatcher;
 
-import edu.tau.eng.neuroscience.mri.common.Machine;
+import edu.tau.eng.neuroscience.mri.common.datatypes.Machine;
 
 import java.util.List;
 
