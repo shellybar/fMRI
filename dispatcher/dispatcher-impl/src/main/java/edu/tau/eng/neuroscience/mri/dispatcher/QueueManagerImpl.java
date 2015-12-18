@@ -11,21 +11,23 @@ import java.util.List;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
-// TODO add unit tests and comments
 public class QueueManagerImpl implements QueueManager {
 
     private static final int MAX_QUEUE_CAPACITY = 100;
-    private static final int NUM_CONSUMER_THREADS = 1;
-    private static final int NUM_PRODUCER_THREADS = 1;
+    private static final int NUM_CONSUMER_THREADS = Math.max(2, Runtime.getRuntime().availableProcessors());
 
-    private static Logger logger = LoggerManager.getLogger(UnitFetcher.class);
-    private final Object tasksToProcess = new Object();
-    private boolean producerMayWork = false; // lets the producers know whether they may work or not
+    private static Logger logger = LoggerManager.getLogger(QueueManagerImpl.class);
+    private final Object consumerLock = new Object();
+    private final Object producerLock = new Object();
+    private boolean producerMayWork = false; // lets the producer know whether they may work or not
+    private boolean producerUpdatingDatabase = false; // lets the consumers know they need to wait
 
     private BlockingQueue<Task> queue = new ArrayBlockingQueue<>(MAX_QUEUE_CAPACITY, true);
     private DBProxy dbProxy;
     private ExecutionProxy executionProxy;
     private MachinesManager machinesManager;
+    private ExecutorService consumers;
+    private ExecutorService producer;
 
     public QueueManagerImpl(DBProxy dbProxy) throws QueueManagementException {
         this.machinesManager = new MachinesManagerImpl();
@@ -46,36 +48,66 @@ public class QueueManagerImpl implements QueueManager {
     }
 
     private void initQueue() {
-        ExecutorService consumers = Executors.newFixedThreadPool(NUM_CONSUMER_THREADS);
+        consumers = Executors.newFixedThreadPool(NUM_CONSUMER_THREADS);
         for (int i = 0; i < NUM_CONSUMER_THREADS; i++)
             consumers.execute(new Consumer(queue, dbProxy));
-        ExecutorService producers = Executors.newFixedThreadPool(NUM_PRODUCER_THREADS);
-        for (int i = 0; i < NUM_PRODUCER_THREADS; i++)
-            producers.execute(new Producer(queue, dbProxy));
+        logger.debug("Created " + NUM_CONSUMER_THREADS + " queue consumer thread"
+                + ((NUM_CONSUMER_THREADS > 1)?"s":""));
+        producer = Executors.newSingleThreadExecutor();
+        producer.execute(new Producer(queue, dbProxy));
+        logger.debug("Created queue producer thread");
+    }
+
+    void shutdownNow() throws QueueManagementException {
+        producer.shutdownNow();
+        consumers.shutdownNow();
+        try {
+            dbProxy.disconnect();
+        } catch (SQLException e) {
+            String errorMsg = String.format("Failed to disconnect from the database (url: %s; user: %s)",
+                    dbProxy.getUrl(), dbProxy.getUser());
+            logger.error(errorMsg +
+                    "\nSQLException: " + e.getMessage() +
+                    "\nSQLState: " + e.getSQLState() +
+                    "\nVendorError: " + e.getErrorCode());
+            throw new QueueManagementException(ErrorCodes.DB_CONNECTION_ERROR, errorMsg);
+        }
     }
 
     @Override
     public void enqueue(List<Unit> units) {
         // Convert list of units to list of tasks
         List<Task> tasks = units.stream()
-                .map((Unit unit) -> {
+                .map((unit) -> {
                     TaskImpl task = new TaskImpl();
                     task.setUnit(unit);
                     task.setStatus(TaskStatus.NEW);
                     return task;
                 }).collect(Collectors.<Task> toList());
 
-        // add tasks to DB and notify a producer thread
+        // add tasks to DB and notify producer thread
+        synchronized(producerLock) {
+            producerMayWork = false;
+        }
         dbProxy.add(tasks);
-        synchronized(tasksToProcess){
+        synchronized(producerLock) {
             producerMayWork = true;
-            tasksToProcess.notify();
+            producerLock.notify();
         }
     }
 
     @Override
     public void updateTaskStatus(Task task) {
         dbProxy.update(task);
+    }
+
+    private synchronized static Task shallowCopyTask(Task task) {
+        Task copied = new TaskImpl();
+        copied.setId(task.getId());
+        copied.setMachine(task.getMachine());
+        copied.setStatus(task.getStatus());
+        copied.setUnit(task.getUnit());
+        return copied;
     }
 
     private class Consumer extends Thread {
@@ -92,15 +124,28 @@ public class QueueManagerImpl implements QueueManager {
         public void run() {
             try {
                 while (true) {
+                    logger.debug("Waiting to take task from queue");
                     Task task = queue.take();
+                    Task currTask = shallowCopyTask(task);
+                    synchronized (consumerLock) {
+                        while (producerUpdatingDatabase) {
+                            consumerLock.wait();
+                        }
+                    }
+                    logger.debug("Retrieved task from queue: taskId=" + currTask.getId()
+                            + ", unitId=" + currTask.getUnit().getId());
                     Machine machine = machinesManager.getAvailableMachine();
-                    task.setMachine(machine);
-                    task.setStatus(TaskStatus.PROCESSING);
-                    dbProxy.update(task);
-                    executionProxy.execute(task);
+                    currTask.setMachine(machine);
+                    logger.debug("Allocated machine (machineId=" + machine.getId()
+                            + ") for task (taskId=" + currTask.getId() + ")");
+                    currTask.setStatus(TaskStatus.PROCESSING);
+                    logger.debug("Updating task's status in DB to 'processing' (taskId=" + currTask.getId() + ")");
+                    dbProxy.update(currTask);
+                    logger.debug("Sending task for execution (taskId=" + currTask.getId() + ")");
+                    executionProxy.execute(currTask);
                 }
             } catch (InterruptedException e) {
-                // Do nothing - consumer will simply terminate
+                logger.debug("Queue consumer thread shutting down after interrupt");
             }
         }
     }
@@ -119,21 +164,46 @@ public class QueueManagerImpl implements QueueManager {
         public void run() {
             try {
                 while (true) {
-                    synchronized (tasksToProcess) {
-                        while (!QueueManagerImpl.this.producerMayWork) {
-                            tasksToProcess.wait();
+                    synchronized (producerLock) {
+                        while (!producerMayWork) {
+                            producerLock.wait();
                         }
-                        QueueManagerImpl.this.producerMayWork = false;
                     }
                     List<Task> tasks = dbProxy.getNewTasks();
+                    synchronized(producerLock) {
+                        if (tasks == null || tasks.isEmpty()) {
+                            producerMayWork = false;
+                            continue;
+                        }
+                    }
                     for (Task task: tasks) {
-                        queue.add(task);
+                        Task currTask = shallowCopyTask(task);
+                        logger.debug("Adding new task to queue (taskId=" + currTask.getId() + ")");
+                        synchronized (consumerLock) {
+                            producerUpdatingDatabase = true;
+                        }
+                        boolean taskInsertedToQueue = queue.offer(currTask);
+                        if (!taskInsertedToQueue) {
+                            synchronized (consumerLock) {
+                                producerUpdatingDatabase = false;
+                                consumerLock.notify();
+                            }
+                            queue.put(currTask);
+                            synchronized (consumerLock) {
+                                producerUpdatingDatabase = true;
+                            }
+                        }
                         task.setStatus(TaskStatus.PENDING);
-                        dbProxy.update(task);
+                        logger.debug("Updating task's status in DB to 'pending' (taskId=" + currTask.getId() + ")");
+                        dbProxy.update(currTask);
+                        synchronized (consumerLock) {
+                            producerUpdatingDatabase = false;
+                            consumerLock.notify();
+                        }
                     }
                 }
             } catch (InterruptedException e) {
-                // Do nothing - producer will simply terminate
+                logger.debug("Queue producer thread shutting down after interrupt");
             }
         }
     }
