@@ -13,6 +13,9 @@ import java.util.stream.Collectors;
 
 public class QueueManagerImpl implements QueueManager {
 
+    // max time (in milliseconds) the producer thread awaits to be notified of new tasks.
+    // After this amount of time, it will check if there are new tasks in the DB.
+    private static final int MAX_PRODUCER_IDLE_TIME = 1000 * 60 * 30; // 30 minutes
     private static final int MAX_QUEUE_CAPACITY = 100;
     private static final int NUM_CONSUMER_THREADS = Math.max(2, Runtime.getRuntime().availableProcessors());
 
@@ -166,7 +169,7 @@ public class QueueManagerImpl implements QueueManager {
                 while (true) {
                     synchronized (producerLock) {
                         while (!producerMayWork) {
-                            producerLock.wait();
+                            producerLock.wait(MAX_PRODUCER_IDLE_TIME);
                         }
                     }
                     List<Task> tasks = dbProxy.getNewTasks();
