@@ -1,6 +1,8 @@
 package edu.tau.eng.neuroscience.mri.dispatcher;
 
 import edu.tau.eng.neuroscience.mri.common.datatypes.Task;
+import edu.tau.eng.neuroscience.mri.common.log.Logger;
+import edu.tau.eng.neuroscience.mri.common.log.LoggerManager;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -15,6 +17,7 @@ import java.util.List;
  */
 public class DBProxy {
 
+    private static Logger logger = LoggerManager.getLogger(DBProxy.class);
     private Connection connection;
     private String url;
     private String user;
@@ -59,7 +62,7 @@ public class DBProxy {
      *             If the task ID cannot be found in the DB, this method does nothing
      */
     public void update(Task task) {
-        // TODO update task in DB according to ID
+        // TODO update task in DB according to ID (decide what to do if id does not exist)
     }
 
     public Task getTask(int id) throws SQLException {
@@ -84,7 +87,19 @@ public class DBProxy {
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
-                // TODO close connecions - this can be done if we have a connection pool for instance
+                try {
+                    if (connection != null && !connection.isClosed()) {
+                        connection.close();
+                    }
+                } catch (SQLException e) {
+                    String errorMsg =
+                            String.format("Failed to disconnect from the database (url: %s; user: %s)",
+                                    getUrl(), getUser());
+                    logger.error(errorMsg +
+                            "\nSQLException: " + e.getMessage() +
+                            "\nSQLState: " + e.getSQLState() +
+                            "\nVendorError: " + e.getErrorCode());
+                }
             }
         });
     }

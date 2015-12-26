@@ -141,7 +141,6 @@ public class QueueManagerImpl implements QueueManager {
                     currTask.setMachine(machine);
                     logger.debug("Allocated machine (machineId=" + machine.getId()
                             + ") for task (taskId=" + currTask.getId() + ")");
-                    currTask.setStatus(TaskStatus.PROCESSING);
                     logger.debug("Updating task's status in DB to 'processing' (taskId=" + currTask.getId() + ")");
                     dbProxy.update(currTask);
                     logger.debug("Sending task for execution (taskId=" + currTask.getId() + ")");
@@ -189,19 +188,22 @@ public class QueueManagerImpl implements QueueManager {
                         if (!taskInsertedToQueue) {
                             synchronized (consumerLock) {
                                 producerUpdatingDatabase = false;
-                                consumerLock.notify();
+                                consumerLock.notifyAll();
                             }
                             queue.put(currTask);
                             synchronized (consumerLock) {
                                 producerUpdatingDatabase = true;
                             }
                         }
-                        task.setStatus(TaskStatus.PENDING);
+                        currTask.setStatus(TaskStatus.PENDING);
                         logger.debug("Updating task's status in DB to 'pending' (taskId=" + currTask.getId() + ")");
+                        /* TODO If the status of the task in the DB is 'processing', do not change to pending
+                         * (specifically in this case, since this is a new task).
+                         * Implement this once the update functions are implemented */
                         dbProxy.update(currTask);
                         synchronized (consumerLock) {
                             producerUpdatingDatabase = false;
-                            consumerLock.notify();
+                            consumerLock.notifyAll();
                         }
                     }
                 }
