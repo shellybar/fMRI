@@ -15,20 +15,21 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
 
-public class ExecutionProxyImpl implements ExecutionProxy {
+public enum ExecutionProxyImpl implements ExecutionProxy {
+
+    INSTANCE; // This is a singleton
+
+    public static ExecutionProxyImpl getInstance() {
+        return INSTANCE;
+    }
 
     private static Logger logger = LoggerManager.getLogger(ExecutionProxyImpl.class);
-    private Task task;
     private FilesServer server;
     private String inputDirPath;
 
-    public ExecutionProxyImpl(Task task) {
-        this.task = task;
-    }
-
     @Override
     public void execute(Task task) {
-        int returnCode =  this.sendInputFiles();
+        int returnCode =  sendInputFiles(task);
         /* TODO continue - check return code etc. */
 
     }
@@ -38,10 +39,10 @@ public class ExecutionProxyImpl implements ExecutionProxy {
         return null;
     }
 
-    public int sendInputFiles() {
-        int connectionPort = this.task.getTaskId(); /* TODO use an external adapter to convert task_id to port */
+    public int sendInputFiles(Task task) {
+        int connectionPort = task.getId(); /* TODO use an external adapter to convert task_id to port */
         server = new FilesServer(connectionPort);
-        inputDirPath = this.task.getUnit().getInputPath();
+        inputDirPath = task.getUnit().getInputPath();
         int numberOfInputFiles = server.getFilesInDir(inputDirPath).length;
 
         // Start the process for sending files on a new thread, and start the client on the designated machine.
@@ -51,7 +52,7 @@ public class ExecutionProxyImpl implements ExecutionProxy {
         thread.start();
 
         // Start the client on the designated machine and wait for response.
-        int returnCode = sendGetFilesRequest(connectionPort, numberOfInputFiles);
+        int returnCode = sendGetFilesRequest(task, connectionPort, numberOfInputFiles);
         server.closeSocket();
         return returnCode;
     }
@@ -63,7 +64,7 @@ public class ExecutionProxyImpl implements ExecutionProxy {
      * BASE_UNIT_REQUEST format:  TODO
      *
      */
-    private int sendGetFilesRequest(int connectionPort, int numberOfInputFiles) {
+    private int sendGetFilesRequest(Task task, int connectionPort, int numberOfInputFiles) {
         String request = MachineConstants.RECEIVE_FILES_REQUEST + " " + connectionPort + " " + numberOfInputFiles;
         try {
             Socket socket = new Socket(task.getMachine().toString(), connectionPort);
@@ -92,7 +93,5 @@ public class ExecutionProxyImpl implements ExecutionProxy {
             logger.error("Error during sendGetFilesRequest: " + e.getMessage());
             return MachineConstants.RECEIVE_ERROR;
         }
-
-
     }
 }

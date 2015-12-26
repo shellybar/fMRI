@@ -8,4 +8,6 @@ public interface Machine {
 
     MachineStatistics getMachineStatistics(int id);
 
+    int getId();
+
 }

@@ -3,6 +3,8 @@ package edu.tau.eng.neuroscience.mri.dispatcher;
 import edu.tau.eng.neuroscience.mri.common.constants.SystemConstants;
 import edu.tau.eng.neuroscience.mri.common.datatypes.BaseUnit;
 import edu.tau.eng.neuroscience.mri.common.datatypes.Unit;
+import edu.tau.eng.neuroscience.mri.common.exceptions.DispatcherException;
+import edu.tau.eng.neuroscience.mri.common.exceptions.ErrorCodes;
 import edu.tau.eng.neuroscience.mri.common.log.Logger;
 import edu.tau.eng.neuroscience.mri.common.log.LoggerManager;
 
@@ -24,9 +26,9 @@ public class UnitFetcher {
      * in the XML configuration file for the unit with unitId.
      * @param unitId is a number required to locate the relevant XML file
      * @return Unit object with the data corresponding to unitId.
-     * If unitId does not exist, the method returns null.
+     * @throws DispatcherException if unit with unitId does not exist
      */
-    public static Unit getUnit(int unitId) {
+    public static Unit getUnit(int unitId) throws DispatcherException {
 
         BaseUnit unit = null;
         File file = getUnitSettingsFile(unitId);
@@ -40,6 +42,10 @@ public class UnitFetcher {
                     " (file path: " + file.getAbsolutePath() + "). " +
                     ((originalMsg == null) ? "" : "Details: " + originalMsg);
             logger.error(msg);
+        }
+        if (unit == null) {
+            throw new DispatcherException(ErrorCodes.UNIT_UNMARSHAL_EXCEPTION, "Failed to retrieve unit " + unitId +
+                    ". Make sure that the unit exists and is configured correctly");
         }
         return unit;
     }
