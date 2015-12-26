@@ -35,7 +35,7 @@ public class QueueManagerImpl implements QueueManager {
     public QueueManagerImpl(DBProxy dbProxy) throws QueueManagementException {
         this.machinesManager = new MachinesManagerImpl();
         this.dbProxy = dbProxy;
-        this.executionProxy = ExecutionProxyImpl.INSTANCE;
+        this.executionProxy = ExecutionProxyImpl.getInstance();
         try {
             dbProxy.connect();
         } catch (SQLException e) {

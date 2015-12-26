@@ -9,6 +9,10 @@ public enum ExecutionProxyImpl implements ExecutionProxy {
 
     INSTANCE; // This is a singleton
 
+    public static ExecutionProxyImpl getInstance() {
+        return INSTANCE;
+    }
+
     @Override
     public void execute(Task task) {
 
