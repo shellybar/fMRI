@@ -1,7 +1,7 @@
 package edu.tau.eng.neuroscience.mri.machine;
 
-import edu.tau.eng.neuroscience.mri.common.MachineStatistics;
-import edu.tau.eng.neuroscience.mri.common.Unit;
+import edu.tau.eng.neuroscience.mri.common.datatypes.MachineStatistics;
+import edu.tau.eng.neuroscience.mri.common.datatypes.Unit;
 
 /**
  * MachineController is run on each machine and manages the units running on it.

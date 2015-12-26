@@ -7,7 +7,7 @@ import java.util.List;
 
 @XmlRootElement(name = "unit")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class BaseUnit implements Unit {
+public class BaseUnit implements Unit, ExecutableObj{
 
     @XmlAttribute
     private int id;
@@ -43,8 +43,24 @@ public class BaseUnit implements Unit {
         return parameters;
     }
 
+    @Override
+    public String getInputPath() { /* TODO do! */
+        return null;
+    }
+
     public void setParameters(List<UnitParameter> parameters) {
         this.parameters = parameters;
     }
 
+    @Override
+    public String getExecutionInputs() {
+        StringBuilder sb = new StringBuilder();
+        List<UnitParameter> inputParams = this.getParameters();
+        for (UnitParameter param :inputParams ){
+            sb.append(" \"");
+            sb.append(param.getValue());
+            sb.append("\"");
+        }
+        return sb.toString();
+    }
 }
