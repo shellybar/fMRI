@@ -3,6 +3,7 @@ package edu.tau.eng.neuroscience.mri.dispatcher;
 import edu.tau.eng.neuroscience.mri.common.datatypes.BaseUnit;
 import edu.tau.eng.neuroscience.mri.common.datatypes.FileUnitParameter;
 import edu.tau.eng.neuroscience.mri.common.datatypes.StringUnitParameter;
+import edu.tau.eng.neuroscience.mri.common.exceptions.DispatcherException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,7 +31,7 @@ public class UnitFetcherTest {
     }
 
     @Test
-    public void testGetUnit() {
+    public void testGetUnit() throws DispatcherException {
         BaseUnit unit = (BaseUnit) UnitFetcher.getUnit(TEST_UNIT_ID);
         assertNotNull("Failed to unmarshal XML to Unit Object", unit);
         assertEquals("Unit created but with wrong ID", TEST_UNIT_ID, unit.getId());
@@ -43,10 +44,9 @@ public class UnitFetcherTest {
         assertEquals(badParameter, "myStr", unit.getParameters().get(1).getName());
     }
 
-    @Test
-    public void testGetNonexistentUnit() {
+    @Test(expected=DispatcherException.class)
+    public void testGetNonexistentUnit() throws DispatcherException {
         BaseUnit unit = (BaseUnit) UnitFetcher.getUnit(TEST_UNIT_ID + 1);
-        assertNull(unit);
     }
 
 }
