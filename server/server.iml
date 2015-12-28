@@ -8,5 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="common" />
+    <orderEntry type="module" module-name="dispatcher-api" />
+    <orderEntry type="module" module-name="dispatcher-impl" />
   </component>
 </module>

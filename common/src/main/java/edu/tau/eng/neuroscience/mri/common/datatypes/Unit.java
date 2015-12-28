@@ -14,13 +14,21 @@ public interface Unit {
      */
     int getId();
 
+    void setId(int id);
+
     String getDescription();
 
+    void setDescription(String description);
+
     List<UnitParameter> getParameters();
+
+    void setParameters(List<UnitParameter> unitParameters);
 
     /**
      * @return the path which holds the task input files
      */
     String getInputPath();
+
+    void setInputPath(String inputPath);
 
 }

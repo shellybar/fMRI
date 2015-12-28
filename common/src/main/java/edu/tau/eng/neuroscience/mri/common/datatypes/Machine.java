@@ -10,4 +10,8 @@ public interface Machine {
 
     int getId();
 
+    String getIp();
+
+    void setIp(String ip);
+
 }

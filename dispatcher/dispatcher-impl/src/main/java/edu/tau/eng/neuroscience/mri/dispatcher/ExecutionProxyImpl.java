@@ -67,7 +67,7 @@ public enum ExecutionProxyImpl implements ExecutionProxy {
     private int sendGetFilesRequest(Task task, int connectionPort, int numberOfInputFiles) {
         String request = MachineConstants.RECEIVE_FILES_REQUEST + " " + connectionPort + " " + numberOfInputFiles;
         try {
-            Socket socket = new Socket(task.getMachine().toString(), connectionPort);
+            Socket socket = new Socket(task.getMachine().getIp(), connectionPort);
             OutputStream os = socket.getOutputStream();
             os.write(request.getBytes());
             os.flush();
