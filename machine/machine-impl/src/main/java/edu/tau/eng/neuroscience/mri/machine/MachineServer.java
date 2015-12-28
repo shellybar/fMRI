@@ -17,14 +17,15 @@ public class MachineServer {
     private static Logger logger = LoggerManager.getLogger(MachineServer.class);
 
     public static void main(String[] args) {
+        logger.info("Initializing machine-server...");
         ServerSocket serverSocket = null;
         try {
             serverSocket = new ServerSocket(MachineConstants.MACHINE_SERVER_PORT);
             logger.debug("Initialized new socket on port: [" + MachineConstants.MACHINE_SERVER_PORT + "]");
-        } catch (IOException e) {
+        } catch (IOException | IllegalArgumentException e) {
             logger.error("Could not listen on port: " + MachineConstants.MACHINE_SERVER_PORT);
         }
-
+        logger.info("Listening on port: " + MachineConstants.MACHINE_SERVER_PORT);
         try {
             while (true) {
                 Socket clientSocket = serverSocket.accept();

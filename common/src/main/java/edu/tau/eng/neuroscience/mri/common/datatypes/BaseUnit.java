@@ -13,6 +13,9 @@ public class BaseUnit implements Unit, ExecutableObj{
     private int id;
 
     @XmlElement
+    private String inputPath;
+
+    @XmlElement
     private String description;
 
     @XmlElementWrapper(name = "parameters")
@@ -45,7 +48,12 @@ public class BaseUnit implements Unit, ExecutableObj{
 
     @Override
     public String getInputPath() { /* TODO do! */
-        return null;
+        return inputPath;
+    }
+
+    @Override
+    public void setInputPath(String inputPath) {
+        this.inputPath = inputPath;
     }
 
     public void setParameters(List<UnitParameter> parameters) {

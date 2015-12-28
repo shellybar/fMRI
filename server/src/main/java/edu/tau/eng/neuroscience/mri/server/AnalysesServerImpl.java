@@ -1,18 +1,23 @@
 package edu.tau.eng.neuroscience.mri.server;
 
-
 import edu.tau.eng.neuroscience.mri.common.datatypes.*;
+import edu.tau.eng.neuroscience.mri.common.log.Logger;
+import edu.tau.eng.neuroscience.mri.common.log.LoggerManager;
 import edu.tau.eng.neuroscience.mri.dispatcher.ExecutionProxy;
 import edu.tau.eng.neuroscience.mri.dispatcher.ExecutionProxyImpl;
 
 import java.util.List;
 
-public class AnalysesServerImpl implements AnalysesServer{
+public class AnalysesServerImpl implements AnalysesServer {
 
+    private static Logger logger = LoggerManager.getLogger(AnalysesServerImpl.class);
 
     public static void main(String[] args) {
+
+        logger.info("Start...");
+
         Task task = new TaskImpl();
-        task.setId(123456);
+        task.setId(23784);
 
         Machine machine = new MachineImpl();
         machine.setIp("132.67.140.170");
@@ -25,6 +30,7 @@ public class AnalysesServerImpl implements AnalysesServer{
         task.setUnit(unit);
 
         ExecutionProxy executionProxy = ExecutionProxyImpl.getInstance();
+        logger.info("Executing task: " + task.getId());
         executionProxy.execute(task);
     }
 

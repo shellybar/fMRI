@@ -40,20 +40,23 @@ public enum ExecutionProxyImpl implements ExecutionProxy {
     }
 
     public int sendInputFiles(Task task) {
+
+        logger.info("Starting to send input files");
         int connectionPort = task.getId(); /* TODO use an external adapter to convert task_id to port */
         server = new FilesServer(connectionPort);
         inputDirPath = task.getUnit().getInputPath();
+        logger.info("Input path: " + inputDirPath);
         int numberOfInputFiles = server.getFilesInDir(inputDirPath).length;
+        logger.info("Number of input files: " + numberOfInputFiles);
 
         // Start the process for sending files on a new thread, and start the client on the designated machine.
 
-        Runnable myRunnableServer = () -> server.getFilesInDir(inputDirPath);
+        Runnable myRunnableServer = () -> server.transferFileToMachine(inputDirPath);
         Thread thread = new Thread(myRunnableServer);
         thread.start();
 
         // Start the client on the designated machine and wait for response.
         int returnCode = sendGetFilesRequest(task, connectionPort, numberOfInputFiles);
-        server.closeSocket();
         return returnCode;
     }
 
@@ -66,8 +69,12 @@ public enum ExecutionProxyImpl implements ExecutionProxy {
      */
     private int sendGetFilesRequest(Task task, int connectionPort, int numberOfInputFiles) {
         String request = MachineConstants.RECEIVE_FILES_REQUEST + " " + connectionPort + " " + numberOfInputFiles;
+        logger.info("Sending request: " + request);
+        Socket socket = null;
         try {
-            Socket socket = new Socket(task.getMachine().getIp(), connectionPort);
+            socket = new Socket(task.getMachine().getIp(), connectionPort);
+            logger.info("Initialized socket to designated machine: ip=[" + task.getMachine().getIp()
+                    + "], port=[" + connectionPort + "]");
             OutputStream os = socket.getOutputStream();
             os.write(request.getBytes());
             os.flush();
@@ -86,12 +93,19 @@ public enum ExecutionProxyImpl implements ExecutionProxy {
                     logger.info("All files received successfully!");
                 else
                     logger.error("Error occur while sending files.");
-
                 return returnCode;
             }
         } catch (IOException e) {
             logger.error("Error during sendGetFilesRequest: " + e.getMessage());
             return MachineConstants.RECEIVE_ERROR;
+        } finally {
+            try {
+                if (socket != null || socket.isClosed()) {
+                    socket.close();
+                }
+            } catch (Exception e) {
+                // do nothing
+            }
         }
     }
 }
