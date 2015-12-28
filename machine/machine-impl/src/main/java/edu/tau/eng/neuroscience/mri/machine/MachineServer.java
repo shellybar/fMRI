@@ -20,6 +20,7 @@ public class MachineServer {
         ServerSocket serverSocket = null;
         try {
             serverSocket = new ServerSocket(MachineConstants.MACHINE_SERVER_PORT);
+            logger.debug("Initialized new socket on port: [" + MachineConstants.MACHINE_SERVER_PORT + "]");
         } catch (IOException e) {
             logger.error("Could not listen on port: " + MachineConstants.MACHINE_SERVER_PORT);
         }
@@ -27,7 +28,9 @@ public class MachineServer {
         try {
             while (true) {
                 Socket clientSocket = serverSocket.accept();
+                logger.debug("Accepted a new socket");
                 RequestHandler rh = new RequestHandler(clientSocket);
+                logger.debug("Starting RequestHandler thread...");
                 rh.start();
             }
         } catch (IOException|NullPointerException e) {
