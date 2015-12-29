@@ -8,7 +8,7 @@ public class clientToCheck {
 
     public static void main(String [ ] args) throws IOException
     {
-        int num = getFilesFromServer(3);
+        int num = getFilesFromServer(2);
         System.out.println("res = ["+num+"]");
 
     }
@@ -17,7 +17,7 @@ public class clientToCheck {
     public static int getFilesFromServer(int numberOfFiles) throws IOException{
         int bytesRead;
         int currentTot;
-        Socket socket = new Socket("nova.cs.tau.ac.il", 65123);
+        Socket socket = new Socket("nova.cs.tau.ac.il", 57982);
         DataInputStream dis = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
 
         for (int i=0; i<numberOfFiles; i++){

@@ -20,6 +20,7 @@ public class FilesServer {
 
     private void start() {
         try {
+            logger.info("FilesServer listening on port = ["+connectionPort+"]");
             ServerSocket serverSocket = new ServerSocket(connectionPort);
             socket = serverSocket.accept();
             logger.info("Accepted connection : " + socket);

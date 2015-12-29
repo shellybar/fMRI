@@ -14,7 +14,9 @@ public class FilesClient {
 
     public FilesClient(String sourceMachine, int connectionPort) {
         try {
+            logger.info("Connecting to socket on machine = [" + sourceMachine+"], on port = ["+connectionPort+"]");
             this.socket = new Socket(sourceMachine, connectionPort);
+            logger.debug("Socket was initialized successfully");
         } catch (IOException e) {
             String errorMsg = "Failed to create socket.\nLogs: "+ e.getMessage();
             logger.error(errorMsg);

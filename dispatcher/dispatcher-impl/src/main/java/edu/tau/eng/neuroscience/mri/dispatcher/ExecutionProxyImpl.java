@@ -41,7 +41,7 @@ public enum ExecutionProxyImpl implements ExecutionProxy {
 
     public int sendInputFiles(Task task) {
 
-        logger.info("Starting to send input files");
+        logger.info("Starting to send input files. Task id = ["+task.getId()+"]");
         int connectionPort = task.getId(); /* TODO use an external adapter to convert task_id to port */
         server = new FilesServer(connectionPort);
         inputDirPath = task.getUnit().getInputPath();
@@ -61,7 +61,7 @@ public enum ExecutionProxyImpl implements ExecutionProxy {
     }
 
     /**
-     * Sends remote request to the machine using HTTP
+     * Sends remote request to the machine using socket
      *
      * RECEIVE_FILES_REQUEST format: RECEIVE_FILES_REQUEST CONNECTION_PORT NUM_OF_FILES
      * BASE_UNIT_REQUEST format:  TODO
@@ -69,14 +69,16 @@ public enum ExecutionProxyImpl implements ExecutionProxy {
      */
     private int sendGetFilesRequest(Task task, int connectionPort, int numberOfInputFiles) {
         String request = MachineConstants.RECEIVE_FILES_REQUEST + " " + connectionPort + " " + numberOfInputFiles;
-        logger.info("Sending request: " + request);
+        char requestLenInChar = (char) request.length();
+        String requestWithLen = requestLenInChar+ request;
+        logger.info("Sending request: " + requestWithLen);
         Socket socket = null;
         try {
-            socket = new Socket(task.getMachine().getIp(), connectionPort);
+            socket = new Socket(task.getMachine().getIp(), MachineConstants.MACHINE_SERVER_PORT); /* TODO : add sleep and retries! because this port is used only for request, it could be in use for a short time*/
             logger.info("Initialized socket to designated machine: ip=[" + task.getMachine().getIp()
-                    + "], port=[" + connectionPort + "]");
+                    + "], port=[" + MachineConstants.MACHINE_SERVER_PORT + "]");
             OutputStream os = socket.getOutputStream();
-            os.write(request.getBytes());
+            os.write(requestWithLen.getBytes());
             os.flush();
 
             // Now wait for response
