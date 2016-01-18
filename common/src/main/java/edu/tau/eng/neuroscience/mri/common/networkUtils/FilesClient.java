@@ -18,7 +18,7 @@ public class FilesClient {
             this.socket = new Socket(sourceMachine, connectionPort);
             logger.debug("Socket was initialized successfully");
         } catch (IOException e) {
-            String errorMsg = "Failed to create socket.\nLogs: "+ e.getMessage();
+            String errorMsg = "Failed to create socket.\nLogs: " + e.getMessage();
             logger.error(errorMsg);
             this.socket = null; // TODO Throw new exception instead
         }
@@ -32,30 +32,35 @@ public class FilesClient {
 
     public int getFilesFromServer(int numberOfFiles) throws IOException{
         int bytesRead;
-        int currentTot;
+        int currentTotalBytesRead;
 
-        DataInputStream dis = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
+        DataInputStream dataInputStream = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
 
-        for (int i=0; i<numberOfFiles; i++){
+        for (int i = 0; i < numberOfFiles; i++){
             try {
-                String filename = dis.readUTF();
-                long fileSize = dis.readLong();
-                byte[] bytearray = new byte[(int) fileSize];
-                FileOutputStream fos = new FileOutputStream(filename);
-                BufferedOutputStream bos = new BufferedOutputStream(fos);
-                logger.debug("Transfer of file [" +filename+"] started...");
-                bytesRead = dis.read(bytearray, 0, bytearray.length);
-                currentTot =0;
-                if (bytesRead >= 0) currentTot += bytesRead;
-                fileSize = fileSize-bytesRead;
-                while ((fileSize>0) && (bytesRead > -1)) {
-                    bytesRead = dis.read(bytearray, currentTot, (bytearray.length - currentTot));
-                    if (bytesRead >= 0) currentTot += bytesRead;
+                String filename = dataInputStream.readUTF();
+                long fileSize = dataInputStream.readLong();
+                byte[] byteArray = new byte[(int) fileSize];
+                FileOutputStream fileOutputStream = new FileOutputStream(filename);
+                BufferedOutputStream bufferedOutputStream =
+                        new BufferedOutputStream(fileOutputStream);
+                logger.debug("Transfer of file [" + filename + "] started...");
+                bytesRead = dataInputStream.read(byteArray, 0, byteArray.length);
+                currentTotalBytesRead = 0;
+                if (bytesRead >= 0) {
+                    currentTotalBytesRead += bytesRead;
                 }
-                bos.write(bytearray, 0, currentTot);
-                bos.flush();
-                bos.close();
-                logger.info("Received file ["+filename+"]");
+                fileSize = fileSize - bytesRead;
+                while (fileSize>0 && bytesRead > -1) {
+                    bytesRead = dataInputStream.read(byteArray, currentTotalBytesRead, (byteArray.length - currentTotalBytesRead));
+                    if (bytesRead >= 0) {
+                        currentTotalBytesRead += bytesRead;
+                    }
+                }
+                bufferedOutputStream.write(byteArray, 0, currentTotalBytesRead);
+                bufferedOutputStream.flush();
+                bufferedOutputStream.close();
+                logger.info("Received file [" + filename + "]");
             } catch (EOFException e) {
                 logger.error("Not enough files were sent! Received [" + (i+1) + "] instead of [" + numberOfFiles+"]");
                 return i;
@@ -72,7 +77,7 @@ public class FilesClient {
         try {
             this.socket.close();
         } catch (IOException e){
-            String errorMsg = "Failed to create socket.\nLogs: "+ e.getMessage();
+            String errorMsg = "Failed to create socket.\nLogs: " + e.getMessage();
             logger.error(errorMsg);
         }
     }

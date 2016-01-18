@@ -32,37 +32,40 @@ public class RequestHandler extends Thread {
         logger.debug("run() - Start");
         try {
 
-            DataInputStream dis = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
-            byte[] messageLen = new byte[1];
-            int bytesReadForLen = dis.read(messageLen, 0, 1);
+            DataInputStream dataInputStream =
+                    new DataInputStream(new BufferedInputStream(socket.getInputStream()));
+            byte[] messageLength = new byte[1];
+            int bytesReadForLength = dataInputStream.read(messageLength, 0, 1);
 
-            if (bytesReadForLen != 1){
-                throw new IOException("Request length - receive with error");
+            if (bytesReadForLength != 1){
+                throw new IOException("Request length - received with error");
             }
 
-            int requestLength = messageLen[0];
+            int requestLength = messageLength[0];
 
-            logger.debug("Incoming request length = ["+requestLength+"]");
-            byte[] bytearray = new byte[requestLength];
-            int bytesRead = dis.read(bytearray, 0, bytearray.length);
+            logger.debug("Incoming request length = [" + requestLength + "]");
+            byte[] byteArray = new byte[requestLength];
+            int bytesRead = dataInputStream.read(byteArray, 0, byteArray.length);
             int totalRead = 0;
-            if (bytesRead >= 0) totalRead += bytesRead;
-            logger.debug("total read bytes from stream = ["+totalRead+"]");
-            while ((bytesRead > -1) && (totalRead<requestLength)) {
-                bytesRead = dis.read(bytearray, totalRead, (bytearray.length - totalRead));
-                if (bytesRead >= 0) totalRead += bytesRead;
-                logger.debug("total read bytes from stream = ["+totalRead+"]");
+            if (bytesRead >= 0) {
+                totalRead += bytesRead;
+            }
+            logger.debug("total read bytes from stream = [" + totalRead + "]");
+            while (bytesRead > -1 && totalRead < requestLength) {
+                bytesRead = dataInputStream.read(byteArray, totalRead, (byteArray.length - totalRead));
+                if (bytesRead >= 0) {
+                    totalRead += bytesRead;
+                }
+                logger.debug("total read bytes from stream = [" + totalRead + "]");
             }
 
-            byte[] totalRequestBytesArray = Arrays.copyOf(bytearray, totalRead);
-            //MachineControllerImpl mc = new MachineControllerImpl();
+            byte[] totalRequestBytesArray = Arrays.copyOf(byteArray, totalRead);
             logger.debug("After totalRequestBytesArray");
 
             String[] parsedRequest = (new String(totalRequestBytesArray)).split(" ");
-            //logger.debug("Parsed request");
             logger.info("Parsed request = [" + Integer.parseInt(parsedRequest[0])+" "+Integer.parseInt(parsedRequest[1]) + " "+Integer.parseInt(parsedRequest[2])+"]");
             int idInput = Integer.parseInt((parsedRequest[0]));
-            logger.debug("idInput = "+idInput+"]");
+            logger.debug("idInput = " + idInput + "]");
             switch (idInput){
                 case MachineConstants.RECEIVE_FILES_REQUEST:
                     logger.info("Receive file request. Calling handleReceiveFilesRequest");
@@ -87,12 +90,11 @@ public class RequestHandler extends Thread {
         int connectionPort = Integer.parseInt(parsedRequest[1]);
         int requestedNumForReceive = Integer.parseInt(parsedRequest[2]);
         logger.info("handleReceiveFilesRequest - start. Connection port = ["+connectionPort+"] requested number of files = ["+requestedNumForReceive+"] from server = ["+MachineConstants.FILESERVER+"]" );
-        FilesClient fc = new FilesClient(MachineConstants.FILESERVER, connectionPort);
+        FilesClient filesClient = new FilesClient(MachineConstants.FILESERVER, connectionPort);
         try {
-            int receivedFiles = fc.getFilesFromServer(requestedNumForReceive);
-            OutputStream os = socket.getOutputStream();
+            int receivedFiles = filesClient.getFilesFromServer(requestedNumForReceive);
+            OutputStream outputStream = socket.getOutputStream();
             byte completionStatus[] = new byte[1];
-
 
             if (receivedFiles<requestedNumForReceive){
                 completionStatus[0] = MachineConstants.RECEIVE_ERROR;
@@ -101,15 +103,13 @@ public class RequestHandler extends Thread {
                 logger.info("Received all files [" + receivedFiles + "]");
                 completionStatus[0] = MachineConstants.RECEIVED_ALL_FILES;
             }
-            os.write(completionStatus, 0, completionStatus.length);
-
+            outputStream.write(completionStatus, 0, completionStatus.length);
         } catch (IOException e) {
             logger.error("Failed receiving files from server " + e.getMessage());
         }
     }
 
     public void handleBaseUnitRequest(String[] parsedRequest){
-        /* TODO parse request. rebuiled unit object and call machine controller impl run method*/
+        // TODO parse request. rebuild unit object and call machine controller impl run method
     }
-
 }

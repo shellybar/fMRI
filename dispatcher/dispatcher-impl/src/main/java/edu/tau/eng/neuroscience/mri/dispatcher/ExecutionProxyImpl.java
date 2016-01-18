@@ -70,27 +70,28 @@ public enum ExecutionProxyImpl implements ExecutionProxy {
     private int sendGetFilesRequest(Task task, int connectionPort, int numberOfInputFiles) {
         String request = MachineConstants.RECEIVE_FILES_REQUEST + " " + connectionPort + " " + numberOfInputFiles;
         char requestLenInChar = (char) request.length();
-        String requestWithLen = requestLenInChar+ request;
-        logger.info("Sending request: " + requestWithLen);
+        String requestWithLength = requestLenInChar + request;
+        logger.info("Sending request: " + requestWithLength);
         Socket socket = null;
         try {
             socket = new Socket(task.getMachine().getIp(), MachineConstants.MACHINE_SERVER_PORT); /* TODO : add sleep and retries! because this port is used only for request, it could be in use for a short time*/
             logger.info("Initialized socket to designated machine: ip=[" + task.getMachine().getIp()
                     + "], port=[" + MachineConstants.MACHINE_SERVER_PORT + "]");
-            OutputStream os = socket.getOutputStream();
-            os.write(requestWithLen.getBytes());
-            os.flush();
+            OutputStream outputStream = socket.getOutputStream();
+            outputStream.write(requestWithLength.getBytes());
+            outputStream.flush();
 
             // Now wait for response
 
-            byte[] bytearray = new byte[1];
-            DataInputStream dis = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
-            int bytesRead = dis.read(bytearray, 0, bytearray.length);
-            if (bytesRead<0){
+            byte[] byteArray = new byte[1];
+            DataInputStream dataInputStream =
+                    new DataInputStream(new BufferedInputStream(socket.getInputStream()));
+            int bytesRead = dataInputStream.read(byteArray, 0, byteArray.length);
+            if (bytesRead < 0){
                 logger.error("Failed receive machine's response");
                 return MachineConstants.RECEIVE_ERROR;
             } else {
-                int returnCode = bytearray[0];
+                int returnCode = byteArray[0];
                 if (returnCode == MachineConstants.RECEIVED_ALL_FILES)
                     logger.info("All files received successfully!");
                 else

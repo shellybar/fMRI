@@ -30,9 +30,9 @@ public class MachineServer {
             while (true) {
                 Socket clientSocket = serverSocket.accept();
                 logger.debug("Accepted a new socket");
-                RequestHandler rh = new RequestHandler(clientSocket);
+                RequestHandler requestHandler = new RequestHandler(clientSocket);
                 logger.debug("Starting RequestHandler thread...");
-                rh.start();
+                requestHandler.start();
             }
         } catch (IOException|NullPointerException e) {
             logger.error("Machine server exception: " + e.getMessage());

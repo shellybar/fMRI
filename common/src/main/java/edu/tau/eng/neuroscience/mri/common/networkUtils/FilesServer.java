@@ -42,19 +42,19 @@ public class FilesServer {
                 String fileName = transferFile.getName();
                 long fileSize = transferFile.length();
 
-                byte[] bytearray = new byte[(int) fileSize];
-                FileInputStream fin = new FileInputStream(transferFile);
-                BufferedInputStream bin = new BufferedInputStream(fin);
-                bin.read(bytearray, 0, bytearray.length);
-                OutputStream os = socket.getOutputStream();
-                DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(os));
+                byte[] byteArray = new byte[(int) fileSize];
+                FileInputStream fileInputStream = new FileInputStream(transferFile);
+                BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
+                bufferedInputStream.read(byteArray, 0, byteArray.length);
+                OutputStream outputStream = socket.getOutputStream();
+                DataOutputStream dataOutputStream = new DataOutputStream(new BufferedOutputStream(outputStream));
                 logger.debug("Sending file [" + fileName + "]...");
 
-                dos.writeUTF(fileName);
-                dos.writeLong(fileSize);
-                dos.flush();
-                os.write(bytearray, 0, bytearray.length);
-                os.flush();
+                dataOutputStream.writeUTF(fileName);
+                dataOutputStream.writeLong(fileSize);
+                dataOutputStream.flush();
+                outputStream.write(byteArray, 0, byteArray.length);
+                outputStream.flush();
                 logger.info("File transfer completed");
             }
         } catch (IOException e) {
