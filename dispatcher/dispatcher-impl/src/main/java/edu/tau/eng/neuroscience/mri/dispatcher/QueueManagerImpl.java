@@ -1,5 +1,6 @@
 package edu.tau.eng.neuroscience.mri.dispatcher;
 
+import com.jcraft.jsch.JSchException;
 import edu.tau.eng.neuroscience.mri.common.datatypes.*;
 import edu.tau.eng.neuroscience.mri.common.exceptions.ErrorCodes;
 import edu.tau.eng.neuroscience.mri.common.exceptions.QueueManagementException;
@@ -46,6 +47,9 @@ public class QueueManagerImpl implements QueueManager {
                     "\nSQLState: " + e.getSQLState() +
                     "\nVendorError: " + e.getErrorCode());
             throw new QueueManagementException(ErrorCodes.DB_CONNECTION_ERROR, errorMsg);
+        } catch (JSchException e) {
+            String errorMsg = "Failed to establish SSH connection to the database";
+            throw new QueueManagementException(ErrorCodes.SSH_CONNECTION_ERROR, errorMsg);
         }
         initQueue();
     }

@@ -1,14 +1,14 @@
 package edu.tau.eng.neuroscience.mri.dispatcher;
 
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
 import edu.tau.eng.neuroscience.mri.common.datatypes.Task;
 import edu.tau.eng.neuroscience.mri.common.log.Logger;
 import edu.tau.eng.neuroscience.mri.common.log.LoggerManager;
+import edu.tau.eng.neuroscience.mri.common.networkUtils.SSHConnection;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -18,30 +18,38 @@ import java.util.List;
 public class DBProxy {
 
     private static Logger logger = LoggerManager.getLogger(DBProxy.class);
+
     private Connection connection;
-    private String url;
+    private String mySqlHost;
+    private String schema;
     private String user;
     private String password;
+    private int mySqlServerPort;
 
-    public DBProxy(String url, String user, String password) throws ClassNotFoundException, SQLException {
-        this.url = url;
+    private int localPort = 49999; // TODO find free local port?
+
+    public DBProxy(String host, int port, String schema, String user, String password)
+            throws ClassNotFoundException, SQLException {
+        this.mySqlHost = host;
+        this.mySqlServerPort = port;
+        this.schema = schema;
         this.user = user;
         this.password = password;
     }
 
-    public String getUrl() {
-        return url;
-    }
+    //TODO create DBConnectionProperties class
+//    public DBProxy(DBConnectionProperties connectionProperties) throws ClassNotFoundException, SQLException {
+//
+//    }
 
     public String getUser() {
         return user;
     }
 
-    public void connect() throws SQLException {
-        if (connection != null && !connection.isClosed()) {
-            connection.close();
+    public void connect() throws SQLException, JSchException {
+        if (connection == null || connection.isClosed()) {
+            safeConnect();
         }
-        safeConnect();
     }
 
     public void disconnect() throws SQLException {
@@ -53,7 +61,9 @@ public class DBProxy {
     }
 
     public void add(Task task) {
-        // TODO add task to DB
+        List<Task> tasks = new ArrayList<>();
+        tasks.add(task);
+        this.add(tasks);
     }
 
     /**
@@ -65,25 +75,40 @@ public class DBProxy {
         // TODO update task in DB according to ID (decide what to do if id does not exist)
     }
 
-    public Task getTask(int id) throws SQLException {
+    public Task getTask(int id) throws SQLException, JSchException, ClassNotFoundException {
         // TODO this is just a placeholder (for example)
         assureConnection();
         Statement statement = connection.createStatement();
         ResultSet results = statement.executeQuery("SELECT * FROM Tasks WHERE id=" + id);
-        // ...
+//        while (result.next()) {
+//            int cnt = result.getInt("cnt");
+//        }
         results.close();
         statement.close();
         return null;
     }
 
-    private void assureConnection() throws SQLException {
+    private void assureConnection() throws SQLException, JSchException, ClassNotFoundException {
         if (connection == null || connection.isClosed()) {
             safeConnect();
         }
     }
 
-    private void safeConnect() throws SQLException {
-        connection = DriverManager.getConnection(url, user, password);
+    // TODO improve exceptions
+    private void safeConnect() throws SQLException, JSchException {
+
+        Session sshSession = SSHConnection.establish();
+        sshSession.setPortForwardingL(localPort, mySqlHost, mySqlServerPort);
+        logger.info("Establishing connection to " + getUrl() + " with user " + user);
+        String driver = "com.mysql.jdbc.Driver";
+        try {
+            Class.forName(driver);
+        } catch (ClassNotFoundException e) {
+            throw new SQLException("Database connection cannot be established. " +
+                    "MySQL JDBC driver class (" + driver + ") was not found");
+        }
+        connection = DriverManager.getConnection(getUrl(), user, password);
+
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
@@ -93,8 +118,8 @@ public class DBProxy {
                     }
                 } catch (SQLException e) {
                     String errorMsg =
-                            String.format("Failed to disconnect from the database (url: %s; user: %s)",
-                                    getUrl(), getUser());
+                            String.format("Failed to disconnect from the database (db: %s; user: %s)",
+                                    getUrl(), user);
                     logger.error(errorMsg +
                             "\nSQLException: " + e.getMessage() +
                             "\nSQLState: " + e.getSQLState() +
@@ -107,4 +132,9 @@ public class DBProxy {
     public List<Task> getNewTasks() {
         return null; // TODO
     }
+
+    public String getUrl() {
+        return "jdbc:mysql://localhost:" + localPort + "/" + schema;
+    }
+
 }

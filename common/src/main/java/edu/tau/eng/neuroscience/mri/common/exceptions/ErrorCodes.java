@@ -8,5 +8,6 @@ public class ErrorCodes {
 
     public static final int GENERAL_QUEUE_MANAGEMENT_EXCEPTION = 8000;
     public static final int DB_CONNECTION_ERROR = 8001;
+    public static final int SSH_CONNECTION_ERROR = 8002;
 
 }

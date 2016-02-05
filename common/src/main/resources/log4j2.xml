@@ -6,8 +6,8 @@
     </Properties>
 
     <Appenders>
-        <RollingFile name="file-log" fileName="${sys:log.directory}/server.log.${date:yyyy-MM-dd}"
-                     filePattern="${sys:log.directory}/server.log.%d{yyyy-MM-dd}"
+        <RollingFile name="file-log" fileName="${sys:log.directory}/server.${date:yyyy-MM-dd}.log"
+                     filePattern="${sys:log.directory}/server.%d{yyyy-MM-dd}.log"
                      immediateFlush="false" append="true">
             <PatternLayout pattern="${log-pattern}"/>
             <Policies>
