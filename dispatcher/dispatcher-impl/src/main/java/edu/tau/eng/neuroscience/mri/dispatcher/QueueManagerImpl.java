@@ -1,13 +1,13 @@
 package edu.tau.eng.neuroscience.mri.dispatcher;
 
-import com.jcraft.jsch.JSchException;
 import edu.tau.eng.neuroscience.mri.common.datatypes.*;
 import edu.tau.eng.neuroscience.mri.common.exceptions.ErrorCodes;
 import edu.tau.eng.neuroscience.mri.common.exceptions.QueueManagementException;
 import edu.tau.eng.neuroscience.mri.common.log.Logger;
 import edu.tau.eng.neuroscience.mri.common.log.LoggerManager;
+import edu.tau.eng.neuroscience.mri.dispatcher.db.DBProxy;
+import edu.tau.eng.neuroscience.mri.dispatcher.db.DBProxyException;
 
-import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -39,17 +39,8 @@ public class QueueManagerImpl implements QueueManager {
         this.executionProxy = ExecutionProxyImpl.getInstance();
         try {
             dbProxy.connect();
-        } catch (SQLException e) {
-            String errorMsg = String.format("Failed to connect to the database (url: %s; user: %s)",
-                    dbProxy.getUrl(), dbProxy.getUser());
-            logger.error(errorMsg +
-                    "\nSQLException: " + e.getMessage() +
-                    "\nSQLState: " + e.getSQLState() +
-                    "\nVendorError: " + e.getErrorCode());
-            throw new QueueManagementException(ErrorCodes.DB_CONNECTION_ERROR, errorMsg);
-        } catch (JSchException e) {
-            String errorMsg = "Failed to establish SSH connection to the database";
-            throw new QueueManagementException(ErrorCodes.SSH_CONNECTION_ERROR, errorMsg);
+        } catch (DBProxyException e) {
+            throw new QueueManagementException(ErrorCodes.QUEUE_MANAGEMENT_CONNECTION_EXCEPTION, e.getMessage());
         }
         initQueue();
     }
@@ -70,14 +61,8 @@ public class QueueManagerImpl implements QueueManager {
         consumers.shutdownNow();
         try {
             dbProxy.disconnect();
-        } catch (SQLException e) {
-            String errorMsg = String.format("Failed to disconnect from the database (url: %s; user: %s)",
-                    dbProxy.getUrl(), dbProxy.getUser());
-            logger.error(errorMsg +
-                    "\nSQLException: " + e.getMessage() +
-                    "\nSQLState: " + e.getSQLState() +
-                    "\nVendorError: " + e.getErrorCode());
-            throw new QueueManagementException(ErrorCodes.DB_CONNECTION_ERROR, errorMsg);
+        } catch (DBProxyException e) {
+            throw new QueueManagementException(ErrorCodes.QUEUE_MANAGEMENT_CONNECTION_EXCEPTION, e.getMessage());
         }
     }
 
@@ -213,6 +198,8 @@ public class QueueManagerImpl implements QueueManager {
                 }
             } catch (InterruptedException e) {
                 logger.debug("Queue producer thread shutting down after interrupt");
+            } catch (DBProxyException e) {
+                // TODO
             }
         }
     }

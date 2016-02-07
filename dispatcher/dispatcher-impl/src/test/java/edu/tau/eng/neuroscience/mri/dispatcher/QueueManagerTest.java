@@ -6,6 +6,7 @@ import edu.tau.eng.neuroscience.mri.common.datatypes.Machine;
 import edu.tau.eng.neuroscience.mri.common.datatypes.Task;
 import edu.tau.eng.neuroscience.mri.common.datatypes.Unit;
 import edu.tau.eng.neuroscience.mri.common.exceptions.QueueManagementException;
+import edu.tau.eng.neuroscience.mri.dispatcher.db.DBProxy;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

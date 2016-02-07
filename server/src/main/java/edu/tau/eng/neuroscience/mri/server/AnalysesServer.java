@@ -5,6 +5,7 @@ import edu.tau.eng.neuroscience.mri.common.exceptions.QueueManagementException;
 import edu.tau.eng.neuroscience.mri.common.log.Logger;
 import edu.tau.eng.neuroscience.mri.common.log.LoggerManager;
 import edu.tau.eng.neuroscience.mri.dispatcher.*;
+import edu.tau.eng.neuroscience.mri.dispatcher.db.DBProxy;
 
 import java.util.List;
 
@@ -15,12 +16,12 @@ public class AnalysesServer {
     public static void main(String[] args) {
 
         logger.info("Start...");
-        DBProxy dbProxy = DBProxy.fromConfigFile("");
-        try {
-            QueueManager queueManager = new QueueManagerImpl(dbProxy);
-        } catch (QueueManagementException e) {
-            // TODO
-        }
+//        DBProxy dbProxy = new DBProxy(""); // TODO add config file path
+//        try {
+//            QueueManager queueManager = new QueueManagerImpl(dbProxy);
+//        } catch (QueueManagementException e) {
+//            // TODO
+//        }
 
         Task task = new TaskImpl();
         task.setId(57982);

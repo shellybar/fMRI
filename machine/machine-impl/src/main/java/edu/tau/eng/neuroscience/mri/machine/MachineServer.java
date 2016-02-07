@@ -10,9 +10,8 @@ import java.net.Socket;
 
 /**
  * MachineServer run on each machine all the time, and listens to socket requests.
- * When a request arrive - the MachineServer create the required objects and call the MachineControllerImpl.
+ * When a request arrives - the MachineServer creates the required objects and call the MachineControllerImpl.
  */
-
 public class MachineServer {
     private static Logger logger = LoggerManager.getLogger(MachineServer.class);
 
