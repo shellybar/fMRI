@@ -61,11 +61,11 @@ public class DBProxy {
     public void disconnect() throws DBProxyException {
         try {
             if (connection != null && !connection.isClosed()) {
-                logger.info(String.format("Disconnecting from the database (url: %s; user: %s).", getUrl(), getUser()));
+                logger.info("Closing connection to " + getUrl() + "...");
                 connection.close();
             }
             if (sshSession != null && sshSession.isConnected()) {
-                logger.info("Disconnecting SSH Connection to host: " + sshSession.getHost() + ":" + sshSession.getPort());
+                logger.info("Closing SSH Connection to host: " + sshSession.getHost() + ":" + sshSession.getPort() + "...");
                 sshSession.disconnect();
             }
             logger.info("Successfully closed database connection via SSH tunneling");
@@ -113,15 +113,15 @@ public class DBProxy {
         try {
             sshSession = SSHConnection.establish();
             localPort = getFreeLocalPort();
-            logger.info("SSH Tunneling to remote DB (" + connProperties.getHost() + ":" + connProperties.getPort()
-                    + ") using local port " + localPort);
+            logger.info("Setting SSH Tunneling to remote DB (" + connProperties.getHost() + ":" + connProperties.getPort()
+                    + ") using local port " + localPort + "...");
             sshSession.setPortForwardingL(localPort, connProperties.getHost(), connProperties.getPort());
         } catch (JSchException e) {
             String errorMsg = "Failed to establish SSH connection to the database";
             logger.error(errorMsg);
             throw new DBProxyException(ErrorCodes.SSH_CONNECTION_EXCEPTION, errorMsg);
         }
-        logger.info("Establishing connection to " + getUrl() + " with user " + getUser());
+        logger.info("Establishing connection to " + getUrl() + " with user " + getUser() + "...");
         String driver = "com.mysql.jdbc.Driver";
         try {
             Class.forName(driver);
@@ -150,6 +150,7 @@ public class DBProxy {
                 }
             }
         });
+        logger.info("Connected to DB at " + getUrl());
     }
 
     public List<Task> getNewTasks() throws DBProxyException {
@@ -187,6 +188,7 @@ public class DBProxy {
     private DBConnectionProperties loadConfig(String configFilePath) throws DBProxyException {
         DBConnectionProperties dbConnectionProperties = null;
         File file = new File(configFilePath);
+        logger.debug("Loading DB Connection configuration details from " + file.getAbsolutePath() + "...");
         try {
             JAXBContext jaxbContext = JAXBContext.newInstance(DBConnectionProperties.class);
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
@@ -206,6 +208,7 @@ public class DBProxy {
     }
 
     private int getFreeLocalPort() {
+        logger.debug("Searching for available local port for SSH tunneling...");
         ServerSocket serverSocket = null;
         int portNumber;
         try {
