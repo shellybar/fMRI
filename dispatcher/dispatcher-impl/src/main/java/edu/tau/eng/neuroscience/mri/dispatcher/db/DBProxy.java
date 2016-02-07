@@ -59,13 +59,16 @@ public class DBProxy {
     }
 
     public void disconnect() throws DBProxyException {
-        if (sshSession != null && sshSession.isConnected()) {
-            sshSession.disconnect();
-        }
         try {
             if (connection != null && !connection.isClosed()) {
+                logger.info(String.format("Disconnecting from the database (url: %s; user: %s).", getUrl(), getUser()));
                 connection.close();
             }
+            if (sshSession != null && sshSession.isConnected()) {
+                logger.info("Disconnecting SSH Connection to host: " + sshSession.getHost() + ":" + sshSession.getPort());
+                sshSession.disconnect();
+            }
+            logger.info("Successfully closed database connection via SSH tunneling");
         } catch (SQLException e) {
             String errorMsg =
                     String.format("Failed to disconnect from the database (url: %s; user: %s).", getUrl(), getUser());
