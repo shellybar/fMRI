@@ -3,7 +3,7 @@
 <db-connection>
     <host>mysqlsrv.cs.tau.ac.il</host>
     <port>3306</port>
-    <schema>brain_tau_db</schema>
-    <user>brain_tau_db</user>
-    <password>brain_tau_db</password>
+    <schema>brain_analysis_db</schema>
+    <user>brain_a_db</user>
+    <password>brain_a_db</password>
 </db-connection>
