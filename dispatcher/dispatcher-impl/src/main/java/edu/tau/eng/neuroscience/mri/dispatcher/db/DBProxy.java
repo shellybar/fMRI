@@ -9,6 +9,7 @@ import edu.tau.eng.neuroscience.mri.common.exceptions.ErrorCodes;
 import edu.tau.eng.neuroscience.mri.common.log.Logger;
 import edu.tau.eng.neuroscience.mri.common.log.LoggerManager;
 import edu.tau.eng.neuroscience.mri.common.networkUtils.SSHConnection;
+import edu.tau.eng.neuroscience.mri.common.networkUtils.SSHConnectionProperties;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -29,20 +30,25 @@ public class DBProxy {
     private static Logger logger = LoggerManager.getLogger(DBProxy.class);
 
     private Session sshSession;
+    private SSHConnectionProperties sshProperties;
+    private boolean useSSH;
     private Connection connection;
-    private DBConnectionProperties connProperties;
+    private DBConnectionProperties dbProperties;
     private int localPort;
 
-    public DBProxy(String host, int port, String schema, String user, String password) {
-        connProperties = new DBConnectionProperties(host, port, schema, user, password);
+    public DBProxy(String configurationFilePath) throws DBProxyException {
+        dbProperties = loadDbConfig(configurationFilePath);
+        useSSH = false;
     }
 
-    public DBProxy(String configurationFilePath) throws DBProxyException {
-        connProperties = loadConfig(configurationFilePath);
+    public DBProxy(String dbConfigurationFilePath, String sshConfigurationFilePath) throws DBProxyException {
+        dbProperties = loadDbConfig(dbConfigurationFilePath);
+        sshProperties = loadSshConfig(sshConfigurationFilePath);
+        useSSH = true;
     }
 
     public String getUser() {
-        return connProperties.getUser();
+        return dbProperties.getUser();
     }
 
     public void connect() throws DBProxyException {
@@ -100,7 +106,7 @@ public class DBProxy {
         connect();
         // TODO implement
 //        Statement statement = connection.createStatement();
-//        ResultSet results = statement.executeQuery("SELECT * FROM " + connProperties.getSchema() + ".tasks WHERE id=" + id);
+//        ResultSet results = statement.executeQuery("SELECT * FROM " + dbProperties.getSchema() + ".tasks WHERE id=" + id);
 ////        while (result.next()) {
 ////            int cnt = result.getInt("cnt");
 ////        }
@@ -110,22 +116,24 @@ public class DBProxy {
     }
 
     private void safeConnect() throws DBProxyException {
-        try {
-            sshSession = SSHConnection.establish();
-            localPort = getFreeLocalPort();
-            logger.info("Setting SSH Tunneling to remote DB (" + connProperties.getHost() + ":" + connProperties.getPort()
-                    + ") using local port " + localPort + "...");
-            sshSession.setPortForwardingL(localPort, connProperties.getHost(), connProperties.getPort());
-        } catch (JSchException e) {
-            String errorMsg = "Failed to establish SSH connection to the database";
-            logger.error(errorMsg);
-            throw new DBProxyException(ErrorCodes.SSH_CONNECTION_EXCEPTION, errorMsg);
+        if (useSSH) {
+            try {
+                sshSession = SSHConnection.establish(sshProperties);
+                localPort = getFreeLocalPort();
+                logger.info("Setting SSH Tunneling to remote DB (" + dbProperties.getHost() + ":" + dbProperties.getPort()
+                        + ") using local port " + localPort + "...");
+                sshSession.setPortForwardingL(localPort, dbProperties.getHost(), dbProperties.getPort());
+            } catch (JSchException e) {
+                String errorMsg = "Failed to establish SSH connection to the database";
+                logger.error(errorMsg);
+                throw new DBProxyException(ErrorCodes.SSH_CONNECTION_EXCEPTION, errorMsg);
+            }
         }
         logger.info("Establishing connection to " + getUrl() + " with user " + getUser() + "...");
         String driver = "com.mysql.jdbc.Driver";
         try {
             Class.forName(driver);
-            connection = DriverManager.getConnection(getActualUrl(), getUser(), connProperties.getPassword());
+            connection = DriverManager.getConnection(getActualUrl(), getUser(), dbProperties.getPassword());
         } catch (SQLException e) {
             String errorMsg = String.format("Failed to connect to the database (url: %s; user: %s)", getUrl(), getUser());
             logSqlException(e, errorMsg);
@@ -160,7 +168,7 @@ public class DBProxy {
         try {
             // TODO extract query to file
             statement = connection.prepareStatement(
-                    "SELECT * FROM " + connProperties.getSchema() + ".tasks WHERE status='New'");
+                    "SELECT * FROM " + dbProperties.getSchema() + ".tasks WHERE status='New'");
             ResultSet resultSet = statement.executeQuery();
             while (resultSet.next()) {
                 Task task = new TaskImpl();
@@ -178,14 +186,20 @@ public class DBProxy {
     }
 
     public String getUrl() {
-        return connProperties.getHost() + ":" + connProperties.getPort() + "/" + connProperties.getSchema();
+        return dbProperties.getHost() + ":" + dbProperties.getPort() + "/" + dbProperties.getSchema();
     }
 
     private String getActualUrl() {
-        return "jdbc:mysql://localhost:" + localPort + "/" + connProperties.getSchema();
+        String url;
+        if (useSSH) {
+            url = "jdbc:mysql://localhost:" + localPort + "/" + dbProperties.getSchema();
+        } else {
+            url = "jdbc:mysql://" + dbProperties.getHost() + ":" + dbProperties.getPort() + "/" + dbProperties.getSchema();
+        }
+        return url;
     }
 
-    private DBConnectionProperties loadConfig(String configFilePath) throws DBProxyException {
+    private DBConnectionProperties loadDbConfig(String configFilePath) throws DBProxyException {
         DBConnectionProperties dbConnectionProperties = null;
         File file = new File(configFilePath);
         logger.debug("Loading DB Connection configuration details from " + file.getAbsolutePath() + "...");
@@ -205,6 +219,28 @@ public class DBProxy {
                             "Make sure that " + file.getAbsolutePath() + " exists and is configured correctly");
         }
         return dbConnectionProperties;
+    }
+
+    private SSHConnectionProperties loadSshConfig(String configFilePath) throws DBProxyException {
+        SSHConnectionProperties sshConnectionProperties = null;
+        File file = new File(configFilePath);
+        logger.debug("Loading SSH Connection configuration details from " + file.getAbsolutePath() + "...");
+        try {
+            JAXBContext jaxbContext = JAXBContext.newInstance(SSHConnectionProperties.class);
+            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+            sshConnectionProperties = (SSHConnectionProperties) unmarshaller.unmarshal(file);
+        } catch (JAXBException e) {
+            String originalMsg = e.getMessage();
+            String msg = "Failed to parse SSH Connection configuration file (file path: "
+                    + file.getAbsolutePath() + "). " + ((originalMsg == null) ? "" : "Details: " + originalMsg);
+            logger.error(msg);
+        }
+        if (sshConnectionProperties == null) {
+            throw new DBProxyException(ErrorCodes.SSH_CONNECTION_PROPERTIES_UNMARSHAL_EXCEPTION,
+                    "Failed to retrieve SSH Connection configuration. " +
+                            "Make sure that " + file.getAbsolutePath() + " exists and is configured correctly");
+        }
+        return sshConnectionProperties;
     }
 
     private int getFreeLocalPort() {

@@ -8,7 +8,9 @@ public class DBProxyTest {
 
     public static void main(String[] args) throws DBProxyException {
 
-        DBProxy dbProxy = new DBProxy(SystemConstants.BASE_DIR + "/configs/db_connection.xml");
+        DBProxy dbProxy = new DBProxy(
+                SystemConstants.BASE_DIR + "/configs/db_connection.xml",
+                SystemConstants.BASE_DIR + "/configs/ssh_connection.xml");
         dbProxy.connect();
         dbProxy.disconnect();
     }

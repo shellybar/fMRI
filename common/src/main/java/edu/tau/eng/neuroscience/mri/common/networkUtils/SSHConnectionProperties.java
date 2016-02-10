@@ -1,18 +1,18 @@
-package edu.tau.eng.neuroscience.mri.dispatcher.db;
+package edu.tau.eng.neuroscience.mri.common.networkUtils;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement(name = "db-connection")
+@XmlRootElement(name = "ssh-connection")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class DBConnectionProperties {
+public class SSHConnectionProperties {
 
     @XmlElement private String host;
     @XmlElement private int port;
-    @XmlElement private String schema;
     @XmlElement private String user;
+    @XmlElement private String keyFilePath;
     @XmlElement private String password;
 
     public String getHost() {
@@ -23,16 +23,15 @@ public class DBConnectionProperties {
         return port;
     }
 
-    public String getSchema() {
-        return schema;
-    }
-
     public String getUser() {
         return user;
+    }
+
+    public String getKeyFilePath() {
+        return keyFilePath;
     }
 
     public String getPassword() {
         return password;
     }
-
 }
