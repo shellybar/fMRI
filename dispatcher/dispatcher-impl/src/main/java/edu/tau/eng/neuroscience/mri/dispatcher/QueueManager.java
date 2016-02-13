@@ -4,11 +4,11 @@ import edu.tau.eng.neuroscience.mri.common.datatypes.*;
 import edu.tau.eng.neuroscience.mri.common.exceptions.ErrorCodes;
 import edu.tau.eng.neuroscience.mri.common.exceptions.MachinesManagementException;
 import edu.tau.eng.neuroscience.mri.common.exceptions.QueueManagementException;
+import edu.tau.eng.neuroscience.mri.common.exceptions.UnitFetcherException;
 import edu.tau.eng.neuroscience.mri.common.log.Logger;
 import edu.tau.eng.neuroscience.mri.common.log.LoggerManager;
 import edu.tau.eng.neuroscience.mri.dispatcher.db.DBProxy;
 import edu.tau.eng.neuroscience.mri.dispatcher.db.DBProxyException;
-import edu.tau.eng.neuroscience.mri.server.AnalysesServer;
 
 import java.util.List;
 import java.util.concurrent.*;
@@ -86,7 +86,7 @@ public class QueueManager {
             dbProxy.add(tasks);
         } catch (DBProxyException e) {
             logger.fatal("Failed to add tasks to DB");
-            DispatcherImpl.notifyFatal(e);
+            DispatcherImpl.notifyFatal(e); // TODO what now?
         }
         synchronized(producerLock) {
             producerMayWork = true;
@@ -145,10 +145,10 @@ public class QueueManager {
             } catch (MachinesManagementException e) {
                 logger.fatal("Queue consumer thread failed to find available machine to run task. Details: " + e.getMessage());
                 logger.fatal(e.getMessage());
-                DispatcherImpl.notifyFatal(e);
+                DispatcherImpl.notifyFatal(e); // TODO what now?
             } catch (DBProxyException e) {
                 logger.fatal("Failed to update task in DB");
-                DispatcherImpl.notifyFatal(e);
+                DispatcherImpl.notifyFatal(e); // TODO what now?
             }
         }
     }
@@ -172,7 +172,13 @@ public class QueueManager {
                             producerLock.wait(MAX_PRODUCER_IDLE_TIME);
                         }
                     }
-                    List<Task> tasks = dbProxy.getNewTasks();
+                    List<Task> tasks = null;
+                    try {
+                        tasks = dbProxy.getNewTasks();
+                    } catch (UnitFetcherException e) {
+                        // TODO this is bad but not horrible because it just means no tasks will be processed -
+                        // but they will also stay safe in the DB and we won't get an inconsistent situation
+                    }
                     synchronized(producerLock) {
                         if (tasks == null || tasks.isEmpty()) {
                             producerMayWork = false;

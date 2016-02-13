@@ -29,9 +29,9 @@ public class UnitFetcher {
      * in the XML configuration file for the unit with unitId.
      * @param unitId is a number required to locate the relevant XML file
      * @return Unit object with the data corresponding to unitId.
-     * @throws DispatcherException if unit with unitId does not exist
+     * @throws UnitFetcherException if unit with unitId does not exist
      */
-    public static Unit getUnit(int unitId) throws DispatcherException {
+    public static Unit getUnit(int unitId) throws UnitFetcherException {
 
         BaseUnit unit = null;
         File file = getUnitSettingsFile(unitId);
@@ -47,7 +47,7 @@ public class UnitFetcher {
             logger.error(msg);
         }
         if (unit == null) {
-            throw new DispatcherException(ErrorCodes.UNIT_UNMARSHAL_EXCEPTION, "Failed to retrieve unit " + unitId +
+            throw new UnitFetcherException(ErrorCodes.UNIT_UNMARSHAL_EXCEPTION, "Failed to retrieve unit " + unitId +
                     ". Make sure that the unit exists and is configured correctly");
         }
         return unit;

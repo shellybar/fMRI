@@ -1,13 +1,23 @@
 package edu.tau.eng.neuroscience.mri.common.datatypes;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonParseException;
+import com.google.gson.reflect.TypeToken;
+import edu.tau.eng.neuroscience.mri.common.log.Logger;
+import edu.tau.eng.neuroscience.mri.common.log.LoggerManager;
+
 import javax.xml.bind.annotation.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 @XmlRootElement(name = "unit")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class BaseUnit implements Unit, ExecutableObj{
+public class BaseUnit implements Unit, ExecutableObj {
+
+    private static Logger logger = LoggerManager.getLogger(BaseUnit.class);
 
     @XmlAttribute
     private int id;
@@ -58,6 +68,20 @@ public class BaseUnit implements Unit, ExecutableObj{
 
     public void setParameters(List<UnitParameter> parameters) {
         this.parameters = parameters;
+    }
+
+    @Override
+    public void setParameterValues(String json) throws JsonParseException {
+        try {
+            Map<String, String> jsonMap =
+                    new Gson().fromJson(json, new TypeToken<HashMap<String, String>>(){}.getType());
+            for (UnitParameter param : parameters) {
+                param.setValue(jsonMap.get(param.getName()));
+            }
+        } catch (RuntimeException e) {
+            logger.fatal("Failed to set parameter values for unit from JSON: " + json);
+            throw new JsonParseException(e.getMessage());
+        }
     }
 
     @Override

@@ -38,7 +38,7 @@ public class DBSynchronizer {
                 updateUnitsInDatabase();
             } catch (SynchronizationException e) {
                 logger.fatal(e.getMessage());
-                DispatcherImpl.notifyFatal(e);
+                DispatcherImpl.notifyFatal(e); // TODO what now?
             }
         }, 0, interval, intervalUnits);
     }

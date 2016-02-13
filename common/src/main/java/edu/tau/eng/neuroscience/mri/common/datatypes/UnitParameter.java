@@ -18,26 +18,24 @@ public class UnitParameter {
         return name;
     }
 
+    public String getDisplay() {
+        return display;
+    }
+
     public String getValue() {
         return value;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
     }
 
     public void setName(String name) {
         this.name = name;
     }
 
-    public String getDisplay() {
-        return display;
-    }
-
     public void setDisplay(String display) {
         this.display = display;
-    }
-
-    @Override
-    public String toString() {
-        //TODO serialize and deserialize JSON
-        return "placeholder";
     }
 
 }

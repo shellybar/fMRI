@@ -3,8 +3,11 @@ package edu.tau.eng.neuroscience.mri.integration;
 import edu.tau.eng.neuroscience.mri.common.constants.SystemConstants;
 import edu.tau.eng.neuroscience.mri.common.datatypes.*;
 import edu.tau.eng.neuroscience.mri.common.exceptions.DispatcherException;
+import edu.tau.eng.neuroscience.mri.dispatcher.UnitFetcher;
 import edu.tau.eng.neuroscience.mri.dispatcher.db.DBProxy;
 import edu.tau.eng.neuroscience.mri.dispatcher.db.DBProxyException;
+
+import java.util.List;
 
 
 public class DBProxyTest {
@@ -14,7 +17,7 @@ public class DBProxyTest {
     public static void main(String[] args) throws Exception {
         init();
         addTaskTest();
-        clean();
+        close();
     }
 
     public static void init() throws Exception {
@@ -23,22 +26,24 @@ public class DBProxyTest {
                 SystemConstants.BASE_DIR + "/configs/ssh_connection.xml",
                 true);
         dbProxy.connect();
+        // TODO clear debug tables
     }
 
-    public static void clean() throws DBProxyException {
-        // TODO clear debug tables
+    public static void close() throws DBProxyException {
         dbProxy.disconnect();
     }
 
     public static void addTaskTest() throws DispatcherException {
         Task task = new TaskImpl();
         task.setStatus(TaskStatus.NEW);
-        Unit unit = new BaseUnit();
-        unit.setId(1);
+        Unit unit = UnitFetcher.getUnit(1);
+        unit.setParameterValues("{\"srcFile\":\"source_path\", \"destFile\":\"destination_path\"}");
         task.setUnit(unit);
         dbProxy.add(task);
-        //dbProxy.getTask(taskId);
-        // TODO assert and delete from db
+        List<Task> tasks = dbProxy.getNewTasks();
+        Task retrievedTask = tasks.get(0);
+        assert(retrievedTask.getUnit().getId() == unit.getId());
+        assert(retrievedTask.getStatus() == task.getStatus());
     }
 
 }

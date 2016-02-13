@@ -24,6 +24,8 @@ public interface Unit {
 
     void setParameters(List<UnitParameter> unitParameters);
 
+    void setParameterValues(String json);
+
     /**
      * @return the path which holds the task input files
      */

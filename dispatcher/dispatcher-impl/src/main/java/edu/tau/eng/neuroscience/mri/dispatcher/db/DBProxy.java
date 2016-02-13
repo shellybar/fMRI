@@ -1,14 +1,18 @@
 package edu.tau.eng.neuroscience.mri.dispatcher.db;
 
+import com.google.gson.JsonParseException;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import com.sun.xml.internal.ws.util.StringUtils;
 import edu.tau.eng.neuroscience.mri.common.datatypes.*;
 import edu.tau.eng.neuroscience.mri.common.exceptions.ErrorCodes;
+import edu.tau.eng.neuroscience.mri.common.exceptions.UnitFetcherException;
 import edu.tau.eng.neuroscience.mri.common.log.Logger;
 import edu.tau.eng.neuroscience.mri.common.log.LoggerManager;
 import edu.tau.eng.neuroscience.mri.common.networkUtils.SSHConnection;
 import edu.tau.eng.neuroscience.mri.common.networkUtils.SSHConnectionProperties;
+import edu.tau.eng.neuroscience.mri.dispatcher.DispatcherImpl;
+import edu.tau.eng.neuroscience.mri.dispatcher.UnitFetcher;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -66,8 +70,34 @@ public class DBProxy {
 
     public void connect() throws DBProxyException {
         try {
+            if (useSSH && (sshSession == null || !sshSession.isConnected())) {
+                try {
+                    sshSession = SSHConnection.establish(sshProperties);
+                    localPort = getFreeLocalPort();
+                    logger.info("Setting SSH Tunneling to remote DB (" + dbProperties.getHost() + ":" + dbProperties.getPort()
+                            + ") using local port " + localPort + "...");
+                    sshSession.setPortForwardingL(localPort, dbProperties.getHost(), dbProperties.getPort());
+                } catch (JSchException e) {
+                    String errorMsg = "Failed to establish SSH connection to the database";
+                    logger.error(errorMsg);
+                    throw new DBProxyException(ErrorCodes.SSH_CONNECTION_EXCEPTION, errorMsg);
+                }
+            }
             if (connection == null || connection.isClosed()) {
-                safeConnect();
+                logger.info("Establishing connection to " + getUrl() + " with user " + getUser() + "...");
+                String driver = "com.mysql.jdbc.Driver";
+                try {
+                    Class.forName(driver);
+                    connection = DriverManager.getConnection(getActualUrl(), getUser(), dbProperties.getPassword());
+                } catch (SQLException e) {
+                    String errorMsg = String.format("Failed to connect to the database (url: %s; user: %s)", getUrl(), getUser());
+                    logSqlException(e, errorMsg);
+                    throw new DBProxyException(ErrorCodes.DB_CONNECTION_EXCEPTION, errorMsg);
+                } catch (ClassNotFoundException e) {
+                    throw new DBProxyException(ErrorCodes.GENERAL_DB_PROXY_EXCEPTION,
+                            "Database connection cannot be established. MySQL JDBC driver class (" + driver + ") was not found");
+                }
+                logger.info("Connected to DB at " + getUrl());
             }
         } catch (SQLException e) {
             String errorMsg =
@@ -133,8 +163,8 @@ public class DBProxy {
                     String status = StringUtils.capitalize(task.getStatus().toString().toLowerCase());
                     Unit unit = task.getUnit();
                     Machine machine = task.getMachine();
-                    return "('" + status + "'," + ((unit == null)?null:unit.getId()) +
-                            "," + ((unit == null)?"NULL": "'" + unit.getParameters().toString() + "'") +
+                    return "('" + status + "'," + ((unit == null)?"NULL":unit.getId()) +
+                            "," + ((unit == null)?"NULL": "'" + getParametersJsonString(unit) + "'") +
                             "," + ((machine == null)?"NULL": "'" + machine.getId() + "'") + "),";
                 }).collect(StringBuilder::new, StringBuilder::append, StringBuilder::append).toString();
         if (values.length() == 0) {
@@ -143,6 +173,20 @@ public class DBProxy {
             values = values.substring(0, values.length()-1);
         }
         return values;
+    }
+
+    private String getParametersJsonString(Unit unit) {
+        List<UnitParameter> params = unit.getParameters();
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("{");
+        boolean isFirst = true;
+        for (UnitParameter param: params) {
+            String nameValuePair = ((isFirst)?"":", ") + "\"" + param.getName() + "\": \"" + param.getValue() + "\"";
+            stringBuilder.append(nameValuePair);
+            isFirst = false;
+        }
+        stringBuilder.append("}");
+        return stringBuilder.toString();
     }
 
     public void add(Task task) throws DBProxyException {
@@ -189,37 +233,7 @@ public class DBProxy {
         return task;
     }
 
-    private void safeConnect() throws DBProxyException {
-        if (useSSH) {
-            try {
-                sshSession = SSHConnection.establish(sshProperties);
-                localPort = getFreeLocalPort();
-                logger.info("Setting SSH Tunneling to remote DB (" + dbProperties.getHost() + ":" + dbProperties.getPort()
-                        + ") using local port " + localPort + "...");
-                sshSession.setPortForwardingL(localPort, dbProperties.getHost(), dbProperties.getPort());
-            } catch (JSchException e) {
-                String errorMsg = "Failed to establish SSH connection to the database";
-                logger.error(errorMsg);
-                throw new DBProxyException(ErrorCodes.SSH_CONNECTION_EXCEPTION, errorMsg);
-            }
-        }
-        logger.info("Establishing connection to " + getUrl() + " with user " + getUser() + "...");
-        String driver = "com.mysql.jdbc.Driver";
-        try {
-            Class.forName(driver);
-            connection = DriverManager.getConnection(getActualUrl(), getUser(), dbProperties.getPassword());
-        } catch (SQLException e) {
-            String errorMsg = String.format("Failed to connect to the database (url: %s; user: %s)", getUrl(), getUser());
-            logSqlException(e, errorMsg);
-            throw new DBProxyException(ErrorCodes.DB_CONNECTION_EXCEPTION, errorMsg);
-        } catch (ClassNotFoundException e) {
-            throw new DBProxyException(ErrorCodes.GENERAL_DB_PROXY_EXCEPTION,
-                    "Database connection cannot be established. MySQL JDBC driver class (" + driver + ") was not found");
-        }
-        logger.info("Connected to DB at " + getUrl());
-    }
-
-    public List<Task> getNewTasks() throws DBProxyException {
+    public List<Task> getNewTasks() throws DBProxyException, UnitFetcherException {
         connect();
         List<Task> tasks = new ArrayList<>();
         String tableName = (!debug)?"":DBConstants.DEBUG_PREFIX + DBConstants.TASKS_TABLE_NAME;
@@ -231,13 +245,19 @@ public class DBProxy {
                 Task task = new TaskImpl();
                 task.setStatus(TaskStatus.NEW);
                 task.setId(resultSet.getInt(DBConstants.TASKS_TASK_ID));
-                // TODO set Unit (the query should use join to get unit details)
+                Unit unit = UnitFetcher.getUnit(resultSet.getInt(DBConstants.TASKS_UNIT_ID));
+                unit.setParameterValues(resultSet.getString(DBConstants.TASKS_UNIT_PARAMS));
+                task.setUnit(unit);
+                task.setId(resultSet.getInt(DBConstants.TASKS_TASK_ID));
                 tasks.add(task);
             }
         } catch (SQLException e) {
             String errorMsg = "Failed to retrieve new tasks from DB";
             logSqlException(e, errorMsg);
             throw new DBProxyException(ErrorCodes.QUERY_FAILURE_EXCEPTION, errorMsg);
+        } catch (JsonParseException e) {
+            DispatcherImpl.notifyFatal(e); // TODO what now?
+            return new ArrayList<>(); // return empty task list
         }
         return tasks;
     }
