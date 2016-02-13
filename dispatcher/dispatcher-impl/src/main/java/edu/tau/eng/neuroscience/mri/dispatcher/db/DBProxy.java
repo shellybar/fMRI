@@ -131,6 +131,7 @@ public class DBProxy {
         }
     }
 
+    // TODO check if a similar task is already in the DB before inserting a duplicate
     public void add(List<Task> tasks) throws DBProxyException {
         connect();
         String tableName = ((!debug)?"":DBConstants.DEBUG_PREFIX) + DBConstants.TASKS_TABLE_NAME;
@@ -146,7 +147,7 @@ public class DBProxy {
             PreparedStatement statement = connection.prepareStatement(sql);
             int numRowsAdded = executeUpdate(statement);
             if (numRowsAdded != tasks.size()) {
-                // TODO
+                // TODO what happens if not all rows were created?
                 System.out.println("Updated " + numRowsAdded + " rows. Expected: " + tasks.size());
             }
         } catch (SQLException e) {
@@ -202,6 +203,7 @@ public class DBProxy {
      */
     public void update(Task task) throws DBProxyException {
         connect();
+
         // TODO update task in DB according to ID (decide what to do if id does not exist)
     }
 
@@ -224,11 +226,16 @@ public class DBProxy {
             task.setStatus(TaskStatus.valueOf(resultSet.getString(DBConstants.TASKS_TASK_STATUS).toUpperCase()));
             task.setId(resultSet.getInt(DBConstants.TASKS_TASK_ID));
             task.setMachine(null); // TODO
-            task.setUnit(null); // TODO
+            Unit unit = UnitFetcher.getUnit(resultSet.getInt(DBConstants.TASKS_UNIT_ID));
+            unit.setParameterValues(resultSet.getString(DBConstants.TASKS_UNIT_PARAMS));
+            task.setUnit(unit);
         } catch (SQLException e) {
             String errorMsg = "Failed to get task from DB by id (" + id + ")";
             logSqlException(e, errorMsg);
             throw new DBProxyException(ErrorCodes.QUERY_FAILURE_EXCEPTION, errorMsg);
+        } catch (UnitFetcherException e) {
+            DispatcherImpl.notifyFatal(e); // TODO what now?
+            return null;
         }
         return task;
     }
@@ -260,19 +267,6 @@ public class DBProxy {
             return new ArrayList<>(); // return empty task list
         }
         return tasks;
-    }
-
-    /**
-     * Update all the machines in the DB with the content of machines
-     */
-    public void updateMachines(List<Machine> machines) throws DBProxyException {
-        connect();
-        // TODO update machines in DB (ip, port...)
-    }
-
-    public void updateUnits(List<Unit> units) throws DBProxyException {
-        connect();
-        // TODO update units in DB
     }
 
     public String getUrl() {
