@@ -10,6 +10,7 @@ import edu.tau.eng.neuroscience.mri.common.log.LoggerManager;
 import edu.tau.eng.neuroscience.mri.dispatcher.db.DBProxy;
 import edu.tau.eng.neuroscience.mri.dispatcher.db.DBProxyException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -35,11 +36,11 @@ public class QueueManager {
     private ExecutorService consumers;
     private ExecutorService producer;
 
-    public QueueManager(DBProxy dbProxy) throws QueueManagementException {
+    public QueueManager(DBProxy dbProxy) throws QueueManagementException, MachinesManagementException {
         this.executionProxy = ExecutionProxy.getInstance();
         this.dbProxy = dbProxy;
-        this.machinesManager = new MachinesManager(executionProxy);
         try {
+            this.machinesManager = new MachinesManager(executionProxy);
             dbProxy.connect();
         } catch (DBProxyException e) {
             throw new QueueManagementException(ErrorCodes.QUEUE_MANAGEMENT_CONNECTION_EXCEPTION, e.getMessage());
@@ -58,7 +59,7 @@ public class QueueManager {
         logger.debug("Created queue producer thread");
     }
 
-    void shutdownNow() throws QueueManagementException {
+    public void shutdownNow() throws QueueManagementException {
         producer.shutdownNow();
         consumers.shutdownNow();
         try {
@@ -66,6 +67,12 @@ public class QueueManager {
         } catch (DBProxyException e) {
             throw new QueueManagementException(ErrorCodes.QUEUE_MANAGEMENT_CONNECTION_EXCEPTION, e.getMessage());
         }
+    }
+
+    public void enqueue(Unit unit) {
+        List<Unit> units = new ArrayList<>();
+        units.add(unit);
+        enqueue(units);
     }
 
     public void enqueue(List<Unit> units) {
@@ -92,10 +99,6 @@ public class QueueManager {
             producerMayWork = true;
             producerLock.notify();
         }
-    }
-
-    public void updateTaskStatus(Task task) {
-        // TODO
     }
 
     private synchronized static Task shallowCopyTask(Task task) {
@@ -135,7 +138,8 @@ public class QueueManager {
                     currTask.setMachine(machine);
                     logger.debug("Allocated machine (machineId=" + machine.getId()
                             + ") for task (taskId=" + currTask.getId() + ")");
-                    logger.debug("Updating task's status in DB to 'processing' (taskId=" + currTask.getId() + ")");
+                    logger.debug("Updating task's status in DB to 'Processing' (taskId=" + currTask.getId() + ")");
+                    currTask.setStatus(TaskStatus.PROCESSING);
                     dbProxy.updateStatus(currTask);
                     logger.debug("Sending task for execution (taskId=" + currTask.getId() + ")");
                     executionProxy.execute(currTask);
@@ -203,7 +207,7 @@ public class QueueManager {
                             }
                         }
                         currTask.setStatus(TaskStatus.PENDING);
-                        logger.debug("Updating task's status in DB to 'pending' (taskId=" + currTask.getId() + ")");
+                        logger.debug("Updating task's status in DB to 'Pending' (taskId=" + currTask.getId() + ")");
                         dbProxy.updateStatus(currTask);
                         synchronized (consumerLock) {
                             producerUpdatingDatabase = false;

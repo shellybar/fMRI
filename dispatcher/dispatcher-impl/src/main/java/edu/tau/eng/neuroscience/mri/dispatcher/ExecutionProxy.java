@@ -28,13 +28,13 @@ public enum ExecutionProxy {
     private String inputDirPath;
 
     public void execute(Task task) {
-        int returnCode =  sendInputFiles(task);
+        //int returnCode =  sendInputFiles(task);
         /* TODO continue - check return code etc. */
 
     }
 
     public MachineStatistics getStatistics(Machine machine) {
-        return null;
+        return new MachineStatistics(); // TODO
     }
 
     public int sendInputFiles(Task task) {

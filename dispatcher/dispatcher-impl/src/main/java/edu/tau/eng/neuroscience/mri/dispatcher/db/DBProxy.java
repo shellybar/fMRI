@@ -225,8 +225,10 @@ public class DBProxy {
             // update execution time if relevant
             if (task.getStatus() == TaskStatus.PROCESSING) {
                 statement.setTimestamp(3, getCurrentTimeStamp());
+                statement.setInt(5, task.getMachine().getId());
             } else {
                 statement.setNull(3, Types.TIMESTAMP);
+                statement.setNull(5, Types.INTEGER);
             }
             // update completion time if relevant
             if (task.getStatus() == TaskStatus.COMPLETED) {
@@ -234,7 +236,7 @@ public class DBProxy {
             } else {
                 statement.setNull(4, Types.TIMESTAMP);
             }
-            statement.setInt(5, task.getId()); // id of task to update
+            statement.setInt(6, task.getId()); // id of task to update
             int numRowsUpdated = executeUpdate(statement);
             if (numRowsUpdated != 1) {
                 // TODO handle update failure

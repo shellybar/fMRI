@@ -26,13 +26,10 @@ public class MachinesManager {
     private static List<Machine> machines;
     private ExecutionProxy executionProxy;
 
-    public MachinesManager(ExecutionProxy executionProxy) {
+    public MachinesManager(ExecutionProxy executionProxy) throws MachinesManagementException {
         this.executionProxy = executionProxy;
+        machines = loadMachines();
         initPeriodicalStatisticsUpdate(2, TimeUnit.HOURS);
-    }
-
-    public static void setMachines(List<Machine> machinesList) {
-        machines = machinesList;
     }
 
     /**
@@ -77,6 +74,12 @@ public class MachinesManager {
 
     private void initPeriodicalStatisticsUpdate(int interval, TimeUnit intervalUnits) {
         statisticsUpdateScheduler.scheduleAtFixedRate(() -> {
+            try {
+                machines = loadMachines();
+            } catch (MachinesManagementException e) {
+                DispatcherImpl.notifyFatal(e);
+                // TODO what now?
+            }
             for (Machine machine: machines) {
                 MachineStatistics machineStatistics = executionProxy.getStatistics(machine);
                 machine.setStatistics(machineStatistics);
