@@ -136,7 +136,7 @@ public class QueueManager {
                     logger.debug("Allocated machine (machineId=" + machine.getId()
                             + ") for task (taskId=" + currTask.getId() + ")");
                     logger.debug("Updating task's status in DB to 'processing' (taskId=" + currTask.getId() + ")");
-                    dbProxy.update(currTask);
+                    dbProxy.updateStatus(currTask);
                     logger.debug("Sending task for execution (taskId=" + currTask.getId() + ")");
                     executionProxy.execute(currTask);
                 }
@@ -147,7 +147,7 @@ public class QueueManager {
                 logger.fatal(e.getMessage());
                 DispatcherImpl.notifyFatal(e); // TODO what now?
             } catch (DBProxyException e) {
-                logger.fatal("Failed to update task in DB");
+                logger.fatal("Failed to updateStatus task in DB");
                 DispatcherImpl.notifyFatal(e); // TODO what now?
             }
         }
@@ -204,10 +204,7 @@ public class QueueManager {
                         }
                         currTask.setStatus(TaskStatus.PENDING);
                         logger.debug("Updating task's status in DB to 'pending' (taskId=" + currTask.getId() + ")");
-                        /* TODO If the status of the task in the DB is 'processing', do not change to pending
-                         * (specifically in this case, since this is a new task).
-                         * Implement this once the update functions are implemented */
-                        dbProxy.update(currTask);
+                        dbProxy.updateStatus(currTask);
                         synchronized (consumerLock) {
                             producerUpdatingDatabase = false;
                             consumerLock.notifyAll();

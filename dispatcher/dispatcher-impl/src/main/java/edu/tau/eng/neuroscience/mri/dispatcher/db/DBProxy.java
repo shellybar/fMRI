@@ -161,10 +161,9 @@ public class DBProxy {
         //(status, unit_id, unit_params, machine_id)
         String values = tasks.stream()
                 .map((task) -> {
-                    String status = StringUtils.capitalize(task.getStatus().toString().toLowerCase());
                     Unit unit = task.getUnit();
                     Machine machine = task.getMachine();
-                    return "('" + status + "'," + ((unit == null)?"NULL":unit.getId()) +
+                    return "('" + getStatusString(task.getStatus()) + "'," + ((unit == null)?"NULL":unit.getId()) +
                             "," + ((unit == null)?"NULL": "'" + getParametersJsonString(unit) + "'") +
                             "," + ((machine == null)?"NULL": "'" + machine.getId() + "'") + "),";
                 }).collect(StringBuilder::new, StringBuilder::append, StringBuilder::append).toString();
@@ -174,6 +173,10 @@ public class DBProxy {
             values = values.substring(0, values.length()-1);
         }
         return values;
+    }
+
+    private String getStatusString(TaskStatus status) {
+        return StringUtils.capitalize(status.toString().toLowerCase());
     }
 
     private String getParametersJsonString(Unit unit) {
@@ -197,14 +200,55 @@ public class DBProxy {
     }
 
     /**
-     * updates the given task in the DB (based on id)
-     * @param task to update in DB.
+     * updates the given task's status in the DB (based on id)
+     * A task may not change from Processing to Pending (it must be cancelled or completed beforehand)
+     * @param task to updateStatus in DB.
      *             If the task ID cannot be found in the DB, this method does nothing
      */
-    public void update(Task task) throws DBProxyException {
+    public void updateStatus(Task task) throws DBProxyException {
         connect();
+        String tableName = ((!debug)?"":DBConstants.DEBUG_PREFIX) + DBConstants.TASKS_TABLE_NAME;
+        try {
+            String sql = Queries.getQuery("update_task_status")
+                    .replace("$tableName", tableName);
+            PreparedStatement statement = connection.prepareStatement(sql);
+            String status = getStatusString(task.getStatus());
+            // if the current status is Processing, don't update to Pending -
+            // this situation may be caused by threads synchronization issues and is not desired
+            // status to set if the current status is Processing
+            if (task.getStatus() == TaskStatus.PENDING) {
+                statement.setString(1, getStatusString(TaskStatus.PROCESSING));
+            } else {
+                statement.setString(1, status);
+            }
+            statement.setString(2, status); // status to set if the current status is not Processing
+            // update execution time if relevant
+            if (task.getStatus() == TaskStatus.PROCESSING) {
+                statement.setTimestamp(3, getCurrentTimeStamp());
+            } else {
+                statement.setNull(3, Types.TIMESTAMP);
+            }
+            // update completion time if relevant
+            if (task.getStatus() == TaskStatus.COMPLETED) {
+                statement.setTimestamp(4, getCurrentTimeStamp());
+            } else {
+                statement.setNull(4, Types.TIMESTAMP);
+            }
+            statement.setInt(5, task.getId()); // id of task to update
+            int numRowsUpdated = executeUpdate(statement);
+            if (numRowsUpdated != 1) {
+                // TODO handle update failure
+            }
+        } catch (SQLException e) {
+            String errorMsg = "Failed to update task's status in DB (taskId="
+                    + task.getId() + ", newStatus=" + task.getStatus() + ")";
+            logSqlException(e, errorMsg);
+            throw new DBProxyException(ErrorCodes.QUERY_FAILURE_EXCEPTION, errorMsg);
+        }
+    }
 
-        // TODO update task in DB according to ID (decide what to do if id does not exist)
+    private Timestamp getCurrentTimeStamp() {
+        return new Timestamp((new java.util.Date()).getTime());
     }
 
     /**

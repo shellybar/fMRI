@@ -67,7 +67,7 @@ public class QueueManagerTest {
         });
         doNothing().when(dbProxyMock).disconnect();
         doNothing().when(dbProxyMock).connect();
-        doNothing().when(dbProxyMock).update(Matchers.any());
+        doNothing().when(dbProxyMock).updateStatus(Matchers.any());
         doAnswer(invocation -> {
             taskList = (List<Task>) invocation.getArguments()[0];
             return null;
