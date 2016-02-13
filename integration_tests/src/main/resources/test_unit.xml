@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<unit id="7">
+    <description>Integration tests unit</description>
+    <parameters>
+        <file-parameter>
+            <name>myFile</name>
+            <display>File parameter</display>
+        </file-parameter>
+        <string-parameter>
+            <name>myStr</name>
+            <display>String parameter</display>
+        </string-parameter>
+    </parameters>
+</unit>

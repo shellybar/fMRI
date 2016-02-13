@@ -2,17 +2,19 @@ package edu.tau.eng.neuroscience.mri.dispatcher;
 
 import edu.tau.eng.neuroscience.mri.common.datatypes.*;
 import edu.tau.eng.neuroscience.mri.common.exceptions.ErrorCodes;
+import edu.tau.eng.neuroscience.mri.common.exceptions.MachinesManagementException;
 import edu.tau.eng.neuroscience.mri.common.exceptions.QueueManagementException;
 import edu.tau.eng.neuroscience.mri.common.log.Logger;
 import edu.tau.eng.neuroscience.mri.common.log.LoggerManager;
 import edu.tau.eng.neuroscience.mri.dispatcher.db.DBProxy;
 import edu.tau.eng.neuroscience.mri.dispatcher.db.DBProxyException;
+import edu.tau.eng.neuroscience.mri.server.AnalysesServer;
 
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
-public class QueueManagerImpl implements QueueManager {
+public class QueueManager {
 
     // max time (in milliseconds) the producer thread awaits to be notified of new tasks.
     // After this amount of time, it will check if there are new tasks in the DB.
@@ -20,7 +22,7 @@ public class QueueManagerImpl implements QueueManager {
     private static final int MAX_QUEUE_CAPACITY = 100;
     private static final int NUM_CONSUMER_THREADS = Math.max(2, Runtime.getRuntime().availableProcessors());
 
-    private static Logger logger = LoggerManager.getLogger(QueueManagerImpl.class);
+    private static Logger logger = LoggerManager.getLogger(QueueManager.class);
     private final Object consumerLock = new Object();
     private final Object producerLock = new Object();
     private boolean producerMayWork = false; // lets the producer know whether they may work or not
@@ -33,10 +35,10 @@ public class QueueManagerImpl implements QueueManager {
     private ExecutorService consumers;
     private ExecutorService producer;
 
-    public QueueManagerImpl(DBProxy dbProxy) throws QueueManagementException {
-        this.machinesManager = new MachinesManagerImpl();
+    public QueueManager(DBProxy dbProxy) throws QueueManagementException {
+        this.executionProxy = ExecutionProxy.getInstance();
         this.dbProxy = dbProxy;
-        this.executionProxy = ExecutionProxyImpl.getInstance();
+        this.machinesManager = new MachinesManager(executionProxy);
         try {
             dbProxy.connect();
         } catch (DBProxyException e) {
@@ -66,7 +68,6 @@ public class QueueManagerImpl implements QueueManager {
         }
     }
 
-    @Override
     public void enqueue(List<Unit> units) {
         // Convert list of units to list of tasks
         List<Task> tasks = units.stream()
@@ -81,16 +82,20 @@ public class QueueManagerImpl implements QueueManager {
         synchronized(producerLock) {
             producerMayWork = false;
         }
-        dbProxy.add(tasks);
+        try {
+            dbProxy.add(tasks);
+        } catch (DBProxyException e) {
+            logger.fatal("Failed to add tasks to DB");
+            DispatcherImpl.notifyFatal(e);
+        }
         synchronized(producerLock) {
             producerMayWork = true;
             producerLock.notify();
         }
     }
 
-    @Override
     public void updateTaskStatus(Task task) {
-        dbProxy.update(task);
+        // TODO
     }
 
     private synchronized static Task shallowCopyTask(Task task) {
@@ -137,6 +142,13 @@ public class QueueManagerImpl implements QueueManager {
                 }
             } catch (InterruptedException e) {
                 logger.debug("Queue consumer thread shutting down after interrupt");
+            } catch (MachinesManagementException e) {
+                logger.fatal("Queue consumer thread failed to find available machine to run task. Details: " + e.getMessage());
+                logger.fatal(e.getMessage());
+                DispatcherImpl.notifyFatal(e);
+            } catch (DBProxyException e) {
+                logger.fatal("Failed to update task in DB");
+                DispatcherImpl.notifyFatal(e);
             }
         }
     }

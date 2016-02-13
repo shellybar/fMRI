@@ -15,26 +15,24 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
 
-public enum ExecutionProxyImpl implements ExecutionProxy {
+public enum ExecutionProxy {
 
     INSTANCE; // This is a singleton
 
-    public static ExecutionProxyImpl getInstance() {
+    public static ExecutionProxy getInstance() {
         return INSTANCE;
     }
 
-    private static Logger logger = LoggerManager.getLogger(ExecutionProxyImpl.class);
+    private static Logger logger = LoggerManager.getLogger(ExecutionProxy.class);
     private FilesServer server;
     private String inputDirPath;
 
-    @Override
     public void execute(Task task) {
         int returnCode =  sendInputFiles(task);
         /* TODO continue - check return code etc. */
 
     }
 
-    @Override
     public MachineStatistics getStatistics(Machine machine) {
         return null;
     }
@@ -74,8 +72,8 @@ public enum ExecutionProxyImpl implements ExecutionProxy {
         logger.info("Sending request: " + requestWithLength);
         Socket socket = null;
         try {
-            socket = new Socket(task.getMachine().getIp(), MachineConstants.MACHINE_SERVER_PORT); /* TODO : add sleep and retries! because this port is used only for request, it could be in use for a short time*/
-            logger.info("Initialized socket to designated machine: ip=[" + task.getMachine().getIp()
+            socket = new Socket(task.getMachine().getAddress(), MachineConstants.MACHINE_SERVER_PORT); /* TODO : add sleep and retries! because this port is used only for request, it could be in use for a short time*/
+            logger.info("Initialized socket to designated machine: ip=[" + task.getMachine().getAddress()
                     + "], port=[" + MachineConstants.MACHINE_SERVER_PORT + "]");
             OutputStream outputStream = socket.getOutputStream();
             outputStream.write(requestWithLength.getBytes());

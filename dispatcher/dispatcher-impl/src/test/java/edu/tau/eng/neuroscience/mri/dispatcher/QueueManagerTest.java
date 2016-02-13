@@ -29,7 +29,7 @@ import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.junit.Assert.*;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({QueueManagerImpl.class, MachinesManagerImpl.class, ExecutionProxyImpl.class})
+@PrepareForTest({QueueManager.class, MachinesManager.class, ExecutionProxy.class})
 @PowerMockIgnore("javax.management.*")
 public class QueueManagerTest {
 
@@ -37,7 +37,7 @@ public class QueueManagerTest {
     private static final String USER = "dbUser";
     private static final int N_UNITS = 10;
 
-    private QueueManagerImpl queueManager;
+    private QueueManager queueManager;
     private AtomicInteger executionCounter;
     private final Object executionCounterLock = new Object();
     private List<Unit> unitList;
@@ -74,8 +74,8 @@ public class QueueManagerTest {
         }).when(dbProxyMock).add(Matchers.anyListOf(Task.class));
 
         // mock ExecutionProxy
-        ExecutionProxyImpl executionProxyMock = mock(ExecutionProxyImpl.class);
-        Whitebox.setInternalState(ExecutionProxyImpl.class, "INSTANCE", executionProxyMock);
+        ExecutionProxy executionProxyMock = mock(ExecutionProxy.class);
+        Whitebox.setInternalState(ExecutionProxy.class, "INSTANCE", executionProxyMock);
         doAnswer(invocation -> {
             synchronized (executionCounterLock) {
                 executionCounter.getAndIncrement();
@@ -83,11 +83,11 @@ public class QueueManagerTest {
             return null;
         }).when(executionProxyMock).execute(Matchers.any(Task.class));
 
-        // mock Machine and MachinesManagerImpl
+        // mock Machine and MachinesManager
         Machine machineMock = mock(Machine.class);
         when(machineMock.getId()).thenReturn(0);
-        MachinesManagerImpl machinesManagerMock = mock(MachinesManagerImpl.class);
-        PowerMockito.whenNew(MachinesManagerImpl.class).withNoArguments().thenReturn(machinesManagerMock);
+        MachinesManager machinesManagerMock = mock(MachinesManager.class);
+        PowerMockito.whenNew(MachinesManager.class).withAnyArguments().thenReturn(machinesManagerMock);
         doReturn(machineMock).when(machinesManagerMock).getAvailableMachine();
 
         unitList = new ArrayList<>();
@@ -96,7 +96,7 @@ public class QueueManagerTest {
             unit.setId(i);
             unitList.add(unit);
         }
-        queueManager = new QueueManagerImpl(dbProxyMock);
+        queueManager = new QueueManager(dbProxyMock);
     }
 
     @Test

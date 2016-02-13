@@ -5,13 +5,16 @@ import edu.tau.eng.neuroscience.mri.common.datatypes.BaseUnit;
 import edu.tau.eng.neuroscience.mri.common.datatypes.Unit;
 import edu.tau.eng.neuroscience.mri.common.exceptions.DispatcherException;
 import edu.tau.eng.neuroscience.mri.common.exceptions.ErrorCodes;
+import edu.tau.eng.neuroscience.mri.common.exceptions.UnitFetcherException;
 import edu.tau.eng.neuroscience.mri.common.log.Logger;
 import edu.tau.eng.neuroscience.mri.common.log.LoggerManager;
+import edu.tau.eng.neuroscience.mri.dispatcher.db.DBProxy;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.File;
+import java.util.List;
 
 
 /**
@@ -48,6 +51,11 @@ public class UnitFetcher {
                     ". Make sure that the unit exists and is configured correctly");
         }
         return unit;
+    }
+
+    public static List<Unit> getAllUnits() throws UnitFetcherException {
+        // TODO implement
+        return null;
     }
 
     private static File getUnitSettingsFile(int unitId) {

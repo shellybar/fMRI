@@ -34,4 +34,10 @@ public class UnitParameter {
         this.display = display;
     }
 
+    @Override
+    public String toString() {
+        //TODO serialize and deserialize JSON
+        return "placeholder";
+    }
+
 }
