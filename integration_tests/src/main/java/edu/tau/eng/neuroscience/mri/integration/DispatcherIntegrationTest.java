@@ -18,7 +18,6 @@ public class DispatcherIntegrationTest {
         Unit unit = UnitFetcher.getUnit(1);
         unit.setParameterValues("{\"srcFile\":\"source_path\", \"destFile\":\"destination_path\"}");
         queueManager.enqueue(unit);
-        //queueManager.shutdownNow();
     }
 
 }

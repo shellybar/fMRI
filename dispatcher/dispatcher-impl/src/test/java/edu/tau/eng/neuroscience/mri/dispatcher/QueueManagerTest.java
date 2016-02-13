@@ -81,7 +81,7 @@ public class QueueManagerTest {
                 executionCounter.getAndIncrement();
             }
             return null;
-        }).when(executionProxyMock).execute(Matchers.any(Task.class));
+        }).when(executionProxyMock).execute(Matchers.any(Task.class), Matchers.any(QueueManager.class));
 
         // mock Machine and MachinesManager
         Machine machineMock = mock(Machine.class);

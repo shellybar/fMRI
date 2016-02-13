@@ -101,6 +101,18 @@ public class QueueManager {
         }
     }
 
+    /**
+     * called by the execution proxy
+     */
+    public void updateTaskAfterExecution(Task task) {
+        try {
+            dbProxy.updateStatus(task);
+        } catch (DBProxyException e) {
+            logger.fatal("Failed to update task in DB");
+            DispatcherImpl.notifyFatal(e); // TODO what now?
+        }
+    }
+
     private synchronized static Task shallowCopyTask(Task task) {
         Task copied = new TaskImpl();
         copied.setId(task.getId());
@@ -142,7 +154,7 @@ public class QueueManager {
                     currTask.setStatus(TaskStatus.PROCESSING);
                     dbProxy.updateStatus(currTask);
                     logger.debug("Sending task for execution (taskId=" + currTask.getId() + ")");
-                    executionProxy.execute(currTask);
+                    executionProxy.execute(currTask, QueueManager.this);
                 }
             } catch (InterruptedException e) {
                 logger.debug("Queue consumer thread shutting down after interrupt");
@@ -151,7 +163,7 @@ public class QueueManager {
                 logger.fatal(e.getMessage());
                 DispatcherImpl.notifyFatal(e); // TODO what now?
             } catch (DBProxyException e) {
-                logger.fatal("Failed to updateStatus task in DB");
+                logger.fatal("Failed to update task in DB");
                 DispatcherImpl.notifyFatal(e); // TODO what now?
             }
         }

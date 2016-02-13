@@ -5,6 +5,7 @@ import edu.tau.eng.neuroscience.mri.common.constants.MachineConstants;
 import edu.tau.eng.neuroscience.mri.common.datatypes.Machine;
 import edu.tau.eng.neuroscience.mri.common.datatypes.MachineStatistics;
 import edu.tau.eng.neuroscience.mri.common.datatypes.Task;
+import edu.tau.eng.neuroscience.mri.common.datatypes.TaskStatus;
 import edu.tau.eng.neuroscience.mri.common.log.Logger;
 import edu.tau.eng.neuroscience.mri.common.log.LoggerManager;
 import edu.tau.eng.neuroscience.mri.common.networkUtils.FilesServer;
@@ -26,11 +27,20 @@ public enum ExecutionProxy {
     private static Logger logger = LoggerManager.getLogger(ExecutionProxy.class);
     private FilesServer server;
     private String inputDirPath;
+    private QueueManager queueManager;
 
-    public void execute(Task task) {
-        //int returnCode =  sendInputFiles(task);
+    /**
+     * @param task to execute
+     * @param queueManager to send the task back after execution
+     */
+    public void execute(Task task, QueueManager queueManager) {
+        this.queueManager = queueManager;
+        //int returnCode = sendInputFiles(task);
         /* TODO continue - check return code etc. */
 
+        // TODO move this part of the code to the method called by the client after execution (it's here only to test the dispatcher)
+        task.setStatus(TaskStatus.COMPLETED); //TODO or Failed
+        queueManager.updateTaskAfterExecution(task);
     }
 
     public MachineStatistics getStatistics(Machine machine) {

@@ -37,7 +37,7 @@ public class AnalysesServer {
         // TODO eventually, the server should "talk" to the dispatcher API and it will pass requests through the flow verificator, queue and all to the execution proxy
         ExecutionProxy executionProxy = ExecutionProxy.getInstance();
         logger.info("Executing task: " + task.getId());
-        executionProxy.execute(task);
+        executionProxy.execute(task, null); // TODO notice you must have a QueueManager at this point
     }
 
     public void submitAnalysis(List<Integer> unitIds) {
