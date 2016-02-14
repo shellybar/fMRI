@@ -222,21 +222,13 @@ public class DBProxy {
                 statement.setString(1, status);
             }
             statement.setString(2, status); // status to set if the current status is not Processing
-            // update execution time if relevant
+            // update execution time and machine if relevant
             if (task.getStatus() == TaskStatus.PROCESSING) {
-                statement.setTimestamp(3, getCurrentTimeStamp());
-                statement.setInt(5, task.getMachine().getId());
+                statement.setInt(3, task.getMachine().getId());
             } else {
-                statement.setNull(3, Types.TIMESTAMP);
-                statement.setNull(5, Types.INTEGER);
+                statement.setNull(3, Types.INTEGER);
             }
-            // update completion time if relevant
-            if (task.getStatus() == TaskStatus.COMPLETED) {
-                statement.setTimestamp(4, getCurrentTimeStamp());
-            } else {
-                statement.setNull(4, Types.TIMESTAMP);
-            }
-            statement.setInt(6, task.getId()); // id of task to update
+            statement.setInt(4, task.getId()); // id of task to update
             int numRowsUpdated = executeUpdate(statement);
             if (numRowsUpdated != 1) {
                 // TODO handle update failure
