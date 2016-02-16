@@ -1,6 +1,6 @@
 # Create debug tasks table
-DROP TABLE IF EXISTS zz_debug_tasks;
-CREATE TABLE zz_debug_tasks (
+DROP TABLE IF EXISTS tasks;
+CREATE TABLE tasks (
   task_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   status VARCHAR(20) NOT NULL,
   unit_id INT UNSIGNED NULL,
@@ -15,7 +15,7 @@ CREATE TABLE zz_debug_tasks (
 
 # Create trigger on tasks table
 DELIMITER $$
-CREATE TRIGGER before_update BEFORE UPDATE ON zz_debug_tasks
+CREATE TRIGGER before_update BEFORE UPDATE ON tasks
 FOR EACH ROW BEGIN SET
 NEW.execution_time = (CASE WHEN NEW.status = 'Processing'
   THEN NOW() ELSE OLD.execution_time END),
