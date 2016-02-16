@@ -37,6 +37,7 @@ public class MachinesManager {
      */
     public static List<Machine> loadMachines() throws MachinesManagementException {
         List<Machine> machines = null;
+        // TODO BASE_DIR should come from command line arguments
         File file = new File(SystemConstants.BASE_DIR, "configs/machines.xml");
         try {
             JAXBContext jaxbContext = JAXBContext.newInstance(MachinesList.class);

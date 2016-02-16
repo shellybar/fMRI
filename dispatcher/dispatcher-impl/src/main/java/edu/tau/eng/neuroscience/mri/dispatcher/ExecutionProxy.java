@@ -2,6 +2,7 @@ package edu.tau.eng.neuroscience.mri.dispatcher;
 
 
 import edu.tau.eng.neuroscience.mri.common.constants.MachineConstants;
+import edu.tau.eng.neuroscience.mri.common.constants.SystemConstants;
 import edu.tau.eng.neuroscience.mri.common.datatypes.Machine;
 import edu.tau.eng.neuroscience.mri.common.datatypes.MachineStatistics;
 import edu.tau.eng.neuroscience.mri.common.datatypes.Task;
@@ -35,23 +36,23 @@ public enum ExecutionProxy {
      */
     public void execute(Task task, QueueManager queueManager) {
         this.queueManager = queueManager;
-        //int returnCode = sendInputFiles(task);
+        int returnCode = sendInputFiles(task, SystemConstants.BASE_DIR.getAbsolutePath());
         /* TODO continue - check return code etc. */
 
         // TODO move this part of the code to the method called by the client after execution (it's here only to test the dispatcher)
-        task.setStatus(TaskStatus.COMPLETED); //TODO or Failed
-        queueManager.updateTaskAfterExecution(task);
+        //task.setStatus(TaskStatus.COMPLETED); //TODO or Failed
+        //queueManager.updateTaskAfterExecution(task);
     }
 
     public MachineStatistics getStatistics(Machine machine) {
         return new MachineStatistics(); // TODO
     }
 
-    public int sendInputFiles(Task task) {
+    public int sendInputFiles(Task task, String baseDir) {
 
         logger.info("Starting to send input files. Task id = ["+task.getId()+"]");
         int connectionPort = task.getId(); /* TODO use an external adapter to convert task_id to port */
-        server = new FilesServer(connectionPort);
+        server = new FilesServer(connectionPort, baseDir);
         inputDirPath = task.getUnit().getInputPath();
         logger.info("Input path: " + inputDirPath);
         int numberOfInputFiles = server.getFilesInDir(inputDirPath).length;
@@ -64,8 +65,7 @@ public enum ExecutionProxy {
         thread.start();
 
         // Start the client on the designated machine and wait for response.
-        int returnCode = sendGetFilesRequest(task, connectionPort, numberOfInputFiles);
-        return returnCode;
+        return sendGetFilesRequest(task, connectionPort, numberOfInputFiles);
     }
 
     /**
@@ -80,11 +80,10 @@ public enum ExecutionProxy {
         char requestLenInChar = (char) request.length();
         String requestWithLength = requestLenInChar + request;
         logger.info("Sending request: " + requestWithLength);
-        Socket socket = null;
-        try {
-            socket = new Socket(task.getMachine().getAddress(), MachineConstants.MACHINE_SERVER_PORT); /* TODO : add sleep and retries! because this port is used only for request, it could be in use for a short time*/
+        try (Socket socket = new Socket(task.getMachine().getAddress(), MachineConstants.MACHINE_LISTENING_PORT)) {
+             /* TODO : add sleep and retries! because this port is used only for request, it could be in use for a short time*/
             logger.info("Initialized socket to designated machine: ip=[" + task.getMachine().getAddress()
-                    + "], port=[" + MachineConstants.MACHINE_SERVER_PORT + "]");
+                    + "], port=[" + MachineConstants.MACHINE_LISTENING_PORT + "]");
             OutputStream outputStream = socket.getOutputStream();
             outputStream.write(requestWithLength.getBytes());
             outputStream.flush();
@@ -100,23 +99,16 @@ public enum ExecutionProxy {
                 return MachineConstants.RECEIVE_ERROR;
             } else {
                 int returnCode = byteArray[0];
-                if (returnCode == MachineConstants.RECEIVED_ALL_FILES)
+                if (returnCode == MachineConstants.RECEIVED_ALL_FILES) {
                     logger.info("All files received successfully!");
-                else
-                    logger.error("Error occur while sending files.");
+                } else {
+                    logger.error("Error occurred while sending files.");
+                }
                 return returnCode;
             }
         } catch (IOException e) {
             logger.error("Error during sendGetFilesRequest: " + e.getMessage());
             return MachineConstants.RECEIVE_ERROR;
-        } finally {
-            try {
-                if (socket != null || socket.isClosed()) {
-                    socket.close();
-                }
-            } catch (Exception e) {
-                // do nothing
-            }
         }
     }
 }

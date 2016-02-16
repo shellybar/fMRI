@@ -58,6 +58,7 @@ public class UnitFetcher {
         return null;
     }
 
+    // TODO BASE_DIR should come from command line arguments
     private static File getUnitSettingsFile(int unitId) {
         String pattern = "unit_%03d.xml";
         return new File(SystemConstants.BASE_DIR,

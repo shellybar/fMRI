@@ -25,13 +25,13 @@ public class AnalysesServer {
         task.setId(57982);
 
         Machine machine = new Machine();
-        machine.setAddress("132.67.140.170");
+        machine.setAddress("127.0.0.1"); //132.67.140.170
 
         task.setMachine(machine);
 
         Unit unit = new BaseUnit();
         unit.setId(1);
-        unit.setInputPath("testUnitInputs");
+        unit.setInputPath("serverWorkspace");
         task.setUnit(unit);
 
         // TODO eventually, the server should "talk" to the dispatcher API and it will pass requests through the flow verificator, queue and all to the execution proxy
