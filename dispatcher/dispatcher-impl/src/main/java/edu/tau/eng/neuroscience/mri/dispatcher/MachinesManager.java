@@ -73,6 +73,7 @@ public class MachinesManager {
         return mostAvailableMachine;
     }
 
+    // TODO or let the machines send heartbeats?
     private void initPeriodicalStatisticsUpdate(int interval, TimeUnit intervalUnits) {
         statisticsUpdateScheduler.scheduleAtFixedRate(() -> {
             try {

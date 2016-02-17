@@ -1,13 +1,20 @@
 package edu.tau.eng.neuroscience.mri.machine;
 
 import edu.tau.eng.neuroscience.mri.common.constants.MachineConstants;
+import edu.tau.eng.neuroscience.mri.common.datatypes.MachineStatistics;
+import edu.tau.eng.neuroscience.mri.common.datatypes.Task;
 import edu.tau.eng.neuroscience.mri.common.log.Logger;
 import edu.tau.eng.neuroscience.mri.common.log.LoggerManager;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.cli.*;
 
@@ -19,12 +26,21 @@ public class MachineServer {
 
     public static final String ARG_SERVER = "server";
     public static final String ARG_DIR = "basedir";
-
     private static Logger logger = LoggerManager.getLogger(MachineServer.class);
+
+    private List<Task> runningTasks = new ArrayList<>();
+    private MachineStatistics machineStatistics;
+
+    public MachineServer() {
+        this.machineStatistics = new MachineStatistics(runningTasks);
+        trackMachinePerformance();
+    }
 
     public static void main(String[] args) {
 
         logger.info("Initializing machine-server...");
+
+        MachineServer machineServer = new MachineServer();
 
         String serverAddress = MachineConstants.SERVER_FALLBACK;
         String baseDir = "";
@@ -50,6 +66,13 @@ public class MachineServer {
         } catch (IOException | IllegalArgumentException e) {
             logger.error("Machine server exception: " + e.getMessage());
         }
+    }
+
+    private void trackMachinePerformance() {
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+        final Runnable sampler = new MachinePerformanceSampler(machineStatistics);
+        scheduler.scheduleAtFixedRate(sampler, 0, 30, TimeUnit.SECONDS);
+
     }
 
     private static HashMap<String, String> parseCommandLineArgs(String[] args) throws ParseException {

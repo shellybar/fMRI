@@ -6,13 +6,13 @@ import edu.tau.eng.neuroscience.mri.common.datatypes.Unit;
 import edu.tau.eng.neuroscience.mri.common.log.Logger;
 import edu.tau.eng.neuroscience.mri.common.log.LoggerManager;
 
+// TODO what is this class good for if we have the MachineServer?
 public class MachineControllerImpl implements MachineController {
 
     private static Logger logger = LoggerManager.getLogger(MachineControllerImpl.class);
 
     @Override
     public MachineStatistics getStatistics() {
-        logger.info("Example logging...");
         return null;
     }
 
