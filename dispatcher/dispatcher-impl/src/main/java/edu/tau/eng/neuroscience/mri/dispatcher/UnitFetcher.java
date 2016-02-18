@@ -64,7 +64,7 @@ public class UnitFetcher {
     }
 
     public List<Unit> getAllUnits() throws UnitFetcherException {
-        File unitsDir = new File(SystemConstants.BASE_DIR, "unit_settings");
+        File unitsDir = new File(unitSettingsDirPath);
         File[] files = unitsDir.listFiles((dir, name) -> UNIT_FILENAME_PATTERN.matcher(name).matches());
         List<Unit> units = new ArrayList<>(files.length);
         for (File file: files) {
