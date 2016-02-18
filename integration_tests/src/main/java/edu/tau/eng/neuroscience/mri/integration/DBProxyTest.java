@@ -13,6 +13,7 @@ import java.util.List;
 public class DBProxyTest {
 
     private static DBProxy dbProxy;
+    private static UnitFetcher unitFetcher;
 
     public static void main(String[] args) throws Exception {
         init();
@@ -21,7 +22,8 @@ public class DBProxyTest {
     }
 
     public static void init() throws Exception {
-        dbProxy = new DBProxy(
+        unitFetcher = new UnitFetcher(SystemConstants.BASE_DIR + "/unit_settings");
+        dbProxy = new DBProxy(unitFetcher,
                 SystemConstants.BASE_DIR + "/configs/db_connection.xml",
                 SystemConstants.BASE_DIR + "/configs/ssh_connection.xml",
                 true);
@@ -36,7 +38,7 @@ public class DBProxyTest {
     public static void addTaskTest() throws DispatcherException {
         Task task = new TaskImpl();
         task.setStatus(TaskStatus.NEW);
-        Unit unit = UnitFetcher.getUnit(1);
+        Unit unit = unitFetcher.getUnit(1);
         unit.setParameterValues("{\"srcFile\":\"source_path\", \"destFile\":\"destination_path\"}");
         task.setUnit(unit);
         dbProxy.add(task);

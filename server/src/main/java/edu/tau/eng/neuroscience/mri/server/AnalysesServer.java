@@ -6,6 +6,7 @@ import edu.tau.eng.neuroscience.mri.common.log.LoggerManager;
 import edu.tau.eng.neuroscience.mri.dispatcher.*;
 
 import java.util.List;
+import java.util.Properties;
 
 public class AnalysesServer {
 
@@ -14,12 +15,9 @@ public class AnalysesServer {
     public static void main(String[] args) {
 
         logger.info("Start...");
-//        DBProxy dbProxy = new DBProxy(""); // TODO add config file path
-//        try {
-//            QueueManager queueManager = new QueueManager(dbProxy);
-//        } catch (QueueManagementException e) {
-//            // TODO
-//        }
+        Properties dispatcherProps = new Properties();
+        // TODO get props from args
+        Dispatcher dispatcher = new DispatcherImpl(dispatcherProps);
 
         Task task = new TaskImpl();
         task.setId(57982);
@@ -34,7 +32,7 @@ public class AnalysesServer {
         unit.setInputPath("testUnitInputs");
         task.setUnit(unit);
 
-        // TODO eventually, the server should "talk" to the dispatcher API and it will pass requests through the flow verificator, queue and all to the execution proxy
+        // TODO move execution proxy to the dispatcher - the AnalysesServer should only know the dispatcher
         ExecutionProxy executionProxy = ExecutionProxy.getInstance();
         logger.info("Executing task: " + task.getId());
         executionProxy.execute(task, null); // TODO notice you must have a QueueManager at this point

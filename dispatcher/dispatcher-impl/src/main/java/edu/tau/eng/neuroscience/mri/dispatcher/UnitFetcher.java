@@ -1,14 +1,11 @@
 package edu.tau.eng.neuroscience.mri.dispatcher;
 
-import edu.tau.eng.neuroscience.mri.common.constants.SystemConstants;
 import edu.tau.eng.neuroscience.mri.common.datatypes.BaseUnit;
 import edu.tau.eng.neuroscience.mri.common.datatypes.Unit;
-import edu.tau.eng.neuroscience.mri.common.exceptions.DispatcherException;
 import edu.tau.eng.neuroscience.mri.common.exceptions.ErrorCodes;
 import edu.tau.eng.neuroscience.mri.common.exceptions.UnitFetcherException;
 import edu.tau.eng.neuroscience.mri.common.log.Logger;
 import edu.tau.eng.neuroscience.mri.common.log.LoggerManager;
-import edu.tau.eng.neuroscience.mri.dispatcher.db.DBProxy;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -23,6 +20,11 @@ import java.util.List;
 public class UnitFetcher {
 
     private static Logger logger = LoggerManager.getLogger(UnitFetcher.class);
+    private String unitSettingsDirPath;
+
+    public UnitFetcher(String unitSettingsDirPath) {
+        this.unitSettingsDirPath = unitSettingsDirPath;
+    }
 
     /**
      * Get a Unit object with unit settings corresponding to those set
@@ -31,7 +33,7 @@ public class UnitFetcher {
      * @return Unit object with the data corresponding to unitId.
      * @throws UnitFetcherException if unit with unitId does not exist
      */
-    public static Unit getUnit(int unitId) throws UnitFetcherException {
+    public Unit getUnit(int unitId) throws UnitFetcherException {
 
         BaseUnit unit = null;
         File file = getUnitSettingsFile(unitId);
@@ -53,15 +55,14 @@ public class UnitFetcher {
         return unit;
     }
 
-    public static List<Unit> getAllUnits() throws UnitFetcherException {
-        // TODO implement
+    public List<Unit> getAllUnits() throws UnitFetcherException {
+        // TODO implement - merge with localhost branch
         return null;
     }
 
-    private static File getUnitSettingsFile(int unitId) {
+    private File getUnitSettingsFile(int unitId) {
         String pattern = "unit_%03d.xml";
-        return new File(SystemConstants.BASE_DIR,
-                "unit_settings" + File.separator + String.format(pattern, unitId));
+        return new File(unitSettingsDirPath, String.format(pattern, unitId));
     }
 
 }

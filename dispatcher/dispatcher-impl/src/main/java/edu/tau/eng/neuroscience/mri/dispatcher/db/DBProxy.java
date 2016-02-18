@@ -40,28 +40,29 @@ public class DBProxy {
     private Connection connection;
     private DBConnectionProperties dbProperties;
     private int localPort;
+    private UnitFetcher unitFetcher;
 
     private boolean debug = false;
 
-    public DBProxy(String configurationFilePath) throws DBProxyException {
+    public DBProxy(UnitFetcher unitFetcher, String configurationFilePath) throws DBProxyException {
         dbProperties = loadDbConfig(configurationFilePath);
         useSSH = false;
+        this.unitFetcher = unitFetcher;
     }
 
-    public DBProxy(String dbConfigurationFilePath, String sshConfigurationFilePath) throws DBProxyException {
+    public DBProxy(UnitFetcher unitFetcher, String dbConfigurationFilePath, String sshConfigurationFilePath) throws DBProxyException {
         dbProperties = loadDbConfig(dbConfigurationFilePath);
         sshProperties = loadSshConfig(sshConfigurationFilePath);
+        this.unitFetcher = unitFetcher;
         useSSH = true;
     }
 
     /**
      * For debugging and tests
      */
-    public DBProxy(String dbConfigurationFilePath, String sshConfigurationFilePath, boolean debug) throws DBProxyException {
+    public DBProxy(UnitFetcher unitFetcher, String dbConfigurationFilePath, String sshConfigurationFilePath, boolean debug) throws DBProxyException {
+        this(unitFetcher, dbConfigurationFilePath, sshConfigurationFilePath);
         this.debug = debug;
-        dbProperties = loadDbConfig(dbConfigurationFilePath);
-        sshProperties = loadSshConfig(sshConfigurationFilePath);
-        useSSH = true;
     }
 
     public String getUser() {
@@ -264,7 +265,7 @@ public class DBProxy {
             task.setStatus(TaskStatus.valueOf(resultSet.getString(DBConstants.TASKS_TASK_STATUS).toUpperCase()));
             task.setId(resultSet.getInt(DBConstants.TASKS_TASK_ID));
             task.setMachine(null); // TODO
-            Unit unit = UnitFetcher.getUnit(resultSet.getInt(DBConstants.TASKS_UNIT_ID));
+            Unit unit = unitFetcher.getUnit(resultSet.getInt(DBConstants.TASKS_UNIT_ID));
             unit.setParameterValues(resultSet.getString(DBConstants.TASKS_UNIT_PARAMS));
             task.setUnit(unit);
         } catch (SQLException e) {
@@ -290,7 +291,7 @@ public class DBProxy {
                 Task task = new TaskImpl();
                 task.setStatus(TaskStatus.NEW);
                 task.setId(resultSet.getInt(DBConstants.TASKS_TASK_ID));
-                Unit unit = UnitFetcher.getUnit(resultSet.getInt(DBConstants.TASKS_UNIT_ID));
+                Unit unit = unitFetcher.getUnit(resultSet.getInt(DBConstants.TASKS_UNIT_ID));
                 unit.setParameterValues(resultSet.getString(DBConstants.TASKS_UNIT_PARAMS));
                 task.setUnit(unit);
                 task.setId(resultSet.getInt(DBConstants.TASKS_TASK_ID));
