@@ -36,11 +36,14 @@ public class QueueManager {
     private ExecutorService consumers;
     private ExecutorService producer;
 
-    public QueueManager(DBProxy dbProxy) throws QueueManagementException, MachinesManagementException {
+    public QueueManager(DBProxy dbProxy, MachinesManager machinesManager) {
         this.executionProxy = ExecutionProxy.getInstance();
         this.dbProxy = dbProxy;
+        this.machinesManager = machinesManager;
+    }
+
+    public void start() throws QueueManagementException {
         try {
-            this.machinesManager = new MachinesManager(executionProxy);
             dbProxy.connect();
         } catch (DBProxyException e) {
             throw new QueueManagementException(ErrorCodes.QUEUE_MANAGEMENT_CONNECTION_EXCEPTION, e.getMessage());

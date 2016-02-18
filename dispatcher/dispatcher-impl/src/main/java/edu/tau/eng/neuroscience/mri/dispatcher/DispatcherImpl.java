@@ -1,37 +1,85 @@
 package edu.tau.eng.neuroscience.mri.dispatcher;
 
 import edu.tau.eng.neuroscience.mri.common.constants.SystemConstants;
+import edu.tau.eng.neuroscience.mri.common.datatypes.Context;
+import edu.tau.eng.neuroscience.mri.common.datatypes.Unit;
+import edu.tau.eng.neuroscience.mri.common.exceptions.DispatcherException;
 import edu.tau.eng.neuroscience.mri.common.exceptions.MachinesManagementException;
 import edu.tau.eng.neuroscience.mri.common.exceptions.QueueManagementException;
 import edu.tau.eng.neuroscience.mri.dispatcher.db.DBProxy;
 import edu.tau.eng.neuroscience.mri.dispatcher.db.DBProxyException;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 public class DispatcherImpl implements Dispatcher {
 
     private DBProxy dbProxy;
     private UnitFetcher unitFetcher;
+    private MachinesManager machinesManager;
+    private QueueManager queueManager;
+    private ExecutionProxy executionProxy;
+    private FlowVerificator flowVerificator;
 
     public DispatcherImpl(Properties props) {
+        this(props, false);
+    }
+
+    public DispatcherImpl(Properties props, boolean debug) {
+        String unitSettingsDirPath = props.getProperty(SystemConstants.UNIT_SETTINGS_DIR_PATH);
+        String dbConfigFilePath = props.getProperty(SystemConstants.DB_CONFIG_FILE_PATH);
+        String sshConfigFilePath = props.getProperty(SystemConstants.SSH_CONFIG_FILE_PATH);
+        String machinesConfigFilePath = props.getProperty(SystemConstants.MACHINES_CONFIG_FILE_PATH);
+
+        executionProxy = ExecutionProxy.getInstance();
+        unitFetcher = new UnitFetcher(unitSettingsDirPath);
         try {
-            String unitSettingsDirPath = props.getProperty(SystemConstants.UNIT_SETTINGS_FILE_PATH);
-            String dbConfigFilePath = props.getProperty(SystemConstants.DB_CONFIG_FILE_PATH);
-            String sshConfigFilePath = props.getProperty(SystemConstants.SSH_CONFIG_FILE_PATH);
-            unitFetcher = new UnitFetcher(unitSettingsDirPath);
             dbProxy = (sshConfigFilePath == null) ?
-                    new DBProxy(unitFetcher, dbConfigFilePath) :
-                    new DBProxy(unitFetcher, dbConfigFilePath, sshConfigFilePath);
+                    new DBProxy(unitFetcher, dbConfigFilePath, debug) :
+                    new DBProxy(unitFetcher, dbConfigFilePath, sshConfigFilePath, debug);
         } catch (DBProxyException e) {
-            // TODO handle DBProxyException on dispatcher startup
+            // TODO handle exception on Dispatcher startup
         }
+        machinesManager = new MachinesManager(executionProxy, machinesConfigFilePath);
+        queueManager = new QueueManager(dbProxy, machinesManager);
+        flowVerificator = new FlowVerificator(queueManager);
+    }
+
+    @Override
+    public void start() {
         try {
-            QueueManager queueManager = new QueueManager(dbProxy);
+            dbProxy.start();
+            machinesManager.start();
+            queueManager.start();
         } catch (QueueManagementException e) {
-            // TODO handle QueueManagementException on dispatcher startup
+            // TODO handle QueueManagementException on dispatcher start
+        } catch (DBProxyException e) {
+            // TODO handle DBProxyException on dispatcher start
         } catch (MachinesManagementException e) {
-            // TODO handle MachinesManagementException on dispatcher startup
+            // TODO handle MachinesManagementException on dispatcher start
         }
+    }
+
+    @Override
+    public void dispatch(Context context, List<Unit> units) {
+        try {
+            List<Unit> returnedUnits = flowVerificator.startAnalysis(context, units);
+            if (units == returnedUnits) {
+                // TODO
+            } else {
+                // TODO
+            }
+        } catch (DispatcherException e) {
+            // TODO handle DispatcherException
+        }
+    }
+
+    @Override
+    public void dispatch(Context context, Unit unit) {
+        List<Unit> units = new ArrayList<>(1);
+        units.add(unit);
+        dispatch(context, units);
     }
 
     /**
@@ -40,5 +88,4 @@ public class DispatcherImpl implements Dispatcher {
     public static void notifyFatal(Throwable e) {
         // TODO notify UI, try to solve based on error code...
     }
-
 }

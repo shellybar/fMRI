@@ -28,7 +28,9 @@ public class DBProxyTest {
                 SystemConstants.BASE_DIR + "/configs/ssh_connection.xml",
                 true);
         dbProxy.connect();
-        // TODO clear debug tables
+
+        // TODO clean debug tables in DB
+
     }
 
     public static void close() throws DBProxyException {
@@ -37,7 +39,6 @@ public class DBProxyTest {
 
     public static void addTaskTest() throws DispatcherException {
         Task task = new TaskImpl();
-        task.setStatus(TaskStatus.NEW);
         Unit unit = unitFetcher.getUnit(1);
         unit.setParameterValues("{\"srcFile\":\"source_path\", \"destFile\":\"destination_path\"}");
         task.setUnit(unit);
@@ -45,7 +46,7 @@ public class DBProxyTest {
         List<Task> tasks = dbProxy.getNewTasks();
         Task retrievedTask = tasks.get(0);
         assert(retrievedTask.getUnit().getId() == unit.getId());
-        assert(retrievedTask.getStatus() == task.getStatus());
+        assert(retrievedTask.getStatus() == TaskStatus.NEW);
     }
 
 }

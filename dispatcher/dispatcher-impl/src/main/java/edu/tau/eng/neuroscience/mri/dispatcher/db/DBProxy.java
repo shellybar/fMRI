@@ -45,9 +45,14 @@ public class DBProxy {
     private boolean debug = false;
 
     public DBProxy(UnitFetcher unitFetcher, String configurationFilePath) throws DBProxyException {
+        this(unitFetcher, configurationFilePath, false);
+    }
+
+    public DBProxy(UnitFetcher unitFetcher, String configurationFilePath, boolean debug) throws DBProxyException {
         dbProperties = loadDbConfig(configurationFilePath);
         useSSH = false;
         this.unitFetcher = unitFetcher;
+        this.debug = debug;
     }
 
     public DBProxy(UnitFetcher unitFetcher, String dbConfigurationFilePath, String sshConfigurationFilePath) throws DBProxyException {
@@ -63,6 +68,10 @@ public class DBProxy {
     public DBProxy(UnitFetcher unitFetcher, String dbConfigurationFilePath, String sshConfigurationFilePath, boolean debug) throws DBProxyException {
         this(unitFetcher, dbConfigurationFilePath, sshConfigurationFilePath);
         this.debug = debug;
+    }
+
+    public void start() throws DBProxyException {
+        connect();
     }
 
     public String getUser() {

@@ -11,7 +11,8 @@ import javax.xml.bind.annotation.*;
 public class Machine {
 
     @XmlAttribute private int id;
-    @XmlElement private String address; // TODO maybe create class for IP - RAZ: I don't think it's necessary (If Shelly agrees, please remove the TODO)
+    @XmlElement private String address;
+    @XmlElement private int port;
     @XmlElement private MachineStatistics machineStatistics;
 
     public MachineStatistics getMachineStatistics() {
@@ -36,5 +37,13 @@ public class Machine {
 
     public void setStatistics(MachineStatistics machineStatistics) {
         this.machineStatistics = machineStatistics;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
     }
 }

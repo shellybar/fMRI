@@ -19,14 +19,9 @@ public class BaseUnit implements Unit, ExecutableObj {
 
     private static Logger logger = LoggerManager.getLogger(BaseUnit.class);
 
-    @XmlAttribute
-    private int id;
-
-    @XmlElement
-    private String inputPath;
-
-    @XmlElement
-    private String description;
+    @XmlAttribute private int id;
+    @XmlElement private String inputPath;
+    @XmlElement private String description;
 
     @XmlElementWrapper(name = "parameters")
     @XmlElements({

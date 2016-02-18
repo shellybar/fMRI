@@ -6,7 +6,6 @@ import edu.tau.eng.neuroscience.mri.common.constants.SystemConstants;
 import edu.tau.eng.neuroscience.mri.common.datatypes.Machine;
 import edu.tau.eng.neuroscience.mri.common.datatypes.MachineStatistics;
 import edu.tau.eng.neuroscience.mri.common.datatypes.Task;
-import edu.tau.eng.neuroscience.mri.common.datatypes.TaskStatus;
 import edu.tau.eng.neuroscience.mri.common.log.Logger;
 import edu.tau.eng.neuroscience.mri.common.log.LoggerManager;
 import edu.tau.eng.neuroscience.mri.common.networkUtils.FilesServer;
@@ -40,7 +39,7 @@ public enum ExecutionProxy {
         /* TODO continue - check return code etc. */
 
         // TODO move this part of the code to the method called by the client after execution (it's here only to test the dispatcher)
-        //task.setStatus(TaskStatus.COMPLETED); //TODO or Failed
+        //task.setStatus(TaskStatus.COMPLETED);
         //queueManager.updateTaskAfterExecution(task);
     }
 
@@ -50,8 +49,8 @@ public enum ExecutionProxy {
 
     public int sendInputFiles(Task task, String baseDir) {
 
-        logger.info("Starting to send input files. Task id = ["+task.getId()+"]");
-        int connectionPort = task.getId(); /* TODO use an external adapter to convert task_id to port */
+        logger.info("Starting to send input files. Task id = [" + task.getId() + "]");
+        int connectionPort = task.getMachine().getPort();
         server = new FilesServer(connectionPort, baseDir);
         inputDirPath = task.getUnit().getInputPath();
         logger.info("Input path: " + inputDirPath);

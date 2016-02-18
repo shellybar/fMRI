@@ -13,7 +13,13 @@ import java.util.List;
  * (i.e. the order of the units in the list is valid) and if so, passes the
  * analysis flow on to the underlying layers for execution.
  */
-public interface FlowVerificator {
+public class FlowVerificator {
+
+    private QueueManager queueManager;
+
+    public FlowVerificator(QueueManager queueManager) {
+        this.queueManager = queueManager;
+    }
 
     /**
      * Receives a request for an analysis flow, verifies its validity and
@@ -24,6 +30,10 @@ public interface FlowVerificator {
      * List (by reference). Otherwise, the returned value is a suggested reordering of the flow.
      * @throws DispatcherException if no valid order can be computed for the given list of units.
      */
-    List<Unit> startAnalysis(Context context, List<Unit> units) throws DispatcherException;
+    public List<Unit> startAnalysis(Context context, List<Unit> units) throws DispatcherException {
+        //TODO implement flow verificator
+        queueManager.enqueue(units);
+        return units;
+    }
 
 }

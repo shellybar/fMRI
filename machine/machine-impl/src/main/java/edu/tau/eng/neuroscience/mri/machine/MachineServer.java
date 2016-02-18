@@ -10,8 +10,8 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -34,6 +34,9 @@ public class MachineServer {
     public MachineServer() {
         runningTasks = new ArrayList<>();
         this.machineStatistics = new MachineStatistics(runningTasks);
+    }
+
+    public void start() {
         trackMachinePerformance();
     }
 
@@ -41,13 +44,14 @@ public class MachineServer {
 
         logger.info("Initializing machine-server...");
         MachineServer machineServer = new MachineServer();
+        machineServer.start();
 
         String serverAddress = MachineConstants.SERVER_FALLBACK;
         String baseDir = "";
         try {
-            HashMap<String, String> map = parseCommandLineArgs(args);
-            serverAddress = map.get(ARG_SERVER);
-            baseDir = map.get(ARG_DIR);
+            Properties props = parseCommandLineArgs(args);
+            serverAddress = props.getProperty(ARG_SERVER);
+            baseDir = props.getProperty(ARG_DIR);
         } catch (ParseException e) {
             logger.error("Failed to parse command line arguments - continuing with default values");
         }
@@ -75,16 +79,16 @@ public class MachineServer {
 
     }
 
-    private static HashMap<String, String> parseCommandLineArgs(String[] args) throws ParseException {
+    private static Properties parseCommandLineArgs(String[] args) throws ParseException {
         Options options = new Options();
         options.addOption(buildOption("Server Address", "The IP or host name of the server", ARG_SERVER));
         options.addOption(buildOption("Base Directory", "The path to the directory where filed will be stored", ARG_DIR));
         CommandLineParser parser = new DefaultParser();
         CommandLine line = parser.parse(options, args);
 
-        HashMap<String, String> result = new HashMap<>();
-        result.put(ARG_SERVER, line.getOptionValue(ARG_SERVER, MachineConstants.SERVER_FALLBACK));
-        result.put(ARG_DIR, line.getOptionValue(ARG_DIR, ""));
+        Properties result = new Properties();
+        result.setProperty(ARG_SERVER, line.getOptionValue(ARG_SERVER, MachineConstants.SERVER_FALLBACK));
+        result.setProperty(ARG_DIR, line.getOptionValue(ARG_DIR, ""));
         return result;
     }
 

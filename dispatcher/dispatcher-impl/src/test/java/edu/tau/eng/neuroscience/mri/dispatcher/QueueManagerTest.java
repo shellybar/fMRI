@@ -96,7 +96,8 @@ public class QueueManagerTest {
             unit.setId(i);
             unitList.add(unit);
         }
-        queueManager = new QueueManager(dbProxyMock);
+        queueManager = new QueueManager(dbProxyMock, machinesManagerMock);
+        queueManager.start();
     }
 
     @Test

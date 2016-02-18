@@ -1,6 +1,5 @@
 package edu.tau.eng.neuroscience.mri.dispatcher;
 
-import edu.tau.eng.neuroscience.mri.common.constants.SystemConstants;
 import edu.tau.eng.neuroscience.mri.common.datatypes.Machine;
 import edu.tau.eng.neuroscience.mri.common.datatypes.MachineStatistics;
 import edu.tau.eng.neuroscience.mri.common.datatypes.MachinesList;
@@ -25,9 +24,14 @@ public class MachinesManager {
     private final ScheduledExecutorService statisticsUpdateScheduler = Executors.newScheduledThreadPool(1);
     private static List<Machine> machines;
     private ExecutionProxy executionProxy;
+    private String machinesConfigFilePath;
 
-    public MachinesManager(ExecutionProxy executionProxy) throws MachinesManagementException {
+    public MachinesManager(ExecutionProxy executionProxy, String machinesConfigFilePath) {
         this.executionProxy = executionProxy;
+        this.machinesConfigFilePath = machinesConfigFilePath;
+    }
+
+    public void start() throws MachinesManagementException {
         machines = loadMachines();
         initPeriodicalStatisticsUpdate(2, TimeUnit.HOURS);
     }
@@ -35,10 +39,10 @@ public class MachinesManager {
     /**
      * @return list of machines from the configuration file
      */
-    public static List<Machine> loadMachines() throws MachinesManagementException {
+    public List<Machine> loadMachines() throws MachinesManagementException {
         List<Machine> machines = null;
         // TODO BASE_DIR should come from command line arguments
-        File file = new File(SystemConstants.BASE_DIR, "configs/machines.xml");
+        File file = new File(machinesConfigFilePath);
         try {
             JAXBContext jaxbContext = JAXBContext.newInstance(MachinesList.class);
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
