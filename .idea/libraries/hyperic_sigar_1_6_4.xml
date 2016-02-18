@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="hyperic-sigar-1.6.4">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/lib/hyperic-sigar-1.6.4/sigar-bin/lib" />
+    </CLASSES>
+    <JAVADOC />
+    <NATIVE>
+      <root url="file://$PROJECT_DIR$/lib/hyperic-sigar-1.6.4/sigar-bin/lib" />
+    </NATIVE>
+    <SOURCES />
+    <jarDirectory url="file://$PROJECT_DIR$/lib/hyperic-sigar-1.6.4/sigar-bin/lib" recursive="false" />
+  </library>
+</component>

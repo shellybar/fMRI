@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<machines>
+    <machine id="1">
+        <address>127.0.0.1</address>
+        <port>49876</port>
+    </machine>
+</machines>

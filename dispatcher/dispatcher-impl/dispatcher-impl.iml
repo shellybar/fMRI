@@ -6,23 +6,26 @@
       <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/test/resources" type="java-test-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="dispatcher-api" />
-    <orderEntry type="module-library">
+    <orderEntry type="library" name="powermock-mockito-1.6" level="project" />
+    <orderEntry type="module" module-name="common" />
+    <orderEntry type="library" name="mysql-connector-java-5.1" level="project" />
+    <orderEntry type="module-library" scope="TEST">
       <library name="JUnit4">
         <CLASSES>
-          <root url="jar://$APPLICATION_HOME_DIR$/lib/junit-4.11.jar!/" />
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/junit-4.12.jar!/" />
           <root url="jar://$APPLICATION_HOME_DIR$/lib/hamcrest-core-1.3.jar!/" />
-          <root url="jar://$APPLICATION_HOME_DIR$/lib/hamcrest-library-1.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="powermock-mockito-1.6" level="project" />
-    <orderEntry type="module" module-name="common" />
-    <orderEntry type="library" name="mysql-connector-java-5.1" level="project" />
+    <orderEntry type="library" name="jsch-0.1.53" level="project" />
+    <orderEntry type="module" module-name="server" />
+    <orderEntry type="library" name="gson-2.6" level="project" />
   </component>
 </module>

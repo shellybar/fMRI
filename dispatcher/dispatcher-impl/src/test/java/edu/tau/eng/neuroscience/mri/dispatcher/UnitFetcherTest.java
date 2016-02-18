@@ -22,17 +22,16 @@ import static org.junit.Assert.*;
 public class UnitFetcherTest {
 
     private static final int TEST_UNIT_ID = 7;
-    private static final File TEST_FILE = new File("src/test/resources/test.xml");
+    private UnitFetcher unitFetcher;
 
     @Before
     public void init() throws Exception {
-        PowerMockito.spy(UnitFetcher.class);
-        PowerMockito.doReturn(TEST_FILE).when(UnitFetcher.class, "getUnitSettingsFile", TEST_UNIT_ID);
+        unitFetcher = new UnitFetcher("src/test/resources/");
     }
 
     @Test
     public void testGetUnit() throws DispatcherException {
-        BaseUnit unit = (BaseUnit) UnitFetcher.getUnit(TEST_UNIT_ID);
+        BaseUnit unit = (BaseUnit) unitFetcher.getUnit(TEST_UNIT_ID);
         assertNotNull("Failed to unmarshal XML to Unit Object", unit);
         assertEquals("Unit created but with wrong ID", TEST_UNIT_ID, unit.getId());
         assertEquals("Unit created but with wrong description", "Unit-test unit", unit.getDescription());
@@ -46,7 +45,7 @@ public class UnitFetcherTest {
 
     @Test(expected=DispatcherException.class)
     public void testGetNonexistentUnit() throws DispatcherException {
-        BaseUnit unit = (BaseUnit) UnitFetcher.getUnit(TEST_UNIT_ID + 1);
+        BaseUnit unit = (BaseUnit) unitFetcher.getUnit(TEST_UNIT_ID + 1);
     }
 
 }

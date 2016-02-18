@@ -18,16 +18,20 @@ public class UnitParameter {
         return name;
     }
 
+    public String getDisplay() {
+        return display;
+    }
+
     public String getValue() {
         return value;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setValue(String value) {
+        this.value = value;
     }
 
-    public String getDisplay() {
-        return display;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public void setDisplay(String display) {
