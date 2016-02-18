@@ -60,7 +60,7 @@ public class MachinesManager {
         Machine mostAvailableMachine = null;
         float availability = 0;
         for (Machine machine: machines) {
-            float currentAvailability = machine.getMachineStatistics().getAvailabilityScore();
+            double currentAvailability = machine.getMachineStatistics().getAvailabilityScore();
             if (currentAvailability > availability) {
                 mostAvailableMachine = machine;
             }

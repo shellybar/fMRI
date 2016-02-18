@@ -45,7 +45,7 @@ public enum ExecutionProxy {
     }
 
     public MachineStatistics getStatistics(Machine machine) {
-        return new MachineStatistics(); // TODO
+        return new MachineStatistics(null); // TODO
     }
 
     public int sendInputFiles(Task task, String baseDir) {

@@ -60,7 +60,6 @@ public class RequestHandler extends Thread {
 
             byte[] totalRequestBytesArray = Arrays.copyOf(byteArray, totalRead);
 
-            // TODO please create an object or three variables instead of parsedRequest - it's hard to understand what each element of this array means
             String[] parsedRequest = (new String(totalRequestBytesArray)).split(" ");
             int idInput = Integer.parseInt((parsedRequest[0]));
             int connectionPort = Integer.parseInt(parsedRequest[1]);

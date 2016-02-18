@@ -28,10 +28,11 @@ public class MachineServer {
     public static final String ARG_DIR = "basedir";
     private static Logger logger = LoggerManager.getLogger(MachineServer.class);
 
-    private List<Task> runningTasks = new ArrayList<>();
+    private List<Task> runningTasks;
     private MachineStatistics machineStatistics;
 
     public MachineServer() {
+        runningTasks = new ArrayList<>();
         this.machineStatistics = new MachineStatistics(runningTasks);
         trackMachinePerformance();
     }
@@ -39,7 +40,6 @@ public class MachineServer {
     public static void main(String[] args) {
 
         logger.info("Initializing machine-server...");
-
         MachineServer machineServer = new MachineServer();
 
         String serverAddress = MachineConstants.SERVER_FALLBACK;

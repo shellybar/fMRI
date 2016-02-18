@@ -8,13 +8,15 @@ import edu.tau.eng.neuroscience.mri.common.exceptions.ErrorCodes;
 import edu.tau.eng.neuroscience.mri.common.exceptions.UnitFetcherException;
 import edu.tau.eng.neuroscience.mri.common.log.Logger;
 import edu.tau.eng.neuroscience.mri.common.log.LoggerManager;
-import edu.tau.eng.neuroscience.mri.dispatcher.db.DBProxy;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 /**
@@ -23,6 +25,8 @@ import java.util.List;
 public class UnitFetcher {
 
     private static Logger logger = LoggerManager.getLogger(UnitFetcher.class);
+    private static final Pattern UNIT_FILENAME_PATTERN = Pattern.compile("unit_[0-9]{3}.xml");
+    private static final Pattern DIGITS_PATTERN = Pattern.compile("-?\\d+");
 
     /**
      * Get a Unit object with unit settings corresponding to those set
@@ -32,9 +36,12 @@ public class UnitFetcher {
      * @throws UnitFetcherException if unit with unitId does not exist
      */
     public static Unit getUnit(int unitId) throws UnitFetcherException {
-
-        BaseUnit unit = null;
         File file = getUnitSettingsFile(unitId);
+        return getUnit(file, unitId);
+    }
+
+    private static Unit getUnit(File file, int unitId) throws UnitFetcherException {
+        BaseUnit unit = null;
         try {
             JAXBContext jaxbContext = JAXBContext.newInstance(BaseUnit.class);
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
@@ -54,8 +61,16 @@ public class UnitFetcher {
     }
 
     public static List<Unit> getAllUnits() throws UnitFetcherException {
-        // TODO implement
-        return null;
+        File unitsDir = new File(SystemConstants.BASE_DIR, "unit_settings");
+        File[] files = unitsDir.listFiles((dir, name) -> UNIT_FILENAME_PATTERN.matcher(name).matches());
+        List<Unit> units = new ArrayList<>(files.length);
+        for (File file: files) {
+            Matcher matcher = DIGITS_PATTERN.matcher(file.getName());
+            if (matcher.find()) {
+                units.add(getUnit(file, Integer.parseInt(matcher.group())));
+            }
+        }
+        return units;
     }
 
     // TODO BASE_DIR should come from command line arguments
