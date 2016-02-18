@@ -20,24 +20,27 @@ import java.util.Arrays;
  */
 
 public class RequestHandler extends Thread {
+
     private static Logger logger = LoggerManager.getLogger(RequestHandler.class);
     private Socket socket = null;
+    private String serverAddress; // Address of the program server
+    private String baseDir; // The root directory where the files should be stored
 
-    public RequestHandler(Socket socket) {
+    public RequestHandler(Socket socket, String serverAddress, String baseDir) {
         super("RequestHandler");
         this.socket = socket;
+        this.serverAddress = serverAddress;
+        this.baseDir = baseDir;
     }
 
+    @Override
     public void run() {
         logger.debug("run() - Start");
         try {
-
             DataInputStream dataInputStream =
                     new DataInputStream(new BufferedInputStream(socket.getInputStream()));
             byte[] messageLength = new byte[1];
-            int bytesReadForLength = dataInputStream.read(messageLength, 0, 1);
-
-            if (bytesReadForLength != 1){
+            if (dataInputStream.read(messageLength, 0, 1) != 1) {
                 throw new IOException("Request length - received with error");
             }
 
@@ -45,60 +48,52 @@ public class RequestHandler extends Thread {
 
             logger.debug("Incoming request length = [" + requestLength + "]");
             byte[] byteArray = new byte[requestLength];
-            int bytesRead = dataInputStream.read(byteArray, 0, byteArray.length);
+            int bytesRead;
             int totalRead = 0;
-            if (bytesRead >= 0) {
-                totalRead += bytesRead;
-            }
-            logger.debug("total read bytes from stream = [" + totalRead + "]");
-            while (bytesRead > -1 && totalRead < requestLength) {
+            do {
                 bytesRead = dataInputStream.read(byteArray, totalRead, (byteArray.length - totalRead));
                 if (bytesRead >= 0) {
                     totalRead += bytesRead;
                 }
-                logger.debug("total read bytes from stream = [" + totalRead + "]");
-            }
+                logger.debug("Current total read bytes from stream = [" + totalRead + "]");
+            } while (bytesRead > -1 && totalRead < requestLength);
 
             byte[] totalRequestBytesArray = Arrays.copyOf(byteArray, totalRead);
-            logger.debug("After totalRequestBytesArray");
 
             String[] parsedRequest = (new String(totalRequestBytesArray)).split(" ");
-            logger.info("Parsed request = [" + Integer.parseInt(parsedRequest[0])+" "+Integer.parseInt(parsedRequest[1]) + " "+Integer.parseInt(parsedRequest[2])+"]");
             int idInput = Integer.parseInt((parsedRequest[0]));
+            int connectionPort = Integer.parseInt(parsedRequest[1]);
+            int requestedNumForReceive = Integer.parseInt(parsedRequest[2]);
+            logger.info("Parsed request = [" + idInput + " " + connectionPort + " " + requestedNumForReceive + "]");
             logger.debug("idInput = " + idInput + "]");
-            switch (idInput){
-                case MachineConstants.RECEIVE_FILES_REQUEST:
-                    logger.info("Receive file request. Calling handleReceiveFilesRequest");
-                    handleReceiveFilesRequest(parsedRequest);
-                    break;
-                case MachineConstants.BASE_UNIT_REQUEST:
-                    handleBaseUnitRequest(parsedRequest);
-                    break;
-                default:
-                    logger.error("Undefined input ID : " + idInput);
+            if (idInput == MachineConstants.RECEIVE_FILES_REQUEST) {
+                logger.info("Received file request. Calling handleReceiveFilesRequest");
+                handleReceiveFilesRequest(connectionPort, requestedNumForReceive);
+            } else if (idInput == MachineConstants.BASE_UNIT_REQUEST) {
+                handleBaseUnitRequest(connectionPort, requestedNumForReceive);
+            } else {
+                logger.error("Undefined input ID: " + idInput);
             }
-
             logger.info("Closing request socket.");
             socket.close();
-
         } catch (IOException e) {
-            logger.error("Failed handling request : " + e.getMessage());
+            logger.error("Failed handling request: " + e.getMessage());
         }
     }
 
-    private void handleReceiveFilesRequest(String[] parsedRequest){
-        int connectionPort = Integer.parseInt(parsedRequest[1]);
-        int requestedNumForReceive = Integer.parseInt(parsedRequest[2]);
-        logger.info("handleReceiveFilesRequest - start. Connection port = ["+connectionPort+"] requested number of files = ["+requestedNumForReceive+"] from server = ["+MachineConstants.FILESERVER+"]" );
-        FilesClient filesClient = new FilesClient(MachineConstants.FILESERVER, connectionPort);
+    private void handleReceiveFilesRequest(int connectionPort, int requestedNumForReceive){
+        logger.info("handleReceiveFilesRequest - start. Connection port = [" + connectionPort + "] " +
+                "requested number of files = [" + requestedNumForReceive + "] " +
+                "from server = [" + serverAddress + "]" );
+        FilesClient filesClient = new FilesClient(serverAddress, connectionPort, baseDir);
         try {
             int receivedFiles = filesClient.getFilesFromServer(requestedNumForReceive);
             OutputStream outputStream = socket.getOutputStream();
             byte completionStatus[] = new byte[1];
 
-            if (receivedFiles<requestedNumForReceive){
+            if (receivedFiles < requestedNumForReceive){
                 completionStatus[0] = MachineConstants.RECEIVE_ERROR;
-                logger.error("Received [" + receivedFiles + "] instead of ["+requestedNumForReceive+"]");
+                logger.error("Received [" + receivedFiles + "] instead of [" + requestedNumForReceive + "]");
             } else {
                 logger.info("Received all files [" + receivedFiles + "]");
                 completionStatus[0] = MachineConstants.RECEIVED_ALL_FILES;
@@ -109,7 +104,7 @@ public class RequestHandler extends Thread {
         }
     }
 
-    public void handleBaseUnitRequest(String[] parsedRequest){
+    public void handleBaseUnitRequest(int connectionPort, int requestedNumForReceive){
         // TODO parse request. rebuild unit object and call machine controller impl run method
     }
 }

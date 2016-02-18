@@ -11,7 +11,10 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 /**
@@ -20,6 +23,8 @@ import java.util.List;
 public class UnitFetcher {
 
     private static Logger logger = LoggerManager.getLogger(UnitFetcher.class);
+    private static final Pattern UNIT_FILENAME_PATTERN = Pattern.compile("unit_[0-9]{3}.xml");
+    private static final Pattern DIGITS_PATTERN = Pattern.compile("-?\\d+");
     private String unitSettingsDirPath;
 
     public UnitFetcher(String unitSettingsDirPath) {
@@ -34,9 +39,12 @@ public class UnitFetcher {
      * @throws UnitFetcherException if unit with unitId does not exist
      */
     public Unit getUnit(int unitId) throws UnitFetcherException {
-
-        BaseUnit unit = null;
         File file = getUnitSettingsFile(unitId);
+        return getUnit(file, unitId);
+    }
+
+    private Unit getUnit(File file, int unitId) throws UnitFetcherException {
+        BaseUnit unit = null;
         try {
             JAXBContext jaxbContext = JAXBContext.newInstance(BaseUnit.class);
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
@@ -56,8 +64,16 @@ public class UnitFetcher {
     }
 
     public List<Unit> getAllUnits() throws UnitFetcherException {
-        // TODO implement - merge with localhost branch
-        return null;
+        File unitsDir = new File(SystemConstants.BASE_DIR, "unit_settings");
+        File[] files = unitsDir.listFiles((dir, name) -> UNIT_FILENAME_PATTERN.matcher(name).matches());
+        List<Unit> units = new ArrayList<>(files.length);
+        for (File file: files) {
+            Matcher matcher = DIGITS_PATTERN.matcher(file.getName());
+            if (matcher.find()) {
+                units.add(getUnit(file, Integer.parseInt(matcher.group())));
+            }
+        }
+        return units;
     }
 
     private File getUnitSettingsFile(int unitId) {

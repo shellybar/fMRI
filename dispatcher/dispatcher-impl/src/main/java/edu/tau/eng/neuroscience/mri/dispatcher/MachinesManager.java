@@ -37,6 +37,7 @@ public class MachinesManager {
      */
     public static List<Machine> loadMachines() throws MachinesManagementException {
         List<Machine> machines = null;
+        // TODO BASE_DIR should come from command line arguments
         File file = new File(SystemConstants.BASE_DIR, "configs/machines.xml");
         try {
             JAXBContext jaxbContext = JAXBContext.newInstance(MachinesList.class);
@@ -59,7 +60,7 @@ public class MachinesManager {
         Machine mostAvailableMachine = null;
         float availability = 0;
         for (Machine machine: machines) {
-            float currentAvailability = machine.getMachineStatistics().getAvailabilityScore();
+            double currentAvailability = machine.getMachineStatistics().getAvailabilityScore();
             if (currentAvailability > availability) {
                 mostAvailableMachine = machine;
             }
@@ -72,6 +73,7 @@ public class MachinesManager {
         return mostAvailableMachine;
     }
 
+    // TODO or let the machines send heartbeats?
     private void initPeriodicalStatisticsUpdate(int interval, TimeUnit intervalUnits) {
         statisticsUpdateScheduler.scheduleAtFixedRate(() -> {
             try {

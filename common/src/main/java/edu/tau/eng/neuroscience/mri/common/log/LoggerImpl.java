@@ -9,6 +9,7 @@ public class LoggerImpl implements Logger {
 
     private org.apache.logging.log4j.Logger logger;
 
+    // TODO get the log directory from command line arguments!
     static {
         File logDirFile = new File(SystemConstants.BASE_DIR, "logs");
         if (System.getProperty("log.directory") == null) {

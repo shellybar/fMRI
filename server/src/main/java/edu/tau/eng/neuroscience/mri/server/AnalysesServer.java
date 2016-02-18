@@ -23,13 +23,13 @@ public class AnalysesServer {
         task.setId(57982);
 
         Machine machine = new Machine();
-        machine.setAddress("132.67.140.170");
+        machine.setAddress("127.0.0.1"); //132.67.140.170
 
         task.setMachine(machine);
 
         Unit unit = new BaseUnit();
         unit.setId(1);
-        unit.setInputPath("testUnitInputs");
+        unit.setInputPath("serverWorkspace");
         task.setUnit(unit);
 
         // TODO move execution proxy to the dispatcher - the AnalysesServer should only know the dispatcher
