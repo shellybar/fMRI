@@ -11,6 +11,11 @@ import java.util.Properties;
 
 import static ubongo.common.constants.SystemConstants.BASE_DIR;
 import static ubongo.common.constants.SystemConstants.MACHINES_CONFIG_FILE_PATH;
+import static ubongo.common.constants.SystemConstants.UNIT_SETTINGS_DIR_PATH;
+import static ubongo.common.constants.SystemConstants.DB_CONFIG_FILE_PATH;
+import static ubongo.common.constants.SystemConstants.SSH_CONFIG_FILE_PATH;
+
+
 
 public class DispatcherIntegrationTest {
 

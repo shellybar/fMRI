@@ -42,6 +42,9 @@ public class QueueManager {
         this.machinesManager = machinesManager;
     }
 
+    public QueueManager() { // TODO remove this
+    }
+
     public void start() throws QueueManagementException {
         try {
             dbProxy.connect();

@@ -4,7 +4,6 @@ import ubongo.common.datatypes.BaseUnit;
 import ubongo.common.datatypes.Unit;
 import ubongo.common.log.Logger;
 import ubongo.common.log.LoggerManager;
-import edu.tau.eng.neuroscience.mri.dispatcher.*;
 
 import java.io.File;
 import java.util.List;
@@ -12,6 +11,12 @@ import java.util.Properties;
 import org.apache.commons.cli.*;
 import ubongo.dispatcher.Dispatcher;
 import ubongo.dispatcher.DispatcherImpl;
+
+import static ubongo.common.constants.SystemConstants.BASE_DIR;
+import static ubongo.common.constants.SystemConstants.MACHINES_CONFIG_FILE_PATH;
+import static ubongo.common.constants.SystemConstants.UNIT_SETTINGS_DIR_PATH;
+import static ubongo.common.constants.SystemConstants.DB_CONFIG_FILE_PATH;
+import static ubongo.common.constants.SystemConstants.SSH_CONFIG_FILE_PATH;
 
 public class AnalysesServer {
 

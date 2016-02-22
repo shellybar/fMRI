@@ -1,6 +1,7 @@
 package ubongo.common.datatypes;
 
 import javax.xml.bind.annotation.*;
+import java.io.Serializable;
 
 /**
  * Machine holds all required information regarding the physical/virtual machine
@@ -8,7 +9,7 @@ import javax.xml.bind.annotation.*;
  */
 @XmlRootElement(name = "machine")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Machine {
+public class Machine implements Serializable {
 
     @XmlAttribute private int id;
     @XmlElement private String address;

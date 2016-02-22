@@ -1,6 +1,7 @@
 package ubongo.common.networkUtils;
 
 
+import ubongo.common.exceptions.NetworkException;
 import ubongo.common.log.Logger;
 import ubongo.common.log.LoggerManager;
 
@@ -13,7 +14,7 @@ public class FilesClient {
     private Socket socket;
     private String baseDir;
 
-    public FilesClient(String sourceMachine, int connectionPort, String baseDir) {
+    public FilesClient(String sourceMachine, int connectionPort, String baseDir) throws NetworkException{
         this.baseDir = baseDir;
         try {
             logger.info("Connecting to socket on machine = [" + sourceMachine + "], on port = [" + connectionPort + "]");
@@ -22,7 +23,8 @@ public class FilesClient {
         } catch (IOException e) {
             String errorMsg = "Failed to create socket.\nDetails: " + e.getMessage();
             logger.error(errorMsg);
-            this.socket = null; // TODO Throw new exception instead
+            this.socket = null;
+            throw new NetworkException(errorMsg);
         }
     }
 
