@@ -1,6 +1,7 @@
 package ubongo.machine;
 
 import ubongo.common.datatypes.MachineStatistics;
+import ubongo.common.datatypes.Task;
 import ubongo.common.datatypes.Unit;
 
 /**
@@ -20,10 +21,10 @@ public interface MachineController {
     /**
      * A request to run a certain unit on the machine. If the request is valid,
      * this will trigger the execution of a unit on the underlying machine
-     * A response regarding the completion of the unit's operation will be returned async.
-     * @param unit is the Unit for which the running request was sent.
+     * A response regarding the completion of the unit's operation will be returned.
+     * @param task is the task for which the running request was sent.
      *             It includes all the settings the specific unit may require to run.
      */
-    void run(Unit unit);
+    void run(Task task);
 
 }

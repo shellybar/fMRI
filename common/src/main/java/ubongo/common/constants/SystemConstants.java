@@ -14,6 +14,9 @@ public class SystemConstants {
     }
     public static final File BASE_DIR = new File(baseStr);
 
+    public static final int NETWORK_RETRIES =5;
+    public static final int SLEEP_BETWEEN_NETWORK_RETRIES = 1000;
+
     // Configuration
     public static final String DB_CONFIG_FILE_PATH = "db_config";
     public static final String SSH_CONFIG_FILE_PATH = "ssh_config";

@@ -12,4 +12,7 @@ public class MachineConstants {
     public static final int RECEIVED_ALL_FILES = 0;
     public static final int RECEIVE_ERROR = 1;
 
+    public static final int BASE_UNIT_COMPLETED = 0;
+    public static final int BASE_UNIT_FAILURE = 1;
+
 }

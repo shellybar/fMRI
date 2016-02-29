@@ -2,6 +2,7 @@
 
 <unit id="7">
     <description>Integration tests unit</description>
+    <relativePath>testUnit.java</relativePath>
     <parameters>
         <file-parameter>
             <name>myFile</name>

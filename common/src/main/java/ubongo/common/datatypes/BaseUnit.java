@@ -7,6 +7,7 @@ import ubongo.common.log.Logger;
 import ubongo.common.log.LoggerManager;
 
 import javax.xml.bind.annotation.*;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,20 +16,27 @@ import java.util.Map;
 
 @XmlRootElement(name = "unit")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class BaseUnit implements Unit, ExecutableObj {
+public class BaseUnit implements Unit, ExecutableObj, Serializable {
 
     private static Logger logger = LoggerManager.getLogger(BaseUnit.class);
 
     @XmlAttribute private int id;
     @XmlElement private String inputPath;
     @XmlElement private String description;
-
+    @XmlElement private String relativePath;
     @XmlElementWrapper(name = "parameters")
     @XmlElements({
             @XmlElement(name = "string-parameter", type = StringUnitParameter.class),
             @XmlElement(name = "file-parameter", type = FileUnitParameter.class)
     })
     private List<UnitParameter> parameters = new ArrayList<>();
+
+    public BaseUnit(int id) {
+        this.id = id;
+    }
+
+    public BaseUnit() {
+    }
 
     @Override
     public int getId() {
@@ -89,5 +97,13 @@ public class BaseUnit implements Unit, ExecutableObj {
             sb.append("\"");
         }
         return sb.toString();
+    }
+
+    public String getRelativePath() {
+        return relativePath;
+    }
+
+    public void setRelativePath(String relativePath) {
+        this.relativePath = relativePath;
     }
 }

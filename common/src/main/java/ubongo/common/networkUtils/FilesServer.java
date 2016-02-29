@@ -1,5 +1,8 @@
 package ubongo.common.networkUtils;
 
+import com.sun.corba.se.impl.orbutil.closure.Constant;
+import ubongo.common.constants.SystemConstants;
+import ubongo.common.exceptions.NetworkException;
 import ubongo.common.log.Logger;
 import ubongo.common.log.LoggerManager;
 
@@ -20,7 +23,53 @@ public class FilesServer {
         this.baseDir = baseDir;
     }
 
-    private void start() {
+
+    /**
+     * Calls start and transferFileToMachine, and handles exceptions by re-try.
+     */
+    public void manageFileTransfer(String relativeDirPath) {
+        int success = 0;
+        int retries = 0;
+        while ((success == 0) && (retries < SystemConstants.NETWORK_RETRIES)){
+            retries++;
+            try {
+                start();
+                success = 1;
+            } catch (IOException e) {
+                success = 0;
+                try {
+                    Thread.sleep(SystemConstants.SLEEP_BETWEEN_NETWORK_RETRIES);
+                } catch (InterruptedException e1) {
+                    // do nothing
+                }
+            }
+        }
+
+        if (success==1){
+            success=0;
+            retries=0;
+            while ((success == 0) && (retries < SystemConstants.NETWORK_RETRIES)){
+                retries++;
+                try {
+                    transferFileToMachine(relativeDirPath);
+                    success = 1;
+                } catch (NetworkException e) {
+                    success = 0;
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e1) {
+                        // do nothing
+                    }
+                }
+            }
+        }
+
+        if (success==0){
+            logger.error("Failure after " + retries + " retries.");
+        }
+    }
+
+    private void start() throws IOException{
         try {
             logger.info("FilesServer listening on port = [" + connectionPort + "]");
             ServerSocket serverSocket = new ServerSocket(connectionPort);
@@ -29,15 +78,15 @@ public class FilesServer {
         } catch (IOException e) {
             String errorMsg = "Failed to create socket.\nDetails: "+ e.getMessage();
             logger.error(errorMsg);
-            socket = null; // TODO throw new exception instead
+            socket = null;
+            throw e;
         }
     }
 
     /**
      * Sends files from relativeDirPath (absolute path is baseDir/relativeDirPath) to the chosen machine using socket.
      */
-    public void transferFileToMachine(String relativeDirPath) {
-        start(); // TODO accept blocks and then the log is not written
+    private void transferFileToMachine(String relativeDirPath) throws NetworkException {
         try {
             File filesToSend[] = this.getFilesInDir(relativeDirPath);
             for (File transferFile : filesToSend) {
@@ -52,7 +101,7 @@ public class FilesServer {
                 DataOutputStream dataOutputStream = new DataOutputStream(new BufferedOutputStream(outputStream));
                 logger.debug("Sending file [" + fileName + "]...");
 
-                dataOutputStream.writeUTF(fileName); // TODO send only the important part of the path (without the baseDir)
+                dataOutputStream.writeUTF(fileName.substring(fileName.lastIndexOf("\\") + 1));
                 dataOutputStream.writeLong(fileSize);
                 dataOutputStream.flush();
                 outputStream.write(byteArray, 0, byteArray.length);
@@ -60,7 +109,9 @@ public class FilesServer {
                 logger.info("File transfer completed");
             }
         } catch (IOException e) {
-            //TODO
+            String errorMsg = "Failed to send files.\nDetails: "+ e.getMessage();
+            logger.error(errorMsg);
+            throw new NetworkException(errorMsg);
         } finally {
             closeSocket();
         }
@@ -84,8 +135,11 @@ public class FilesServer {
         try {
             this.socket.close();
         } catch (IOException e){
-            String errorMsg = "Failed to create socket.\nLogs: "+ e.getMessage();
+            String errorMsg = "Failed to close socket.\nLogs: "+ e.getMessage();
             logger.error(errorMsg);
+        } catch (Exception e){ // TODO remove - tmp for tests
+        String errorMsg = "Failed to close socket.\nLogs: "+ e.getMessage();
+        logger.error(errorMsg);
         }
     }
 

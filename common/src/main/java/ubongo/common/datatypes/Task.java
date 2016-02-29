@@ -31,4 +31,10 @@ public interface Task {
 
     void setStatus(TaskStatus status);
 
+    String getInputPath();
+
+    String getOutputPath();
+
+    int getNetworkPort();
+
 }
