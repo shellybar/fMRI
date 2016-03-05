@@ -44,7 +44,7 @@ public class MachineServer {
 
         logger.info("Initializing machine-server...");
         MachineServer machineServer = new MachineServer();
-        machineServer.start();
+        // machineServer.start(); // TODO remove comment
 
         String serverAddress = MachineConstants.SERVER_FALLBACK;
         String baseDir = "";
@@ -56,7 +56,7 @@ public class MachineServer {
             logger.error("Failed to parse command line arguments - continuing with default values");
         }
         logger.info("Server address: [" + serverAddress + "], base directory path: [" + baseDir + "]");
-
+        System.out.println("Server address: [" + serverAddress + "], base directory path: [" + baseDir + "]"); // TODO remove
         try (ServerSocket serverSocket = new ServerSocket(MachineConstants.MACHINE_LISTENING_PORT)) {
             logger.debug("Initialized new socket on port: [" + MachineConstants.MACHINE_LISTENING_PORT + "]");
             logger.info("Listening on port: " + MachineConstants.MACHINE_LISTENING_PORT);

@@ -1,7 +1,6 @@
 package ubongo.machine;
 
 
-import ubongo.common.constants.MachineConstants;
 import ubongo.common.datatypes.Task;
 import ubongo.common.exceptions.NetworkException;
 import ubongo.common.log.Logger;
@@ -33,6 +32,7 @@ public class RequestHandler extends Thread {
         this.socket = socket;
         this.serverAddress = serverAddress;
         this.baseDir = baseDir;
+        logger.debug("serverAddress = [" + serverAddress+"] baseDir = ["+baseDir+"]");
     }
 
     @Override
@@ -67,24 +67,18 @@ public class RequestHandler extends Thread {
             int connectionPort = Integer.parseInt(parsedRequest[1]);
 
             logger.info("Parsed request = [" + idInput + " " + connectionPort +"]");
-            if (idInput == MachineConstants.RECEIVE_FILES_REQUEST) {
-                int requestedNumForReceive = Integer.parseInt(parsedRequest[2]);
-                logger.info("Parsed request = [" + idInput + " " + connectionPort + " " + requestedNumForReceive + "]");
-                logger.info("Received file request. Calling handleReceiveFilesRequest");
-                String inputFilesDir = this.baseDir + File.separator  + connectionPort + "_in";
-                handleReceiveFilesRequest(connectionPort, requestedNumForReceive, inputFilesDir);
-            } else if (idInput == MachineConstants.BASE_UNIT_REQUEST) {
-                String outputFilesDir = this.baseDir + File.separator  + connectionPort + "_out";
-                ObjectInputStream objectOutputStream = new ObjectInputStream(dataInputStream);
-                Task task = null;
-                try {
-                    task = (Task) objectOutputStream.readObject();
-                    handleBaseUnitRequest(connectionPort, outputFilesDir, task);
-                } catch (ClassNotFoundException e) {
-                    logger.error("Error while receiving task object: " + e.getMessage());
-                }
-            } else {
-                logger.error("Undefined input ID: " + idInput);
+
+            String outputFilesDir = this.baseDir + File.separator  + connectionPort + "_out";
+            String inputFilesDir = this.baseDir + File.separator  + connectionPort + "_in";
+            ObjectInputStream objectOutputStream = new ObjectInputStream(dataInputStream);
+            Task task = null;
+            try {
+                task = (Task) objectOutputStream.readObject();
+                logger.debug("Calling handleBaseUnitRequest: inputFilesDir = ["+inputFilesDir+"] outputFilesDir=["+outputFilesDir+"]");
+
+                handleBaseUnitRequest(connectionPort, inputFilesDir, outputFilesDir, task);
+            } catch (ClassNotFoundException e) {
+                logger.error("Error while receiving task object: " + e.getMessage());
             }
             logger.info("Closing request socket.");
             socket.close();
@@ -93,15 +87,15 @@ public class RequestHandler extends Thread {
         }
     }
 
-    private void handleReceiveFilesRequest(int connectionPort, int requestedNumForReceive, String inputFilesDir){
-        logger.info("handleReceiveFilesRequest - start. Connection port = [" + connectionPort + "] " +
-                "requested number of files = [" + requestedNumForReceive + "] " +
-                "from server = [" + serverAddress + "]" );
+    private boolean handleReceiveFiles(String inputFilesDir, String filesSourceDir){
+        boolean success = true;
+        logger.info("handleReceiveFiles - start. filesSourceDir= [" + filesSourceDir +
+                "] from server = [" + serverAddress + "] inputFilesDir = [" + inputFilesDir + "]" );
 
         File inputDir = new File(inputFilesDir);
         if (inputDir.exists()) {
             logger.error("input Dir already exists..."); // TODO handle this !
-            return;
+            return false;
         }
         boolean result = false;
         try{
@@ -110,43 +104,34 @@ public class RequestHandler extends Thread {
         }
         catch(SecurityException se){
             logger.error("Failed to create input Dir " + inputFilesDir); // TODO handle this !
-            return;
+            return false;
         }
         if(!result) {
             logger.error("Failed to create input Dir " + inputFilesDir); // TODO handle this !
-            return;
+            return false;
         }
-
 
         FilesClient filesClient = null;
         try {
-            filesClient = new FilesClient(serverAddress, connectionPort, inputFilesDir);
+            filesClient = new FilesClient(serverAddress, filesSourceDir, inputFilesDir);
+            filesClient.getFilesFromServer();
         } catch (NetworkException e) {
-            return;
-        }
-        try {
-            int receivedFiles = filesClient.getFilesFromServer(requestedNumForReceive);
-            OutputStream outputStream = socket.getOutputStream();
-            byte completionStatus[] = new byte[1];
-
-            if (receivedFiles < requestedNumForReceive){
-                completionStatus[0] = MachineConstants.RECEIVE_ERROR;
-                logger.error("Received [" + receivedFiles + "] instead of [" + requestedNumForReceive + "]");
-            } else {
-                logger.info("Received all files [" + receivedFiles + "]");
-                completionStatus[0] = MachineConstants.RECEIVED_ALL_FILES;
-            }
-            outputStream.write(completionStatus, 0, completionStatus.length);
-        } catch (IOException e) {
             logger.error("Failed receiving files from server " + e.getMessage());
+            return false;
         }
+
+        return success;
     }
 
-    public void handleBaseUnitRequest(int connectionPort, String outputFilesDir, Task task){
+    public void handleBaseUnitRequest(int connectionPort, String inputFilesDir, String outputFilesDir, Task task){
         logger.info("handleBaseUnitRequest - start. Connection port = [" + connectionPort + "] " +
                 "from server = [" + serverAddress + ". task ID = " +task.getId() +"]" );
 
-        System.out.println("task ID = "+task.getId()); // TODO remove
+        if (!handleReceiveFiles(inputFilesDir, task.getInputPath())){
+            // TODO - update task failure!
+            return;
+        }
+
         File outputDir = new File(outputFilesDir);
         if (outputDir.exists()) {
             logger.error("output Dir already exists..."); // TODO handle this !
@@ -169,29 +154,6 @@ public class RequestHandler extends Thread {
         MachineController machineController = new MachineControllerImpl();
         machineController.run(task);
 
-
-//        FilesClient filesClient = null;
-//        try {
-//            filesClient = new FilesClient(serverAddress, connectionPort, outputFilesDir);
-//        } catch (NetworkException e) {
-//            return;
-//        }
-//        try {
-//            int receivedFiles = filesClient.getFilesFromServer(requestedNumForReceive);
-//            OutputStream outputStream = socket.getOutputStream();
-//            byte completionStatus[] = new byte[1];
-//
-//            if (receivedFiles < requestedNumForReceive){
-//                completionStatus[0] = MachineConstants.RECEIVE_ERROR;
-//                logger.error("Received [" + receivedFiles + "] instead of [" + requestedNumForReceive + "]");
-//            } else {
-//                logger.info("Received all files [" + receivedFiles + "]");
-//                completionStatus[0] = MachineConstants.RECEIVED_ALL_FILES;
-//            }
-//            outputStream.write(completionStatus, 0, completionStatus.length);
-//        } catch (IOException e) {
-//            logger.error("Failed receiving files from server " + e.getMessage());
-//        }
     }
 
 }
