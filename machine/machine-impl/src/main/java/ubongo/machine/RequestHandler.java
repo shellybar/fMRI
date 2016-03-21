@@ -1,6 +1,8 @@
 package ubongo.machine;
 
 
+import ubongo.common.constants.MachineConstants;
+import ubongo.common.datatypes.RabbitData;
 import ubongo.common.datatypes.Task;
 import ubongo.common.exceptions.NetworkException;
 import ubongo.common.log.Logger;
@@ -8,8 +10,7 @@ import ubongo.common.log.LoggerManager;
 import ubongo.common.networkUtils.FilesClient;
 
 import java.io.*;
-import java.net.Socket;
-import java.util.Arrays;
+
 
 /**
  * RequestHandler is called by the MachineServer when a new request arrives.
@@ -23,66 +24,31 @@ import java.util.Arrays;
 public class RequestHandler extends Thread {
 
     private static Logger logger = LoggerManager.getLogger(RequestHandler.class);
-    private Socket socket = null;
-    private String serverAddress; // Address of the program server
     private String baseDir; // The root directory where the files should be stored
+    private String serverAddress; // Address of the program server
+    private RabbitData rabbitMessage;
 
-    public RequestHandler(Socket socket, String serverAddress, String baseDir) {
+    public RequestHandler(RabbitData rabbitMessage, String serverAddress, String baseDir) {
         super("RequestHandler");
-        this.socket = socket;
-        this.serverAddress = serverAddress;
         this.baseDir = baseDir;
-        logger.debug("serverAddress = [" + serverAddress+"] baseDir = ["+baseDir+"]");
+        this.serverAddress = serverAddress;
+        this.rabbitMessage = rabbitMessage;
+        logger.debug("serverAddress = [" + serverAddress+"] baseDir = ["+baseDir+"] message = ["+ rabbitMessage.getMessage() + "]");
     }
 
     @Override
     public void run() {
         logger.debug("run() - Start");
         try {
-            DataInputStream dataInputStream =
-                    new DataInputStream(new BufferedInputStream(socket.getInputStream()));
-            byte[] messageLength = new byte[1];
-            if (dataInputStream.read(messageLength, 0, 1) != 1) {
-                throw new IOException("Request length - received with error");
+            Task task = rabbitMessage.getTask();
+            logger.info("Parsed request = [" + rabbitMessage.getMessage() + " " + task.getId() +"]");
+
+            if (rabbitMessage.getMessage().equals(MachineConstants.BASE_UNIT_REQUEST)){
+                String outputFilesDir = this.baseDir + File.separator  + task.getId() + "_out";
+                String inputFilesDir = this.baseDir + File.separator  + task.getId() + "_in";
+                handleBaseUnitRequest(inputFilesDir, outputFilesDir, task);
             }
-
-            int requestLength = messageLength[0];
-
-            logger.debug("Incoming request length = [" + requestLength + "]");
-            byte[] byteArray = new byte[requestLength];
-            int bytesRead;
-            int totalRead = 0;
-            do {
-                bytesRead = dataInputStream.read(byteArray, totalRead, (byteArray.length - totalRead));
-                if (bytesRead >= 0) {
-                    totalRead += bytesRead;
-                }
-                logger.debug("Current total read bytes from stream = [" + totalRead + "]");
-            } while (bytesRead > -1 && totalRead < requestLength);
-
-            byte[] totalRequestBytesArray = Arrays.copyOf(byteArray, totalRead);
-
-            String[] parsedRequest = (new String(totalRequestBytesArray)).split(" ");
-            int idInput = Integer.parseInt((parsedRequest[0]));
-            int connectionPort = Integer.parseInt(parsedRequest[1]);
-
-            logger.info("Parsed request = [" + idInput + " " + connectionPort +"]");
-
-            String outputFilesDir = this.baseDir + File.separator  + connectionPort + "_out";
-            String inputFilesDir = this.baseDir + File.separator  + connectionPort + "_in";
-            ObjectInputStream objectOutputStream = new ObjectInputStream(dataInputStream);
-            Task task = null;
-            try {
-                task = (Task) objectOutputStream.readObject();
-                logger.debug("Calling handleBaseUnitRequest: inputFilesDir = ["+inputFilesDir+"] outputFilesDir=["+outputFilesDir+"]");
-
-                handleBaseUnitRequest(connectionPort, inputFilesDir, outputFilesDir, task);
-            } catch (ClassNotFoundException e) {
-                logger.error("Error while receiving task object: " + e.getMessage());
-            }
-            logger.info("Closing request socket.");
-            socket.close();
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.error("Failed handling request: " + e.getMessage());
         }
     }
@@ -123,9 +89,8 @@ public class RequestHandler extends Thread {
         return success;
     }
 
-    public void handleBaseUnitRequest(int connectionPort, String inputFilesDir, String outputFilesDir, Task task){
-        logger.info("handleBaseUnitRequest - start. Connection port = [" + connectionPort + "] " +
-                "from server = [" + serverAddress + ". task ID = " +task.getId() +"]" );
+    public void handleBaseUnitRequest(String inputFilesDir, String outputFilesDir, Task task){
+        logger.info("handleBaseUnitRequest - start. task ID = " +task.getId() +"]" );
 
         if (!handleReceiveFiles(inputFilesDir, task.getInputPath())){
             // TODO - update task failure!

@@ -85,7 +85,7 @@ public class QueueManager {
         // Convert list of units to list of tasks
         List<Task> tasks = units.stream()
                 .map((unit) -> {
-                    TaskImpl task = new TaskImpl();
+                    Task task = new Task();
                     task.setUnit(unit);
                     task.setStatus(TaskStatus.NEW);
                     return task;
@@ -120,7 +120,7 @@ public class QueueManager {
     }
 
     private synchronized static Task shallowCopyTask(Task task) {
-        Task copied = new TaskImpl();
+        Task copied = new Task();
         copied.setId(task.getId());
         copied.setMachine(task.getMachine());
         copied.setStatus(task.getStatus());

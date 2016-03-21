@@ -28,7 +28,7 @@ public class FilesClient {
         this.sourceMachine = sourceMachine;
         this.sourceDir = sourceDir;
         this.destDir = destDir;
-        this.user = "xxx"; // TODO get from conf - create a new user;
+        this.user = "shellybar"; // TODO get from conf - create a new user;
         this.password = "xxx"; // TODO get from conf - create a new user;
         this.sftpUri = "sftp://" + user + ":" + password +  "@" + sourceMachine + sourceDir + "/";
 

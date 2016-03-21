@@ -23,7 +23,7 @@ public class NetworkingTest {
         Unit unit = new BaseUnit(7);
 
 
-        Task taskToExec = new TaskImpl(id, unit, machine, TaskStatus.PROCESSING, inputPath, outputPath);
+        Task taskToExec = new Task(id, unit, machine, TaskStatus.PROCESSING, inputPath, outputPath);
         executionProxy.execute(taskToExec,queueManager);
 
     }

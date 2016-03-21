@@ -17,5 +17,6 @@
     <orderEntry type="library" name="commons-vfs2-2.0" level="project" />
     <orderEntry type="library" name="commons-logging-1.2" level="project" />
     <orderEntry type="library" name="jsch-0.1.531" level="project" />
+    <orderEntry type="library" name="rabbitmq-client" level="project" />
   </component>
 </module>

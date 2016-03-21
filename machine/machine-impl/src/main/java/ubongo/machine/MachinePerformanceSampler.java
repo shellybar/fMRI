@@ -3,7 +3,6 @@ package ubongo.machine;
 import ubongo.common.datatypes.MachineStatistics;
 import ubongo.common.log.Logger;
 import ubongo.common.log.LoggerManager;
-import org.hyperic.sigar.*;
 
 public class MachinePerformanceSampler implements Runnable {
 

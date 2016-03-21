@@ -270,7 +270,7 @@ public class DBProxy {
             if (!resultSet.next()) {
                 throw new DBProxyException(ErrorCodes.EMPTY_RESULT_SET, "No task with id=" + id + "exists in DB");
             }
-            task = new TaskImpl();
+            task = new Task();
             task.setStatus(TaskStatus.valueOf(resultSet.getString(DBConstants.TASKS_TASK_STATUS).toUpperCase()));
             task.setId(resultSet.getInt(DBConstants.TASKS_TASK_ID));
             task.setMachine(null); // TODO
@@ -297,7 +297,7 @@ public class DBProxy {
             PreparedStatement statement = connection.prepareStatement(sql);
             ResultSet resultSet = executeQuery(statement);
             while (resultSet.next()) {
-                Task task = new TaskImpl();
+                Task task = new Task();
                 task.setStatus(TaskStatus.NEW);
                 task.setId(resultSet.getInt(DBConstants.TASKS_TASK_ID));
                 Unit unit = unitFetcher.getUnit(resultSet.getInt(DBConstants.TASKS_UNIT_ID));

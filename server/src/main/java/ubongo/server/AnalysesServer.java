@@ -1,7 +1,6 @@
 package ubongo.server;
 
-import ubongo.common.datatypes.BaseUnit;
-import ubongo.common.datatypes.Unit;
+import ubongo.common.datatypes.*;
 import ubongo.common.log.Logger;
 import ubongo.common.log.LoggerManager;
 
@@ -9,8 +8,8 @@ import java.io.File;
 import java.util.List;
 import java.util.Properties;
 import org.apache.commons.cli.*;
-import ubongo.dispatcher.Dispatcher;
-import ubongo.dispatcher.DispatcherImpl;
+import ubongo.dispatcher.ExecutionProxy;
+import ubongo.dispatcher.QueueManager;
 
 import static ubongo.common.constants.SystemConstants.BASE_DIR;
 import static ubongo.common.constants.SystemConstants.MACHINES_CONFIG_FILE_PATH;
@@ -23,16 +22,30 @@ public class AnalysesServer {
     private static Logger logger = LoggerManager.getLogger(AnalysesServer.class);
 
     public static void main(String[] args) throws ParseException {
+        ExecutionProxy executionProxy = ExecutionProxy.getInstance();
+        QueueManager queueManager = new QueueManager();
 
-        logger.info("Start...");
-        Properties props = parseCommandLineArgs(args);
-        Dispatcher dispatcher = new DispatcherImpl(props);
-        dispatcher.start();
 
-        Unit unit = new BaseUnit();
-        unit.setId(1);
-        unit.setParameterValues("{}"); // TODO unit.setInputPath("serverWorkspace"); change this protocol - pass a task
-        dispatcher.dispatch(null, unit);
+        int id = 1;
+        Machine machine = new Machine();
+        machine.setPort(1234);
+        machine.setAddress("rack-hezi-01");
+        String inputPath= "/specific/a/home/cc/students/csguests/shellybar/fmri/rabbitTests/unit7Inputs";
+        String outputPath = "/specific/a/home/cc/students/csguests/shellybar/fmri/rabbitTests/unit7Outputs";
+        Unit unit = new BaseUnit(7);
+
+
+        Task taskToExec = new Task(id, unit, machine, TaskStatus.PROCESSING, inputPath, outputPath);
+        executionProxy.execute(taskToExec,queueManager);
+//        logger.info("Start...");
+//        Properties props = parseCommandLineArgs(args);
+//        Dispatcher dispatcher = new DispatcherImpl(props);
+//        dispatcher.start();
+//
+//        Unit unit = new BaseUnit();
+//        unit.setId(1);
+//        unit.setParameterValues("{}"); // TODO unit.setInputPath("serverWorkspace"); change this protocol - pass a task
+//        dispatcher.dispatch(null, unit);
     }
 
     public void submitAnalysis(List<Integer> unitIds) {
