@@ -1,12 +1,12 @@
 package ubongo.machine;
 
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import ubongo.common.datatypes.BaseUnit;
 import ubongo.common.datatypes.MachineStatistics;
 import ubongo.common.datatypes.Task;
 import ubongo.common.datatypes.Unit;
-import ubongo.common.log.Logger;
-import ubongo.common.log.LoggerManager;
 import ubongo.common.exceptions.UnmarshalException;
 
 import javax.xml.bind.JAXBContext;
@@ -17,7 +17,7 @@ import java.io.File;
 // TODO what is this class good for if we have the MachineServer? - Shelly's answer - MachineServer listens to requests via socket. MachineController - run the scripts on the machine.
 public class MachineControllerImpl implements MachineController {
 
-    private static Logger logger = LoggerManager.getLogger(MachineControllerImpl.class);
+    private static Logger logger = LogManager.getLogger(MachineControllerImpl.class);
 
     @Override
     public MachineStatistics getStatistics() {
@@ -53,8 +53,7 @@ public class MachineControllerImpl implements MachineController {
             logger.error(msg);
         }
         if (unit == null) {
-            throw new UnmarshalException(ErrorCodes.UNIT_UNMARSHAL_EXCEPTION,
-                    "Failed to retrieve Database Connection configuration. " +
+            throw new UnmarshalException("Failed to retrieve Database Connection configuration. " +
                             "Make sure that " + unitConfigFilePath.getAbsolutePath() + " exists and is configured correctly");
         }
         return unit;

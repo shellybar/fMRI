@@ -3,12 +3,12 @@ package ubongo.machine;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 import ubongo.common.datatypes.MachineStatistics;
-import ubongo.common.log.Logger;
-import ubongo.common.log.LoggerManager;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 
 public class MachinePerformanceSampler implements Runnable {
 
-    private static Logger logger = LoggerManager.getLogger(MachinePerformanceSampler.class);
+    private static Logger logger = LogManager.getLogger(MachinePerformanceSampler.class);
     private MachineStatistics machineStatistics;
 
     public MachinePerformanceSampler(MachineStatistics machineStatistics) {

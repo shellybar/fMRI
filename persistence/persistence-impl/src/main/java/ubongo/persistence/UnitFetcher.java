@@ -2,8 +2,8 @@ package ubongo.persistence;
 
 import ubongo.common.datatypes.BaseUnit;
 import ubongo.common.datatypes.Unit;
-import ubongo.common.log.Logger;
-import ubongo.common.log.LoggerManager;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import ubongo.persistence.exceptions.UnitFetcherException;
 
 import javax.xml.bind.JAXBContext;
@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
  */
 public class UnitFetcher {
 
-    private static Logger logger = LoggerManager.getLogger(UnitFetcher.class);
+    private static Logger logger = LogManager.getLogger(UnitFetcher.class);
     private static final Pattern UNIT_FILENAME_PATTERN = Pattern.compile("unit_[0-9]{3}.xml");
     private static final Pattern DIGITS_PATTERN = Pattern.compile("-?\\d+");
     private String unitSettingsDirPath;

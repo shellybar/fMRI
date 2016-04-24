@@ -4,10 +4,10 @@ import com.google.gson.JsonParseException;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import com.sun.xml.internal.ws.util.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import ubongo.common.datatypes.*;
 import ubongo.persistence.exceptions.UnitFetcherException;
-import ubongo.common.log.Logger;
-import ubongo.common.log.LoggerManager;
 import ubongo.common.networkUtils.SSHConnection;
 import ubongo.common.networkUtils.SSHConnectionProperties;
 import ubongo.persistence.exceptions.DBProxyException;
@@ -31,7 +31,7 @@ public class DBProxy {
 
     // TODO add retry mechanism to all methods that send statements to the DB
 
-    private static Logger logger = LoggerManager.getLogger(DBProxy.class);
+    private static Logger logger = LogManager.getLogger(DBProxy.class);
 
     private Session sshSession;
     private SSHConnectionProperties sshProperties;
@@ -89,7 +89,7 @@ public class DBProxy {
                 } catch (JSchException e) {
                     String errorMsg = "Failed to establish SSH connection to the database";
                     logger.error(errorMsg);
-                    throw new DBProxyException(ErrorCodes.SSH_CONNECTION_EXCEPTION, errorMsg);
+                    throw new DBProxyException(errorMsg);
                 }
             }
             if (connection == null || connection.isClosed()) {
@@ -101,10 +101,9 @@ public class DBProxy {
                 } catch (SQLException e) {
                     String errorMsg = String.format("Failed to connect to the database (url: %s; user: %s)", getUrl(), getUser());
                     logSqlException(e, errorMsg);
-                    throw new DBProxyException(ErrorCodes.DB_CONNECTION_EXCEPTION, errorMsg);
+                    throw new DBProxyException(errorMsg);
                 } catch (ClassNotFoundException e) {
-                    throw new DBProxyException(ErrorCodes.GENERAL_DB_PROXY_EXCEPTION,
-                            "Database connection cannot be established. MySQL JDBC driver class (" + driver + ") was not found");
+                    throw new DBProxyException("Database connection cannot be established. MySQL JDBC driver class (" + driver + ") was not found");
                 }
                 logger.info("Connected to DB at " + getUrl());
             }
@@ -112,7 +111,7 @@ public class DBProxy {
             String errorMsg =
                     String.format("Failed to connect to the database (url: %s; user: %s).", getUrl(), getUser());
             logSqlException(e, errorMsg);
-            throw new DBProxyException(ErrorCodes.DB_CONNECTION_EXCEPTION, errorMsg);
+            throw new DBProxyException(errorMsg);
         }
     }
 
@@ -136,7 +135,7 @@ public class DBProxy {
             String errorMsg =
                     String.format("Failed to disconnect from the database (url: %s; user: %s).", getUrl(), getUser());
             logSqlException(e, errorMsg);
-            throw new DBProxyException(ErrorCodes.DB_CONNECTION_EXCEPTION, errorMsg);
+            throw new DBProxyException(errorMsg);
         }
     }
 
@@ -162,7 +161,7 @@ public class DBProxy {
         } catch (SQLException e) {
             String errorMsg = "Failed to add tasks to DB";
             logSqlException(e, errorMsg);
-            throw new DBProxyException(ErrorCodes.QUERY_FAILURE_EXCEPTION, errorMsg);
+            throw new DBProxyException(errorMsg);
         }
     }
 
@@ -246,7 +245,7 @@ public class DBProxy {
             String errorMsg = "Failed to update task's status in DB (taskId="
                     + task.getId() + ", newStatus=" + task.getStatus() + ")";
             logSqlException(e, errorMsg);
-            throw new DBProxyException(ErrorCodes.QUERY_FAILURE_EXCEPTION, errorMsg);
+            throw new DBProxyException(errorMsg);
         }
     }
 
@@ -267,7 +266,7 @@ public class DBProxy {
             statement.setInt(1, id);
             ResultSet resultSet = executeQuery(statement);
             if (!resultSet.next()) {
-                throw new DBProxyException(ErrorCodes.EMPTY_RESULT_SET, "No task with id=" + id + "exists in DB");
+                throw new DBProxyException("No task with id=" + id + "exists in DB");
             }
             task = new Task();
             task.setStatus(TaskStatus.valueOf(resultSet.getString(DBConstants.TASKS_TASK_STATUS).toUpperCase()));
@@ -279,7 +278,7 @@ public class DBProxy {
         } catch (SQLException e) {
             String errorMsg = "Failed to get task from DB by id (" + id + ")";
             logSqlException(e, errorMsg);
-            throw new DBProxyException(ErrorCodes.QUERY_FAILURE_EXCEPTION, errorMsg);
+            throw new DBProxyException(errorMsg);
         } catch (UnitFetcherException e) {
             // TODO DispatcherImpl.notifyFatal(e); // TODO what now?
             return null;
@@ -308,7 +307,7 @@ public class DBProxy {
         } catch (SQLException e) {
             String errorMsg = "Failed to retrieve new tasks from DB";
             logSqlException(e, errorMsg);
-            throw new DBProxyException(ErrorCodes.QUERY_FAILURE_EXCEPTION, errorMsg);
+            throw new DBProxyException(errorMsg);
         } catch (JsonParseException e) {
             // TODO DispatcherImpl.notifyFatal(e); // TODO what now?
             return new ArrayList<>(); // return empty task list
@@ -345,8 +344,7 @@ public class DBProxy {
             logger.error(msg);
         }
         if (dbConnectionProperties == null) {
-            throw new DBProxyException(ErrorCodes.DB_CONNECTION_PROPERTIES_UNMARSHAL_EXCEPTION,
-                    "Failed to retrieve Database Connection configuration. " +
+            throw new DBProxyException("Failed to retrieve Database Connection configuration. " +
                             "Make sure that " + file.getAbsolutePath() + " exists and is configured correctly");
         }
         return dbConnectionProperties;
@@ -367,8 +365,7 @@ public class DBProxy {
             logger.error(msg);
         }
         if (sshConnectionProperties == null) {
-            throw new DBProxyException(ErrorCodes.SSH_CONNECTION_PROPERTIES_UNMARSHAL_EXCEPTION,
-                    "Failed to retrieve SSH Connection configuration. " +
+            throw new DBProxyException("Failed to retrieve SSH Connection configuration. " +
                             "Make sure that " + file.getAbsolutePath() + " exists and is configured correctly");
         }
         return sshConnectionProperties;

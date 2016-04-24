@@ -5,8 +5,8 @@ import ubongo.common.constants.MachineConstants;
 import ubongo.common.datatypes.RabbitData;
 import ubongo.common.datatypes.Task;
 import ubongo.common.exceptions.NetworkException;
-import ubongo.common.log.Logger;
-import ubongo.common.log.LoggerManager;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import ubongo.common.networkUtils.FilesClient;
 
 import java.io.*;
@@ -23,7 +23,7 @@ import java.io.*;
 
 public class RequestHandler extends Thread {
 
-    private static Logger logger = LoggerManager.getLogger(RequestHandler.class);
+    private static Logger logger = LogManager.getLogger(RequestHandler.class);
     private String baseDir; // The root directory where the files should be stored
     private String serverAddress; // Address of the program server
     private RabbitData rabbitMessage;

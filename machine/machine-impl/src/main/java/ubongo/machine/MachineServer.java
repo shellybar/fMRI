@@ -5,8 +5,8 @@ import ubongo.common.constants.SystemConstants;
 import ubongo.common.datatypes.MachineStatistics;
 import ubongo.common.datatypes.RabbitData;
 import ubongo.common.datatypes.Task;
-import ubongo.common.log.Logger;
-import ubongo.common.log.LoggerManager;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 
 import com.rabbitmq.client.*;
 
@@ -27,7 +27,7 @@ public class MachineServer {
 
     public static final String ARG_SERVER = "server";
     public static final String ARG_DIR = "basedir";
-    private static Logger logger = LoggerManager.getLogger(MachineServer.class);
+    private static Logger logger = LogManager.getLogger(MachineServer.class);
 
     private List<Task> runningTasks;
     private MachineStatistics machineStatistics;
@@ -81,8 +81,6 @@ public class MachineServer {
         } catch (Exception e){
             logger.error("Failed receiving message via rabbit mq error: " + e.getMessage());
         }
-
-
     }
 
     private void trackMachinePerformance() {
