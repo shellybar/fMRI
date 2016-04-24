@@ -3,15 +3,20 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/common/common.iml" filepath="$PROJECT_DIR$/common/common.iml" />
-      <module fileurl="file://$PROJECT_DIR$/dispatcher/dispatcher.iml" filepath="$PROJECT_DIR$/dispatcher/dispatcher.iml" />
-      <module fileurl="file://$PROJECT_DIR$/dispatcher/dispatcher-api/dispatcher-api.iml" filepath="$PROJECT_DIR$/dispatcher/dispatcher-api/dispatcher-api.iml" />
-      <module fileurl="file://$PROJECT_DIR$/dispatcher/dispatcher-impl/dispatcher-impl.iml" filepath="$PROJECT_DIR$/dispatcher/dispatcher-impl/dispatcher-impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/execution/execution.iml" filepath="$PROJECT_DIR$/execution/execution.iml" />
+      <module fileurl="file://$PROJECT_DIR$/execution/execution-api/execution-api.iml" filepath="$PROJECT_DIR$/execution/execution-api/execution-api.iml" />
+      <module fileurl="file://$PROJECT_DIR$/execution/execution-impl/execution-impl.iml" filepath="$PROJECT_DIR$/execution/execution-impl/execution-impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/fMRI.iml" filepath="$PROJECT_DIR$/fMRI.iml" />
-      <module fileurl="file://$PROJECT_DIR$/integration_tests/integration_tests.iml" filepath="$PROJECT_DIR$/integration_tests/integration_tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/integration-tests/integration-tests.iml" filepath="$PROJECT_DIR$/integration-tests/integration-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/machine/machine.iml" filepath="$PROJECT_DIR$/machine/machine.iml" />
       <module fileurl="file://$PROJECT_DIR$/machine/machine-api/machine-api.iml" filepath="$PROJECT_DIR$/machine/machine-api/machine-api.iml" />
       <module fileurl="file://$PROJECT_DIR$/machine/machine-impl/machine-impl.iml" filepath="$PROJECT_DIR$/machine/machine-impl/machine-impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/persistence/persistence.iml" filepath="$PROJECT_DIR$/persistence/persistence.iml" />
+      <module fileurl="file://$PROJECT_DIR$/persistence/persistence-api/persistence-api.iml" filepath="$PROJECT_DIR$/persistence/persistence-api/persistence-api.iml" />
+      <module fileurl="file://$PROJECT_DIR$/persistence/persistence-impl/persistence-impl.iml" filepath="$PROJECT_DIR$/persistence/persistence-impl/persistence-impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/server/server.iml" filepath="$PROJECT_DIR$/server/server.iml" />
+      <module fileurl="file://$PROJECT_DIR$/server/server-api/server-api.iml" filepath="$PROJECT_DIR$/server/server-api/server-api.iml" />
+      <module fileurl="file://$PROJECT_DIR$/server/server-impl/server-impl.iml" filepath="$PROJECT_DIR$/server/server-impl/server-impl.iml" />
     </modules>
   </component>
 </project>

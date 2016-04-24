@@ -1,21 +1,18 @@
 package ubongo.common.datatypes;
 
-
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 public class Task implements Serializable{
 
-    private int id;
+    private long id;
+    private long flowId; // TODO add to constructor + add getter/setter
     private Unit unit;
     private Machine machine;
     private TaskStatus status;
     private String inputPath;
     private String outputPath;
 
-    public Task(int id, Unit unit, Machine machine, TaskStatus status, String inputPath, String outputPath) {
+    public Task(long id, Unit unit, Machine machine, TaskStatus status, String inputPath, String outputPath) {
         this.id = id;
         this.unit = unit;
         this.machine = machine;
@@ -35,11 +32,11 @@ public class Task implements Serializable{
         return outputPath;
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 

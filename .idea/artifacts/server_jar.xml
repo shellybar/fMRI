@@ -3,12 +3,12 @@
     <output-path>$PROJECT_DIR$/out/artifacts/server_jar</output-path>
     <root id="archive" name="server.jar">
       <element id="directory" name="META-INF">
-        <element id="file-copy" path="$PROJECT_DIR$/server/src/main/resources/META-INF/MANIFEST.MF" />
+        <element id="file-copy" path="$PROJECT_DIR$/server/server-impl/src/main/resources/META-INF/MANIFEST.MF" />
       </element>
       <element id="module-output" name="server" />
       <element id="module-output" name="common" />
-      <element id="module-output" name="dispatcher-api" />
-      <element id="module-output" name="dispatcher-impl" />
+      <element id="module-output" name="execution-api" />
+      <element id="module-output" name="execution-impl" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/apache-log4j-2.4.1-bin/log4j-core-2.4.1.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/powermock-mockito-1.6.2/objenesis-2.1.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/powermock-mockito-1.6.2/cglib-nodep-2.2.2.jar" path-in-jar="/" />

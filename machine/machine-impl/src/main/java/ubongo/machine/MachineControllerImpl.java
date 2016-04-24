@@ -5,7 +5,6 @@ import ubongo.common.datatypes.BaseUnit;
 import ubongo.common.datatypes.MachineStatistics;
 import ubongo.common.datatypes.Task;
 import ubongo.common.datatypes.Unit;
-import ubongo.common.exceptions.ErrorCodes;
 import ubongo.common.log.Logger;
 import ubongo.common.log.LoggerManager;
 import ubongo.common.exceptions.UnmarshalException;

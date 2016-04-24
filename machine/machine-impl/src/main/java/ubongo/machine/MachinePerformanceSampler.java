@@ -1,5 +1,7 @@
 package ubongo.machine;
 
+import org.hyperic.sigar.Sigar;
+import org.hyperic.sigar.SigarException;
 import ubongo.common.datatypes.MachineStatistics;
 import ubongo.common.log.Logger;
 import ubongo.common.log.LoggerManager;

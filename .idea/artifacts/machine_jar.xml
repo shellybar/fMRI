@@ -16,9 +16,9 @@
       <element id="dir-copy" path="$PROJECT_DIR$/lib/hyperic-sigar-1.6.4" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/gson-2.6.1/gson-2.6.1.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/commons-vfs-2.0/commons-vfs2-2.0.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/lib/commons-logging-1.2/commons-logging-1.2.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/jsch-0.1.53/jsch-0.1.53.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/rabbitmq-java-client-bin-3.6.1/rabbitmq-client.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/commons-logging-1.2/commons-logging-1.2.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>

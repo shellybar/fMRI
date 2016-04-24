@@ -3,14 +3,14 @@ package ubongo.common.networkUtils;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
-import ubongo.common.log.Logger;
-import ubongo.common.log.LoggerManager;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 
 public class SSHConnection {
 
-    private static Logger logger = LoggerManager.getLogger(SSHConnection.class);
+    private static Logger logger = LogManager.getLogger(SSHConnection.class);
 
     public static Session establish(SSHConnectionProperties sshProperties) throws JSchException {
         if (sshProperties.getKeyFilePath() != null) {

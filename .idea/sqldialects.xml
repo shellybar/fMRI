@@ -3,9 +3,9 @@
   <component name="SqlDialectMappings">
     <file url="file://$PROJECT_DIR$/common" dialect="MySQL" />
     <file url="file://$PROJECT_DIR$/data" dialect="MySQL" />
-    <file url="file://$PROJECT_DIR$/dispatcher" dialect="MySQL" />
     <file url="file://$PROJECT_DIR$/documentation" dialect="MySQL" />
-    <file url="file://$PROJECT_DIR$/integration_tests" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/execution" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/integration-tests" dialect="MySQL" />
     <file url="file://$PROJECT_DIR$/machine" dialect="MySQL" />
     <file url="file://$PROJECT_DIR$/server" dialect="MySQL" />
   </component>

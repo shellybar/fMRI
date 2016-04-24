@@ -1,10 +1,9 @@
 package ubongo.common.networkUtils;
 
-
 import org.apache.commons.vfs2.provider.sftp.SftpFileSystemConfigBuilder;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import ubongo.common.exceptions.NetworkException;
-import ubongo.common.log.Logger;
-import ubongo.common.log.LoggerManager;
 
 import java.io.*;
 import org.apache.commons.vfs2.VFS;
@@ -15,7 +14,7 @@ import org.apache.commons.vfs2.Selectors;
 
 public class FilesClient {
 
-    private static Logger logger = LoggerManager.getLogger(FilesClient.class);
+    private static Logger logger = LogManager.getLogger(FilesClient.class);
     private String sourceDir;
     private String destDir;
     private String sourceMachine;
@@ -28,8 +27,8 @@ public class FilesClient {
         this.sourceMachine = sourceMachine;
         this.sourceDir = sourceDir;
         this.destDir = destDir;
-        this.user = "shellybar"; // TODO get from conf - create a new user;
-        this.password = "xxx"; // TODO get from conf - create a new user;
+        this.user = "razregev"; // TODO get from conf - create a new user;
+        this.password = ""; // TODO get from conf - create a new user;
         this.sftpUri = "sftp://" + user + ":" + password +  "@" + sourceMachine + sourceDir + "/";
 
         logger.info("FilesClient was initiated. sourceMachine=" + sourceMachine+" sourceDir= "+sourceDir+ " destDir = " +destDir);

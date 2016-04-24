@@ -3,8 +3,8 @@ package ubongo.common.datatypes;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
-import ubongo.common.log.Logger;
-import ubongo.common.log.LoggerManager;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.xml.bind.annotation.*;
 import java.io.Serializable;
@@ -18,7 +18,7 @@ import java.util.Map;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class BaseUnit implements Unit, ExecutableObj, Serializable {
 
-    private static Logger logger = LoggerManager.getLogger(BaseUnit.class);
+    private static Logger logger = LogManager.getLogger(BaseUnit.class);
 
     @XmlAttribute private int id;
     @XmlElement private String inputPath;

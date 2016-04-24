@@ -1,6 +1,5 @@
 package ubongo.machine;
 
-import com.sun.xml.internal.messaging.saaj.soap.Envelope;
 import ubongo.common.constants.MachineConstants;
 import ubongo.common.constants.SystemConstants;
 import ubongo.common.datatypes.MachineStatistics;

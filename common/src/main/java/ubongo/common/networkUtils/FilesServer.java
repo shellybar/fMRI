@@ -1,10 +1,9 @@
 package ubongo.common.networkUtils;
 
-import com.sun.corba.se.impl.orbutil.closure.Constant;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import ubongo.common.constants.SystemConstants;
 import ubongo.common.exceptions.NetworkException;
-import ubongo.common.log.Logger;
-import ubongo.common.log.LoggerManager;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -13,7 +12,7 @@ import java.io.File;
 
 public class FilesServer {
 
-    private static Logger logger = LoggerManager.getLogger(FilesServer.class);
+    private static Logger logger = LogManager.getLogger(FilesServer.class);
     private Socket socket;
     private int connectionPort;
     private String baseDir;
