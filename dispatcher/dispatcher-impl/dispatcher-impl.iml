@@ -38,5 +38,6 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="rabbitmq-client" level="project" />
   </component>
 </module>

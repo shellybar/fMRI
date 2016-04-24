@@ -1,81 +1,72 @@
 package ubongo.common.networkUtils;
 
 
+import org.apache.commons.vfs2.provider.sftp.SftpFileSystemConfigBuilder;
 import ubongo.common.exceptions.NetworkException;
 import ubongo.common.log.Logger;
 import ubongo.common.log.LoggerManager;
 
 import java.io.*;
-import java.net.Socket;
+import org.apache.commons.vfs2.VFS;
+import org.apache.commons.vfs2.FileSystemManager;
+import org.apache.commons.vfs2.FileSystemOptions;
+import org.apache.commons.vfs2.FileObject;
+import org.apache.commons.vfs2.Selectors;
 
 public class FilesClient {
 
     private static Logger logger = LoggerManager.getLogger(FilesClient.class);
-    private Socket socket;
-    private String baseDir;
+    private String sourceDir;
+    private String destDir;
+    private String sourceMachine;
+    private String user;
+    private String password;
+    private String sftpUri;
+    private FileSystemManager fsManager = null;
 
-    public FilesClient(String sourceMachine, int connectionPort, String baseDir) throws NetworkException{
-        this.baseDir = baseDir;
-        try {
-            logger.info("Connecting to socket on machine = [" + sourceMachine + "], on port = [" + connectionPort + "]");
-            this.socket = new Socket(sourceMachine, connectionPort);
-            logger.debug("Socket was initialized successfully");
-        } catch (IOException e) {
-            String errorMsg = "Failed to create socket.\nDetails: " + e.getMessage();
-            logger.error(errorMsg);
-            this.socket = null;
-            throw new NetworkException(errorMsg);
-        }
+    public FilesClient(String sourceMachine, String sourceDir, String destDir) throws NetworkException{
+        this.sourceMachine = sourceMachine;
+        this.sourceDir = sourceDir;
+        this.destDir = destDir;
+        this.user = "shellybar"; // TODO get from conf - create a new user;
+        this.password = "xxx"; // TODO get from conf - create a new user;
+        this.sftpUri = "sftp://" + user + ":" + password +  "@" + sourceMachine + sourceDir + "/";
+
+        logger.info("FilesClient was initiated. sourceMachine=" + sourceMachine+" sourceDir= "+sourceDir+ " destDir = " +destDir);
     }
+
 
     /**
-     * Receives files using socket.
+     * Receives files using SFTP.
      * Used for receiving files from the main files server to the machines, or from a machine to the files server.
-     * @return the number of received files.
      */
-    public int getFilesFromServer(int numFiles) throws IOException{
-        DataInputStream dataInputStream = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
-        for (int i = 0; i < numFiles; i++){
-            try {
-                String filename = dataInputStream.readUTF();
-                long fileSize = dataInputStream.readLong();
-                byte[] byteArray = new byte[(int) fileSize];
-                BufferedOutputStream bufferedOutputStream =
-                        new BufferedOutputStream(new FileOutputStream(new File(baseDir, filename)));
-                logger.debug("Transfer of file [" + filename + "] started...");
-                int currentTotalBytesRead = 0;
-                int bytesRead;
-                do {
-                    bytesRead = dataInputStream.read(byteArray, currentTotalBytesRead,
-                            (byteArray.length - currentTotalBytesRead));
-                    if (bytesRead >= 0) {
-                        currentTotalBytesRead += bytesRead;
-                    }
-                } while (fileSize > 0 && bytesRead > 0);
-                bufferedOutputStream.write(byteArray, 0, currentTotalBytesRead);
-                bufferedOutputStream.flush();
-                bufferedOutputStream.close();
-                logger.info("Received file [" + filename + "]");
-            } catch (EOFException e) {
-                logger.error("Not enough files were sent! Received [" + (i + 1) + "] instead of [" + numFiles + "]");
-                return i;
-            } catch (IOException e) {
-                String errorMsg = "Unexpected error. \nDetails: "+ e.getMessage();
-                logger.error(errorMsg);
-                return i;
+    public void getFilesFromServer() throws NetworkException{
+        try {
+            FileSystemOptions opts = new FileSystemOptions();
+            SftpFileSystemConfigBuilder.getInstance().setUserDirIsRoot(opts, false);
+            fsManager = VFS.getManager();
+
+            // List all the files in that directory.Try to give the directory path
+
+            FileObject localFileObject=fsManager.resolveFile(sftpUri,opts);
+
+            FileObject[] children = localFileObject.getChildren();
+            for ( int i = 0; i < children.length; i++ ){
+                String fileName = children[ i ].getName().getBaseName();
+                System.out.println( fileName );
+                String filepath = destDir + "/" + fileName;
+                File file = new File(filepath);
+                FileObject localFile = fsManager.resolveFile(file.getAbsolutePath(),opts);
+                FileObject remoteFile = fsManager.resolveFile(sftpUri+ "/" + fileName, opts);
+                localFile.copyFrom(remoteFile, Selectors.SELECT_SELF);
+                logger.info("File download successful: " + fileName);
             }
         }
-        closeSocket();
-        return numFiles;
+        catch (Exception ex) {
+            throw new NetworkException(ex.getMessage());
+        }
+        return;
     }
 
-    public void closeSocket(){
-        try {
-            socket.close();
-        } catch (IOException e){
-            String errorMsg = "Failed to close socket.\nDetails: " + e.getMessage();
-            logger.error(errorMsg);
-        }
-    }
 
 }

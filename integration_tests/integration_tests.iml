@@ -12,5 +12,7 @@
     <orderEntry type="module" module-name="dispatcher-api" />
     <orderEntry type="module" module-name="dispatcher-impl" />
     <orderEntry type="module" module-name="server" />
+    <orderEntry type="library" name="log4j-api-2.4.1" level="project" />
+    <orderEntry type="library" name="commons-cli-1.3" level="project" />
   </component>
 </module>

@@ -1,21 +1,23 @@
 package ubongo.machine;
 
+import com.sun.xml.internal.messaging.saaj.soap.Envelope;
 import ubongo.common.constants.MachineConstants;
+import ubongo.common.constants.SystemConstants;
 import ubongo.common.datatypes.MachineStatistics;
+import ubongo.common.datatypes.RabbitData;
 import ubongo.common.datatypes.Task;
 import ubongo.common.log.Logger;
 import ubongo.common.log.LoggerManager;
 
+import com.rabbitmq.client.*;
+
 import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
 import org.apache.commons.cli.*;
 
 /**
@@ -44,32 +46,44 @@ public class MachineServer {
 
         logger.info("Initializing machine-server...");
         MachineServer machineServer = new MachineServer();
-        machineServer.start();
+        // machineServer.start(); // TODO remove comment
+        final String QUEUE_NAME = SystemConstants.UBONGO_RABBIT_QUEUE;
 
-        String serverAddress = MachineConstants.SERVER_FALLBACK;
-        String baseDir = "";
         try {
-            Properties props = parseCommandLineArgs(args);
-            serverAddress = props.getProperty(ARG_SERVER);
-            baseDir = props.getProperty(ARG_DIR);
-        } catch (ParseException e) {
-            logger.error("Failed to parse command line arguments - continuing with default values");
-        }
-        logger.info("Server address: [" + serverAddress + "], base directory path: [" + baseDir + "]");
+            ConnectionFactory factory = new ConnectionFactory();
+            factory.setHost("localhost");
+            Connection connection = factory.newConnection();
+            Channel channel = connection.createChannel();
+            channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+            System.out.println(" [*] Waiting for messages. To exit press CTRL+C");
 
-        try (ServerSocket serverSocket = new ServerSocket(MachineConstants.MACHINE_LISTENING_PORT)) {
-            logger.debug("Initialized new socket on port: [" + MachineConstants.MACHINE_LISTENING_PORT + "]");
-            logger.info("Listening on port: " + MachineConstants.MACHINE_LISTENING_PORT);
-            while (true) {
-                Socket clientSocket = serverSocket.accept();
-                logger.debug("Accepted a new socket");
-                RequestHandler requestHandler = new RequestHandler(clientSocket, serverAddress, baseDir);
-                logger.debug("Starting RequestHandler thread...");
-                requestHandler.start();
-            }
-        } catch (IOException | IllegalArgumentException e) {
-            logger.error("Machine server exception: " + e.getMessage());
+            Consumer consumer = new DefaultConsumer(channel) {
+                @Override
+                public void handleDelivery(String consumerTag, com.rabbitmq.client.Envelope envelope, AMQP.BasicProperties properties, byte[] body)
+                        throws IOException {
+                    String serverAddress = MachineConstants.SERVER_FALLBACK;
+                    try {
+                        RabbitData message = RabbitData.fromBytes(body);
+                        System.out.println(" [x] Received '" + message.getMessage() + "'");
+                        String baseDir = "";
+                        Properties props = parseCommandLineArgs(args);
+                        baseDir = props.getProperty(ARG_DIR);
+                        serverAddress = props.getProperty(ARG_SERVER);
+                        logger.info("Server address: [" + serverAddress + "], base directory path: [" + baseDir + "]");
+                        RequestHandler requestHandler = new RequestHandler(message, serverAddress, baseDir);
+                        logger.debug("Starting RequestHandler thread...");
+                        requestHandler.start();
+                    } catch (Exception e){
+                        throw new IOException(e);
+                    }
+                }
+            };
+            channel.basicConsume(QUEUE_NAME, true, consumer);
+        } catch (Exception e){
+            logger.error("Failed receiving message via rabbit mq error: " + e.getMessage());
         }
+
+
     }
 
     private void trackMachinePerformance() {

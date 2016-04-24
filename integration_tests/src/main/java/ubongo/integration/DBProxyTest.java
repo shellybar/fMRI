@@ -2,7 +2,6 @@ package ubongo.integration;
 
 import ubongo.common.constants.SystemConstants;
 import ubongo.common.datatypes.Task;
-import ubongo.common.datatypes.TaskImpl;
 import ubongo.common.datatypes.TaskStatus;
 import ubongo.common.datatypes.Unit;
 import ubongo.common.exceptions.DispatcherException;
@@ -41,7 +40,7 @@ public class DBProxyTest {
     }
 
     public static void addTaskTest() throws DispatcherException {
-        Task task = new TaskImpl();
+        Task task = new Task();
         Unit unit = unitFetcher.getUnit(1);
         unit.setParameterValues("{\"srcFile\":\"source_path\", \"destFile\":\"destination_path\"}");
         task.setUnit(unit);

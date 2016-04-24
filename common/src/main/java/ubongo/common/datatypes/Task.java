@@ -1,40 +1,70 @@
 package ubongo.common.datatypes;
 
-/**
- * A task encapsulates all the information to run a unit on a machine
- * and return a response once the execution has completed.
- */
-public interface Task {
 
-    /**
-     * @return a unique task ID as it is saved in the DB.
-     */
-    int getId();
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 
-    void setId(int id);
+public class Task implements Serializable{
 
-    /**
-     * @return the unit that is required to run in this task.
-     */
-    Unit getUnit();
+    private int id;
+    private Unit unit;
+    private Machine machine;
+    private TaskStatus status;
+    private String inputPath;
+    private String outputPath;
 
-    void setUnit(Unit unit);
+    public Task(int id, Unit unit, Machine machine, TaskStatus status, String inputPath, String outputPath) {
+        this.id = id;
+        this.unit = unit;
+        this.machine = machine;
+        this.status = status;
+        this.inputPath = inputPath;
+        this.outputPath = outputPath;
+    }
 
-    /**
-     * @return the machine on which to run the unit.
-     */
-    Machine getMachine();
+    public Task() {
+    }
 
-    void setMachine(Machine machine);
+    public String getInputPath() {
+        return inputPath;
+    }
 
-    TaskStatus getStatus();
+    public String getOutputPath() {
+        return outputPath;
+    }
 
-    void setStatus(TaskStatus status);
+    public int getId() {
+        return id;
+    }
 
-    String getInputPath();
+    public void setId(int id) {
+        this.id = id;
+    }
 
-    String getOutputPath();
+    public Unit getUnit() {
+        return unit;
+    }
 
-    int getNetworkPort();
+    public void setUnit(Unit unit) {
+        this.unit = unit;
+    }
+
+    public Machine getMachine() {
+        return machine;
+    }
+
+    public void setMachine(Machine machine) {
+        this.machine = machine;
+    }
+
+    public TaskStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(TaskStatus status) {
+        this.status = status;
+    }
 
 }
