@@ -30,5 +30,6 @@
     </orderEntry>
     <orderEntry type="library" name="log4j-api-2.4.1" level="project" />
     <orderEntry type="library" name="log4j-core-2.4.1" level="project" />
+    <orderEntry type="library" name="commons-io-2.5" level="project" />
   </component>
 </module>

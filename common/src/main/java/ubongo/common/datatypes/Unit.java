@@ -33,4 +33,8 @@ public interface Unit {
 
     void setInputPath(String inputPath);
 
+    static String getUnitFileName(long unitId, String suffix) {
+        String pattern = "unit_%03d" + suffix;
+        return String.format(pattern, unitId);
+    }
 }

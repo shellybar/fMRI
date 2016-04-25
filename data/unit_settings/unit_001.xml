@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--<!DOCTYPE unit SYSTEM "unit.dtd">-->
 
-<unit id="1">
-    <description>Reads a file and writes the same file to a new location</description>
-    <parameters>
-        <file-parameter>
-            <name>srcFile</name>
-            <display>Source file path</display>
-        </file-parameter>
-        <file-parameter>
-            <name>destFile</name>
-            <display>Destination file path</display>
-        </file-parameter>
+<unit id="1"> <!-- supply a unique integer id, which will also appear in the name of the file (we expect a number between 0 and 999 but this can be changed) -->
+    <name>RecreateDCMFilesToMatchBV</name>
+    <description>Renames the DCM files received from the magnet to match BrainVoyager needs</description>
+    <input-files>/specific/a/home/cc/students/csguests/shellybar/fmri/fMRIPiplineSystem/Experiments/{study}/{subject}/Series20141018_122514/(.*).dcm</input-files>
+    <output-dir>/specific/a/home/cc/students/csguests/shellybar/fmri/fMRIPiplineSystem/Experiments/{study}/{subject}/{anatomy}/rawDCMs/</output-dir>
+    <parameters> <!-- parameters that go in the script - anything other than the input/output files -->
+        <string-parameter>
+            <name>{subject}</name>
+            <display>subject name</display>
+            <default></default>
+        </string-parameter>
     </parameters>
 </unit>

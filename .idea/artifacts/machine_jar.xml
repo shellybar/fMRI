@@ -19,6 +19,7 @@
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/jsch-0.1.53/jsch-0.1.53.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/rabbitmq-java-client-bin-3.6.1/rabbitmq-client.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/commons-logging-1.2/commons-logging-1.2.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/commons-io-2.5/commons-io-2.5.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>

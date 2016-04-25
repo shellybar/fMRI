@@ -28,7 +28,8 @@ import org.apache.commons.cli.*;
 public class MachineServer {
 
     public static final String ARG_SERVER = "server";
-    public static final String ARG_DIR = "basedir";
+    public static final String ARG_DIR = "base_dir";
+    public static final String ARG_UNITS = "units_dir";
     private static Logger logger = LogManager.getLogger(MachineServer.class);
 
     private List<Task> runningTasks;
@@ -71,16 +72,15 @@ public class MachineServer {
             @Override
             public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body)
                     throws IOException {
-
                 try {
                     RabbitData message = RabbitData.fromBytes(body);
                     System.out.println(" ["+actionSign+"] Received '" + message.getMessage() + "'");
-                    String baseDir = "";
                     Properties props = parseCommandLineArgs(args);
-                    baseDir = props.getProperty(ARG_DIR);
+                    String baseDir = props.getProperty(ARG_DIR);
+                    String unitsDir = props.getProperty(ARG_UNITS);
                     serverAddress = props.getProperty(ARG_SERVER);
                     logger.info("Server address: [" + serverAddress + "], base directory path: [" + baseDir + "]");
-                    RequestHandler requestHandler = new RequestHandler(message, serverAddress, baseDir);
+                    RequestHandler requestHandler = new RequestHandler(message, serverAddress, baseDir, unitsDir);
                     logger.debug("Starting RequestHandler thread...");
                     requestHandler.start();
                 } catch (Exception e){
@@ -102,12 +102,16 @@ public class MachineServer {
         Options options = new Options();
         options.addOption(buildOption("Server Address", "The IP or host name of the server", ARG_SERVER));
         options.addOption(buildOption("Base Directory", "The path to the directory where files will be stored", ARG_DIR));
+        options.addOption(buildOption("Units Directory", "The path to the directory where unit scripts will be stored, relative to "+ARG_DIR, ARG_UNITS));
+
         CommandLineParser parser = new DefaultParser();
         CommandLine line = parser.parse(options, args);
 
         Properties result = new Properties();
         result.setProperty(ARG_SERVER, line.getOptionValue(ARG_SERVER, MachineConstants.SERVER_FALLBACK));
         result.setProperty(ARG_DIR, line.getOptionValue(ARG_DIR, ""));
+        result.setProperty(ARG_UNITS, line.getOptionValue(ARG_UNITS, "Bash"));
+
         return result;
     }
 

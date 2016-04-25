@@ -2,7 +2,8 @@ package ubongo.machine;
 
 import ubongo.common.datatypes.MachineStatistics;
 import ubongo.common.datatypes.Task;
-import ubongo.common.datatypes.Unit;
+
+import java.nio.file.Path;
 
 /**
  * MachineController is run on each machine and manages the units running on it.
@@ -24,7 +25,9 @@ public interface MachineController {
      * A response regarding the completion of the unit's operation will be returned.
      * @param task is the task for which the running request was sent.
      *             It includes all the settings the specific unit may require to run.
+     * @param unitsDir is the directory where the unit files are stored on the machine
+     * @return true iff run ended successfully
      */
-    void run(Task task);
+    boolean run(Task task, Path unitsDir);
 
 }
