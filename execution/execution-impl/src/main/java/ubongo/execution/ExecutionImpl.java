@@ -4,6 +4,7 @@ import ubongo.common.datatypes.Machine;
 import ubongo.common.datatypes.Task;
 import ubongo.execution.exceptions.QueueManagementException;
 import ubongo.persistence.Persistence;
+import ubongo.persistence.PersistenceException;
 
 import java.util.List;
 
@@ -39,7 +40,11 @@ public class ExecutionImpl implements Execution {
 
     @Override
     public void runFlow(int flowId) {
-        persistence.startFlow(flowId);
+        try {
+            persistence.startFlow(flowId);
+        } catch (PersistenceException e) {
+            // TODO handle PersistenceException in runFlow
+        }
     }
 
     @Override

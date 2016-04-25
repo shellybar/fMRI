@@ -19,7 +19,7 @@ CREATE TABLE units (
 
 # flows table
 CREATE TABLE flows (
-  flow_id INT UNSIGNED NOT NULL,
+  flow_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   study_name VARCHAR(50) NOT NULL,
   insertion_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (flow_id),
@@ -36,6 +36,8 @@ CREATE TABLE tasks (
   serial_in_flow INT UNSIGNED NOT NULL,
   unit_id INT UNSIGNED NOT NULL,
   unit_params BLOB NULL,
+  subject VARCHAR(50) NULL,
+  run VARCHAR(50) NULL,
   machine_id INT UNSIGNED NULL,
   insertion_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   execution_time TIMESTAMP NULL,

@@ -18,7 +18,11 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * This class manages the communication with the DB to separate
@@ -33,6 +37,7 @@ public class DBProxy {
     private Session sshSession;
     private SSHConnectionProperties sshProperties;
     private boolean useSSH;
+    private Map<Integer, Machine> machines;
     private Connection connection;
     private DBConnectionProperties dbProperties;
     private int localPort;
@@ -40,29 +45,33 @@ public class DBProxy {
 
     private boolean debug = false;
 
-    public DBProxy(UnitFetcher unitFetcher, DBConnectionProperties dbConnectionProperties) {
-        this(unitFetcher, dbConnectionProperties, false);
+    public DBProxy(UnitFetcher unitFetcher,
+                   DBConnectionProperties dbConnectionProperties, List<Machine> machines) {
+        this(unitFetcher, dbConnectionProperties, machines, false);
     }
 
-    public DBProxy(UnitFetcher unitFetcher, DBConnectionProperties dbConnectionProperties, boolean debug) {
-        dbProperties = dbConnectionProperties;
+    public DBProxy(UnitFetcher unitFetcher, DBConnectionProperties dbConnectionProperties,
+                   List<Machine> machines, boolean debug) {
+        this.dbProperties = dbConnectionProperties;
         this.unitFetcher = unitFetcher;
-        useSSH = false;
+        this.machines = machines == null ? new HashMap<>() : machines.stream()
+                .collect(Collectors.toMap(Machine::getId, Function.identity()));
+        this.useSSH = false;
         this.debug = debug;
     }
 
     public DBProxy(UnitFetcher unitFetcher, DBConnectionProperties dbConnectionProperties,
-                   SSHConnectionProperties sshConnectionProperties) {
-        this(unitFetcher, dbConnectionProperties);
-        sshProperties = sshConnectionProperties;
-        useSSH = true;
+                   SSHConnectionProperties sshConnectionProperties, List<Machine> machines) {
+        this(unitFetcher, dbConnectionProperties, machines);
+        this.sshProperties = sshConnectionProperties;
+        this.useSSH = true;
     }
 
     // For debugging and tests
     public DBProxy(UnitFetcher unitFetcher, DBConnectionProperties dbConnectionProperties,
                    SSHConnectionProperties sshConnectionProperties,
-                   boolean debug) {
-        this(unitFetcher, dbConnectionProperties, sshConnectionProperties);
+                   List<Machine> machines, boolean debug) {
+        this(unitFetcher, dbConnectionProperties, sshConnectionProperties, machines);
         this.debug = debug;
     }
 
@@ -82,7 +91,7 @@ public class DBProxy {
                 } catch (JSchException e) {
                     String errorMsg = "Failed to establish SSH connection to the database";
                     logger.error(errorMsg);
-                    throw new DBProxyException(errorMsg);
+                    throw new DBProxyException(errorMsg, e);
                 }
             }
             if (connection == null || connection.isClosed()) {
@@ -94,9 +103,10 @@ public class DBProxy {
                 } catch (SQLException e) {
                     String errorMsg = String.format("Failed to connect to the database (url: %s; user: %s)", getUrl(), getUser());
                     logSqlException(e, errorMsg);
-                    throw new DBProxyException(errorMsg);
+                    throw new DBProxyException(errorMsg, e);
                 } catch (ClassNotFoundException e) {
-                    throw new DBProxyException("Database connection cannot be established. MySQL JDBC driver class (" + driver + ") was not found");
+                    throw new DBProxyException("Database connection cannot be established. " +
+                            "MySQL JDBC driver class (" + driver + ") was not found", e);
                 }
                 logger.info("Connected to DB at " + getUrl());
             }
@@ -104,7 +114,7 @@ public class DBProxy {
             String errorMsg =
                     String.format("Failed to connect to the database (url: %s; user: %s).", getUrl(), getUser());
             logSqlException(e, errorMsg);
-            throw new DBProxyException(errorMsg);
+            throw new DBProxyException(errorMsg, e);
         }
     }
 
@@ -128,7 +138,7 @@ public class DBProxy {
             String errorMsg =
                     String.format("Failed to disconnect from the database (url: %s; user: %s).", getUrl(), getUser());
             logSqlException(e, errorMsg);
-            throw new DBProxyException(errorMsg);
+            throw new DBProxyException(errorMsg, e);
         }
     }
 
@@ -170,72 +180,8 @@ public class DBProxy {
             String errorMsg = "Failed to update task's status in DB (taskId="
                     + task.getId() + ", newStatus=" + task.getStatus() + ")";
             logSqlException(e, errorMsg);
-            throw new DBProxyException(errorMsg);
+            throw new DBProxyException(errorMsg, e);
         }
-    }
-
-    /**
-     * @throws DBProxyException if query fails or if there is no task with the given id in the DB
-     */
-    // TODO
-    public Task getTask(int id) throws DBProxyException {
-        connect();
-        Task task;
-        String tableName = getTableName(DBConstants.TASKS_TABLE_NAME);
-        try {
-            String sql = Queries.getQuery("get_task_by_id").replace("$tasksTable", tableName);
-            PreparedStatement statement = connection.prepareStatement(sql);
-            statement.setInt(1, id);
-            ResultSet resultSet = executeQuery(statement);
-            if (!resultSet.next()) {
-                throw new DBProxyException("No task with id=" + id + "exists in DB");
-            }
-            task = new Task();
-            task.setStatus(TaskStatus.valueOf(resultSet.getString(DBConstants.TASKS_TASK_STATUS).toUpperCase()));
-            task.setId(resultSet.getInt(DBConstants.TASKS_TASK_ID));
-            task.setMachine(null); // TODO
-            Unit unit = unitFetcher.getUnit(resultSet.getInt(DBConstants.TASKS_UNIT_ID));
-            unit.setParameterValues(resultSet.getString(DBConstants.TASKS_UNIT_PARAMS));
-            task.setUnit(unit);
-        } catch (SQLException e) {
-            String errorMsg = "Failed to get task from DB by id (" + id + ")";
-            logSqlException(e, errorMsg);
-            throw new DBProxyException(errorMsg);
-        } catch (UnitFetcherException e) {
-            // TODO DispatcherImpl.notifyFatal(e); // TODO what now?
-            return null;
-        }
-        return task;
-    }
-
-    // TODO
-    public List<Task> getNewTasks() throws DBProxyException, UnitFetcherException {
-        connect();
-        List<Task> tasks = new ArrayList<>();
-        String tableName = getTableName(DBConstants.TASKS_TABLE_NAME);
-        try {
-            String sql = Queries.getQuery("get_new_tasks").replace("$tasksTable", tableName);
-            PreparedStatement statement = connection.prepareStatement(sql);
-            ResultSet resultSet = executeQuery(statement);
-            while (resultSet.next()) {
-                Task task = new Task();
-                task.setStatus(TaskStatus.NEW);
-                task.setId(resultSet.getInt(DBConstants.TASKS_TASK_ID));
-                Unit unit = unitFetcher.getUnit(resultSet.getInt(DBConstants.TASKS_UNIT_ID));
-                unit.setParameterValues(resultSet.getString(DBConstants.TASKS_UNIT_PARAMS));
-                task.setUnit(unit);
-                task.setId(resultSet.getInt(DBConstants.TASKS_TASK_ID));
-                tasks.add(task);
-            }
-        } catch (SQLException e) {
-            String errorMsg = "Failed to retrieve new tasks from DB";
-            logSqlException(e, errorMsg);
-            throw new DBProxyException(errorMsg);
-        } catch (JsonParseException e) {
-            // TODO DispatcherImpl.notifyFatal(e); // TODO what now?
-            return new ArrayList<>(); // return empty task list
-        }
-        return tasks;
     }
 
     public void createAnalysis(String analysisName, List<Unit> units) {
@@ -263,69 +209,134 @@ public class DBProxy {
             PreparedStatement statement =
                     connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             statement.setString(1, studyName);
-            int numRowsAdded = executeUpdate(statement);
-            if (numRowsAdded != tasks.size() + 1) {
-                // TODO what happens if not all rows were created?
-                System.out.println("Updated " + numRowsAdded + " rows. Expected: " + (tasks.size() + 1));
-            }
+            executeUpdate(statement);
             ResultSet results = statement.getGeneratedKeys();
             results.next();
-            int flowId = results.getInt(1); // TODO test it returns the flowId
-            return flowId;
+            return results.getInt(1);
         } catch (SQLException e) {
             String errorMsg = "Failed to add tasks to DB";
             logSqlException(e, errorMsg);
-            throw new DBProxyException(errorMsg);
+            throw new DBProxyException(errorMsg, e);
         }
     }
 
-    public void startFlow(int flowId) {
-        // TODO
-
+    public void startFlow(int flowId) throws DBProxyException {
+        connect();
+        String tasksTableName = getTableName(DBConstants.TASKS_TABLE_NAME);
+        try {
+            String sql = Queries.getQuery("start_flow")
+                    .replace("$tasksTable", tasksTableName);
+            PreparedStatement statement =
+                    connection.prepareStatement(sql);
+            statement.setInt(1, flowId);
+            executeUpdate(statement);
+        } catch (SQLException e) {
+            String errorMsg = "Failed to start flow in DB";
+            logSqlException(e, errorMsg);
+            throw new DBProxyException(errorMsg, e);
+        }
     }
 
     public void cancelFlow(int flowId) {
         // TODO
     }
 
-    public List<Task> getTasks(int flowId) {
-        // TODO
-        return null;
-    }
-
     public void cancelTask(Task task) {
         // TODO
     }
 
+    public Task getTask(int id) throws DBProxyException {
+        List<Task> tasks = getTasks(DBConstants.QUERY_GET_TASK_BY_ID, id);
+        if (tasks.size() == 0) {
+            throw new DBProxyException("No task in the DB match the given id (" + id + ")");
+        }
+        return tasks.get(0);
+    }
 
+    public List<Task> getNewTasks() throws DBProxyException {
+        return getTasks(DBConstants.QUERY_GET_NEW_TASKS);
+    }
 
+    public List<Task> getTasks(int flowId) throws DBProxyException {
+        return getTasks(DBConstants.QUERY_GET_FLOW_TASKS, flowId);
+    }
 
+    private List<Task> getTasks(String queryName) throws DBProxyException {
+        return getTasks(queryName, 0);
+    }
 
+    private List<Task> getTasks(String queryName, int id) throws DBProxyException {
+        connect();
+        List<Task> tasks = new ArrayList<>();
+        String tableName = getTableName(DBConstants.TASKS_TABLE_NAME);
+        String flowsTableName = getTableName(DBConstants.FLOWS_TABLE_NAME);
+        String errorMsg = "Failed to retrieve tasks from DB";
+        try {
+            String sql = Queries.getQuery(queryName)
+                    .replace("$flowsTable", flowsTableName)
+                    .replace("$tasksTable", tableName);
+            PreparedStatement statement = connection.prepareStatement(sql);
+            if (queryName.equals(DBConstants.QUERY_GET_FLOW_TASKS) ||
+                    queryName.equals(DBConstants.QUERY_GET_TASK_BY_ID)) {
+                statement.setInt(1, id);
+            }
+            ResultSet resultSet = executeQuery(statement);
+            while (resultSet.next()) {
+                tasks.add(taskFromResultSet(resultSet));
+            }
+        } catch (SQLException e) {
+            logSqlException(e, errorMsg);
+            throw new DBProxyException(errorMsg, e);
+        } catch (JsonParseException | UnitFetcherException e) {
+            throw new DBProxyException(errorMsg, e);
+        }
+        return tasks;
+    }
 
+    private Task taskFromResultSet(ResultSet resultSet) throws SQLException, UnitFetcherException {
+        Unit unit = unitFetcher.getUnit(resultSet.getInt(DBConstants.TASKS_UNIT_ID));
+        unit.setParameterValues(resultSet.getString(DBConstants.TASKS_UNIT_PARAMS));
+        int machineId = resultSet.getInt(DBConstants.TASKS_MACHINE_ID);
+        Context context = new Context(
+                resultSet.getString(DBConstants.TASKS_STUDY),
+                resultSet.getString(DBConstants.TASKS_SUBJECT),
+                resultSet.getString(DBConstants.TASKS_RUN)
+        );
 
-
-
-
-
-
-
-
-
-
-
+        return new Task(
+                resultSet.getInt(DBConstants.TASKS_TASK_ID),
+                resultSet.getInt(DBConstants.TASKS_FLOW_ID),
+                resultSet.getInt(DBConstants.TASKS_SERIAL_NUM),
+                unit,
+                machineId == 0 ? null : machines.get(machineId),
+                TaskStatus.valueOf(resultSet.getString(DBConstants.TASKS_TASK_STATUS).toUpperCase()),
+                context
+        );
+    }
 
     private String getTasksAsValueList(List<Task> tasks) {
-        // (status, flow_id, serial_in_flow, unit_id, unit_params, machine_id)
+        // (status, flow_id, serial_in_flow, unit_id, unit_params, subject, run, machine_id)
         List<String> valuesList = new ArrayList<>();
         for (Task task : tasks) {
             Unit unit = task.getUnit();
             Machine machine = task.getMachine();
+
+            // context
+            String subject = "NULL";
+            String run = "NULL";
+            Context context = task.getContext();
+            if (context != null) {
+                if (context.getSubject() != null) subject = "'" + context.getSubject() + "'";
+                if (context.getRun() != null) run = "'" + context.getRun() + "'";
+            }
+
             // we insert a flow to the DB before inserting tasks so LAST_INSERT_ID() returns the flowId
             valuesList.add(concatStrings(
                     "('", getStatusString(task.getStatus()), "', LAST_INSERT_ID(), ",
                     Integer.toString(task.getSerialNumber()), ", ",
                     ((unit == null)?"NULL":Integer.toString(unit.getId())), ", ",
                     ((unit == null)?"NULL": "'" + getParametersJsonString(unit) + "'"), ", ",
+                    subject, ", ", run, ", ",
                     ((machine == null)?"NULL": "'" + machine.getId() + "'"), ")"
             ));
         }
@@ -370,6 +381,7 @@ public class DBProxy {
         } else {
             url = "jdbc:mysql://" + dbProperties.getHost() + ":" + dbProperties.getPort() + "/" + dbProperties.getSchema();
         }
+        url += "?allowMultiQueries=true";
         return url;
     }
 
@@ -396,9 +408,9 @@ public class DBProxy {
 
     private void logSqlException(SQLException e, String errorMsg) {
         logger.error(errorMsg +
-                "\nSQLException: " + e.getMessage() +
-                "\nSQLState: " + e.getSQLState() +
-                "\nVendorError: " + e.getErrorCode());
+                "\n\tSQLException: " + e.getMessage() +
+                "\n\tSQLState: " + e.getSQLState() +
+                "\n\tVendorError: " + e.getErrorCode());
     }
 
     private ResultSet executeQuery(PreparedStatement statement) throws SQLException {
@@ -416,7 +428,7 @@ public class DBProxy {
     }
 
     private String getTableName(String baseTableName) {
-        return (!debug)?"":DBConstants.DEBUG_PREFIX + baseTableName;
+        return ((!debug)?"":DBConstants.DEBUG_PREFIX) + baseTableName;
     }
 
 }

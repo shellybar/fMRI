@@ -27,7 +27,8 @@ public class AnalysesServerImpl implements AnalysesServer {
 
     private AnalysesServerImpl(Configuration configuration, String unitSettingsDirPath) {
         persistence = new PersistenceImpl(unitSettingsDirPath,
-                configuration.getDbConnectionProperties(), configuration.getSshConnectionProperties());
+                configuration.getDbConnectionProperties(), configuration.getSshConnectionProperties(),
+                configuration.getMachines());
         execution = new ExecutionImpl(persistence, configuration.getMachines());
     }
 

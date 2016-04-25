@@ -29,7 +29,7 @@ public class PersistenceTest {
         String configPath = System.getProperty(CONFIG_PATH);
         String unitsDirPath = System.getProperty(UNITS_DIR_PATH);
         assert(configPath != null && unitsDirPath != null);
-        Configuration configuration = Configuration.loadConfiguration(CONFIG_PATH);
+        Configuration configuration = Configuration.loadConfiguration(configPath);
         persistence = new PersistenceImpl(unitsDirPath, configuration.getDbConnectionProperties(),
                 configuration.getSshConnectionProperties(), false); // TODO change to true for debug!
         persistence.start();
@@ -43,16 +43,18 @@ public class PersistenceTest {
     public static void createFlow() throws PersistenceException {
 
         Unit unit = persistence.getUnit(1);
-        unit.setParameterValues("{\"srcFile\":\"source_path\", \"destFile\":\"destination_path\"}"); // TODO
+        unit.setParameterValues("{\"srcFile\":\"source_path\", \"destFile\":\"destination_path\"}");
 
-        Task task = new Task(0, 0, 0, unit, null,
-                TaskStatus.CREATED, "input_path", "output_path");
+        Task task1 = new Task(0, 0, 0, unit, null,
+                TaskStatus.CREATED, "input_path1", "output_path1");
+        Task task2 = new Task(0, 0, 0, unit, null,
+                TaskStatus.NEW, "input_path2", "output_path2");
         List<Task> tasks = new ArrayList<>();
-        tasks.add(task);
+        tasks.add(task1);
+        tasks.add(task2);
 
-        persistence.createFlow("study1", tasks);
-        persistence.getNewTasks();
-
+        int flowId = persistence.createFlow("study5", tasks); // TODO generate random
+        persistence.startFlow(flowId);
         List<Task> returnedTasks = persistence.getNewTasks();
         Task retrievedTask = returnedTasks.get(0);
         assert(retrievedTask.getUnit().getId() == unit.getId()); // TODO assert more things

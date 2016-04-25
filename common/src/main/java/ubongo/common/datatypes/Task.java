@@ -10,29 +10,34 @@ public class Task implements Serializable{
     private Unit unit;
     private Machine machine;
     private TaskStatus status;
+    private Context context;
     private String inputPath;
     private String outputPath;
 
     public Task(int id, int flowId, int serialNumber, Unit unit, Machine machine,
-                TaskStatus status, String inputPath, String outputPath) {
+                TaskStatus status, Context context) {
         this.id = id;
         this.flowId = flowId;
         this.serialNumber = serialNumber;
         this.unit = unit;
         this.machine = machine;
         this.status = status;
-        this.inputPath = inputPath;
-        this.outputPath = outputPath;
+        this.setContext(context);
     }
 
-    public Task() {
-    }
+    public Task() {}
 
     public String getInputPath() {
+        if (inputPath == null) {
+            // TODO compute from context params (subject, run...)
+        }
         return inputPath;
     }
 
     public String getOutputPath() {
+        if (outputPath == null) {
+            // TODO compute from context params (subject, run...)
+        }
         return outputPath;
     }
 
@@ -82,5 +87,13 @@ public class Task implements Serializable{
 
     public void setSerialNumber(int serialNumber) {
         this.serialNumber = serialNumber;
+    }
+
+    public Context getContext() {
+        return context;
+    }
+
+    public void setContext(Context context) {
+        this.context = context;
     }
 }

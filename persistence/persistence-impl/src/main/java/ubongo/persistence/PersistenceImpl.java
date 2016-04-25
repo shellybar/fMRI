@@ -1,10 +1,12 @@
 package ubongo.persistence;
 
+import ubongo.common.datatypes.Machine;
 import ubongo.common.datatypes.Task;
 import ubongo.common.datatypes.Unit;
 import ubongo.common.networkUtils.SSHConnectionProperties;
 import ubongo.persistence.db.DBConnectionProperties;
 import ubongo.persistence.db.DBProxy;
+import ubongo.persistence.exceptions.DBProxyException;
 
 import java.util.List;
 
@@ -14,23 +16,24 @@ public class PersistenceImpl implements Persistence {
     UnitFetcher unitFetcher;
 
     public PersistenceImpl(String unitSettingsDirPath, DBConnectionProperties dbConnectionProperties,
-                    SSHConnectionProperties sshConnectionProperties) {
-        this(unitSettingsDirPath, dbConnectionProperties, sshConnectionProperties, false);
+                    SSHConnectionProperties sshConnectionProperties, List<Machine> machines) {
+        this(unitSettingsDirPath, dbConnectionProperties, sshConnectionProperties, machines, false);
     }
 
-    public PersistenceImpl(String unitSettingsDirPath, DBConnectionProperties dbConnectionProperties) {
-        this(unitSettingsDirPath, dbConnectionProperties, null, false);
+    public PersistenceImpl(String unitSettingsDirPath,
+                           DBConnectionProperties dbConnectionProperties, List<Machine> machines) {
+        this(unitSettingsDirPath, dbConnectionProperties, null, machines, false);
     }
 
     public PersistenceImpl(String unitSettingsDirPath, DBConnectionProperties dbConnectionProperties,
-                    SSHConnectionProperties sshConnectionProperties, boolean debug) {
+                           SSHConnectionProperties sshConnectionProperties, List<Machine> machines, boolean debug) {
         unitFetcher = new UnitFetcher(unitSettingsDirPath);
 
         // Database
         if (sshConnectionProperties != null) {
-            dbProxy = new DBProxy(unitFetcher, dbConnectionProperties, sshConnectionProperties, debug);
+            dbProxy = new DBProxy(unitFetcher, dbConnectionProperties, sshConnectionProperties, machines, debug);
         } else {
-            dbProxy = new DBProxy(unitFetcher, dbConnectionProperties, debug);
+            dbProxy = new DBProxy(unitFetcher, dbConnectionProperties, machines, debug);
         }
     }
 
@@ -51,12 +54,12 @@ public class PersistenceImpl implements Persistence {
 
     @Override
     public int createFlow(String studyName, List<Task> tasks) throws PersistenceException {
-        return 0; // TODO call dbProxy
+        return dbProxy.createFlow(studyName, tasks);
     }
 
     @Override
-    public void startFlow(int flowId) {
-        // TODO call dbProxy - update tasks linked to flow - turn to status NEW (status on insert would be CREATED)
+    public void startFlow(int flowId) throws PersistenceException {
+        dbProxy.startFlow(flowId);
     }
 
     @Override

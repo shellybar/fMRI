@@ -28,7 +28,7 @@ public interface Persistence {
      */
     int createFlow(String studyName, List<Task> tasks) throws PersistenceException;
 
-    void startFlow(int flowId);
+    void startFlow(int flowId) throws PersistenceException;
 
     void cancelFlow(int flowId);
 
