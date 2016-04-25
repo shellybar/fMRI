@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<ssh-connection>
-    <host>nova.cs.tau.ac.il</host>
-    <port>22</port>
-    <user>university_user</user>
-    <keyFilePath>path_to_rsa_private_key</keyFilePath>
-</ssh-connection>

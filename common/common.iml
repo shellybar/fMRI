@@ -16,6 +16,7 @@
     <orderEntry type="library" name="commons-vfs2-2.0" level="project" />
     <orderEntry type="library" name="commons-logging-1.2" level="project" />
     <orderEntry type="library" name="rabbitmq-client" level="project" />
+    <orderEntry type="library" name="log4j-core-2.4.1" level="project" />
     <orderEntry type="library" name="commons-io-2.5" level="project" />
   </component>
 </module>

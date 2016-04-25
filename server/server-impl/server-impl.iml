@@ -21,5 +21,6 @@
     <orderEntry type="module" module-name="persistence-api" />
     <orderEntry type="module" module-name="persistence-impl" />
     <orderEntry type="library" name="log4j-api-2.4.1" level="project" />
+    <orderEntry type="library" name="log4j-core-2.4.1" level="project" />
   </component>
 </module>
