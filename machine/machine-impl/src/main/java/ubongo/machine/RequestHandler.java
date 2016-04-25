@@ -3,6 +3,7 @@ package ubongo.machine;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
+import org.apache.commons.io.FileUtils;
 import ubongo.common.constants.MachineConstants;
 import ubongo.common.constants.SystemConstants;
 import ubongo.common.datatypes.RabbitData;
@@ -11,9 +12,10 @@ import ubongo.common.datatypes.TaskStatus;
 import ubongo.common.exceptions.NetworkException;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import ubongo.common.networkUtils.FilesClient;
+import ubongo.common.networkUtils.SftpManager;
 
 import java.io.*;
+import java.nio.file.Paths;
 
 /**
  * RequestHandler is called by the MachineServer when a new request arrives.
@@ -24,12 +26,14 @@ public class RequestHandler extends Thread {
 
     private static Logger logger = LogManager.getLogger(RequestHandler.class);
     private String baseDir; // The root directory where the files should be stored
+    private String unitsDir; // The directory where the units should be stored, related to the base dir
     private String serverAddress; // Address of the program server
     private RabbitData rabbitMessage;
 
-    public RequestHandler(RabbitData rabbitMessage, String serverAddress, String baseDir) {
+    public RequestHandler(RabbitData rabbitMessage, String serverAddress, String baseDir, String unitsDir) {
         super("RequestHandler");
         this.baseDir = baseDir;
+        this.unitsDir = unitsDir;
         this.serverAddress = serverAddress;
         this.rabbitMessage = rabbitMessage;
         logger.debug("serverAddress = [" + serverAddress+"] baseDir = ["+baseDir+"] message = ["+ rabbitMessage.getMessage() + "]");
@@ -43,8 +47,8 @@ public class RequestHandler extends Thread {
             logger.info("Parsed request = [" + rabbitMessage.getMessage() + " " + task.getId() +"]");
 
             if (rabbitMessage.getMessage().equals(MachineConstants.BASE_UNIT_REQUEST)){
-                String outputFilesDir = this.baseDir + File.separator  + task.getId() + "_out";
-                String inputFilesDir = this.baseDir + File.separator  + task.getId() + "_in";
+                String outputFilesDir = this.baseDir + File.separator  + task.getId() + MachineConstants.OUTPUT_DIR_SUFFIX;
+                String inputFilesDir = this.baseDir + File.separator  + task.getId() + MachineConstants.INPUT_DIR_SUFFIX;
                 handleBaseUnitRequest(inputFilesDir, outputFilesDir, task);
             } else if (rabbitMessage.getMessage().equals(MachineConstants.KILL_TASK_REQUEST)){
                 handleKillRequest(task);
@@ -81,9 +85,9 @@ public class RequestHandler extends Thread {
             return false;
         }
 
-        FilesClient filesClient = null;
+        SftpManager filesClient = null;
         try {
-            filesClient = new FilesClient(serverAddress, filesSourceDir, inputFilesDir);
+            filesClient = new SftpManager(serverAddress, filesSourceDir, inputFilesDir);
             filesClient.getFilesFromServer();
         } catch (NetworkException e) {
             logger.error("Failed receiving files from server " + e.getMessage());
@@ -94,13 +98,13 @@ public class RequestHandler extends Thread {
 
     public void handleBaseUnitRequest(String inputFilesDir, String outputFilesDir, Task task){
         logger.info("handleBaseUnitRequest - start. task ID = " +task.getId() +"]" );
-
         if (!handleReceiveFiles(inputFilesDir, task.getInputPath())){
             updateTaskFailure(task);
         }
         File outputDir = new File(outputFilesDir);
         if (outputDir.exists()) {
-            logger.error("output Dir already exists..."); // TODO handle this !
+            logger.error("output Dir already exists... " +outputFilesDir);
+            updateTaskFailure(task);
             return;
         }
         boolean result = false;
@@ -118,11 +122,54 @@ public class RequestHandler extends Thread {
             return;
         }
         MachineController machineController = new MachineControllerImpl();
-        machineController.run(task);
+        boolean success = machineController.run(task, Paths.get(baseDir, unitsDir));
+        if (success){
+            // need to send the output files to the server.
+            if (sendOutputFilesToServer(task, outputFilesDir))
+                updateTaskCompleted(task);
+            else
+                updateTaskFailure(task);
+        } else {
+            updateTaskFailure(task);
+        }
+        // delete local input & output dirs
+        cleanLocalDirectories(inputFilesDir, outputFilesDir);
+    }
+
+    private void cleanLocalDirectories(String inputFilesDir, String outputFilesDir) {
+        try {
+            FileUtils.deleteDirectory(new File(inputFilesDir));
+        } catch (IOException e) {
+            logger.error("Failed cleaning local input directory " + inputFilesDir);
+        }
+        try {
+            FileUtils.deleteDirectory(new File(outputFilesDir));
+        } catch (IOException e) {
+            logger.error("Failed cleaning local output directory " + outputFilesDir);
+        }
+    }
+
+    private boolean sendOutputFilesToServer(Task task, String outputDir) {
+        boolean success = true;
+        logger.info("sendOutputFilesToServer - start. filesSourceDir= [" + outputDir +
+                "] to server = [" + serverAddress + "] destination files dir = [" + task.getOutputPath() + "]" );
+        SftpManager filesUploader = null;
+        try {
+            filesUploader = new SftpManager(serverAddress, outputDir, task.getOutputPath());
+            filesUploader.uploadFilesToServer();
+        } catch (NetworkException e) {
+            logger.error("Failed uploading files to server " + e.getMessage());
+            return false;
+        }
+        return success;
     }
 
     private void updateTaskFailure(Task task) {
         updateTaskStatus(task, TaskStatus.FAILED);
+    }
+
+    private void updateTaskCompleted(Task task) {
+        updateTaskStatus(task, TaskStatus.COMPLETED);
     }
 
     public void updateTaskStatus(Task task, TaskStatus status) {
@@ -137,7 +184,7 @@ public class RequestHandler extends Thread {
             task.setStatus(status);
             RabbitData message = new RabbitData(task, MachineConstants.UPDATE_TASK_REQUEST);
             channel.basicPublish("", QUEUE_NAME, null, message.getBytes());
-            logger.debug(" [x] Sent '" + message.getMessage() + "'");
+            logger.debug(" [+] Sent '" + message.getMessage() + "'");
             channel.close();
             connection.close();
         } catch (Exception e){

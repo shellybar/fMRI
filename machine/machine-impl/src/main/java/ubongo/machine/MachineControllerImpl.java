@@ -3,18 +3,14 @@ package ubongo.machine;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import ubongo.common.datatypes.BaseUnit;
-import ubongo.common.datatypes.MachineStatistics;
-import ubongo.common.datatypes.Task;
-import ubongo.common.datatypes.Unit;
-import ubongo.common.exceptions.UnmarshalException;
+import ubongo.common.constants.MachineConstants;
+import ubongo.common.datatypes.*;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.List;
 
-// TODO what is this class good for if we have the MachineServer? - Shelly's answer - MachineServer listens to requests via socket. MachineController - run the scripts on the machine.
 public class MachineControllerImpl implements MachineController {
 
     private static Logger logger = LogManager.getLogger(MachineControllerImpl.class);
@@ -25,37 +21,43 @@ public class MachineControllerImpl implements MachineController {
     }
 
     @Override
-    public void run(Task task) {
-        Unit unit = task.getUnit();
-        String unitResource = "unit_"+String.format("%03d", unit.getId())+".xml";
-        System.out.println(unitResource);
-        File unitConf = new File(MachineControllerImpl.class.getClassLoader().getResource(unitResource).getFile());
+    public boolean run(Task task, Path unitsDir) {
+        String outputDir = task.getId() + MachineConstants.OUTPUT_DIR_SUFFIX;
+        ProcessBuilder pb = new ProcessBuilder(getProcessCommand(task, outputDir));
+        pb.directory(new File(unitsDir.toString()));
+        Process p = null;
         try {
-            Unit unitProperties = loadBaseUnitConfig(unitConf);
-        } catch (UnmarshalException e) {
-            e.printStackTrace(); // TODO handle failure
+            p = pb.start();
+            logger.info("Unit "+ task.getUnit().getId()+" completed successfully : " +p.getOutputStream());
+        } catch (IOException e) {
+            if (p != null)
+                logger.error("Failed running unit: " + p.getErrorStream());
+            else
+                logger.error("Failed running unit: " + e.getMessage());
+            return false;
         }
-
-
+        return true;
     }
 
-    private Unit loadBaseUnitConfig(File unitConfigFilePath) throws UnmarshalException {
-        BaseUnit unit = null;
-        logger.debug("Loading unit configuration details from " + unitConfigFilePath.getAbsolutePath() + "...");
-        try {
-            JAXBContext jaxbContext = JAXBContext.newInstance(BaseUnit.class); // TODO - why xml only configured for base unit? Do we need more that base unit?
-            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-            unit = (BaseUnit) unmarshaller.unmarshal(unitConfigFilePath);
-        } catch (JAXBException e) {
-            String originalMsg = e.getMessage();
-            String msg = "Failed to parse unit configuration file (file path: "
-                    + unitConfigFilePath.getAbsolutePath() + "). " + ((originalMsg == null) ? "" : "Details: " + originalMsg);
-            logger.error(msg);
+    private String getProcessCommand(Task task, String outputDir) {
+        String inputDir = task.getId() + MachineConstants.INPUT_DIR_SUFFIX;
+        String unitExecutable = Unit.getUnitFileName(task.getUnit().getId(), "sh");
+        List<UnitParameter> params = task.getUnit().getParameters();
+        int paramsNum = 1 + 2 + params.size();
+        String[] bashCommand = new String[paramsNum];
+        bashCommand[0] = unitExecutable;
+        bashCommand[1] = inputDir;
+        bashCommand[2] = outputDir;
+        logger.debug("Unit information: Executable = " + unitExecutable + " InputDir = " + inputDir + " OutputDir = "+ outputDir);
+        logger.debug("Unit arguments:");
+        int i = 3;
+        for (UnitParameter unitParam : params){
+            bashCommand[i] = unitParam.getValue();
+            logger.debug(bashCommand[i]);
+
+            i++;
         }
-        if (unit == null) {
-            throw new UnmarshalException("Failed to retrieve Database Connection configuration. " +
-                            "Make sure that " + unitConfigFilePath.getAbsolutePath() + " exists and is configured correctly");
-        }
-        return unit;
+        return unitExecutable;
     }
+
 }

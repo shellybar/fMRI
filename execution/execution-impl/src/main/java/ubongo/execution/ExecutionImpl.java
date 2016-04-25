@@ -1,11 +1,16 @@
 package ubongo.execution;
 
+import com.rabbitmq.client.*;
+import ubongo.common.constants.SystemConstants;
 import ubongo.common.datatypes.Machine;
+import ubongo.common.datatypes.RabbitData;
 import ubongo.common.datatypes.Task;
 import ubongo.execution.exceptions.QueueManagementException;
 import ubongo.persistence.Persistence;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 public class ExecutionImpl implements Execution {
 
@@ -19,6 +24,11 @@ public class ExecutionImpl implements Execution {
         executionProxy = ExecutionProxy.getInstance();
         machinesManager = new MachinesManager(machines, executionProxy);
         queueManager = new QueueManager(persistence, machinesManager);
+        try {
+            tasksStatusListener(queueManager);
+        } catch (Exception e) {
+            notifyFatal(e);
+        }
     }
 
     @Override
@@ -57,5 +67,29 @@ public class ExecutionImpl implements Execution {
      */
     protected static void notifyFatal(Throwable e) {
         // TODO notify UI, try to solve based on type of error...
+    }
+
+    private static void tasksStatusListener(QueueManager queueManager) throws IOException, TimeoutException {
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost("localhost");
+        Connection connection = factory.newConnection();
+        Channel channel = connection.createChannel();
+        String queue = SystemConstants.UBONGO_SERVER_TASKS_STATUS_QUEUE;
+        channel.queueDeclare(queue, false, false, false, null);
+        Consumer consumer = new DefaultConsumer(channel) {
+            @Override
+            public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body)
+                    throws IOException {
+                try {
+                    RabbitData message = RabbitData.fromBytes(body);
+                    System.out.println(" [!] Received '" + message.getMessage() + "'");
+                    Task task = message.getTask();
+                    queueManager.updateTaskAfterExecution(task);
+                } catch (Exception e){
+                    throw new IOException(e);
+                }
+            }
+        };
+        channel.basicConsume(queue, true, consumer);
     }
 }

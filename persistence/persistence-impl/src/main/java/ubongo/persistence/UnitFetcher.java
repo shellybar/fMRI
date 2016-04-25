@@ -75,8 +75,7 @@ public class UnitFetcher {
     }
 
     private File getUnitSettingsFile(long unitId) {
-        String pattern = "unit_%03d.xml";
-        return new File(unitSettingsDirPath, String.format(pattern, unitId));
+        return new File(unitSettingsDirPath, Unit.getUnitFileName(unitId,".xml"));
     }
 
 }

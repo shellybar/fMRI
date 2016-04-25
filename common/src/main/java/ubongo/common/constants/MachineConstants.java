@@ -8,7 +8,10 @@ public class MachineConstants {
     public static final String KILL_TASK_REQUEST = "Kill unit task";
     public static final String UPDATE_TASK_REQUEST = "Update task status";
 
-    public static final int BASE_UNIT_COMPLETED = 0;
-    public static final int BASE_UNIT_FAILURE = 1;
+    public static final String INPUT_DIR_SUFFIX = "_in";
+    public static final String OUTPUT_DIR_SUFFIX = "_iout";
+
+
+
 
 }
