@@ -11,7 +11,7 @@ public interface Execution {
 
     void stop();
 
-    void runFlow(long flowId);
+    void runFlow(int flowId);
 
     void killTask(Task task);
 

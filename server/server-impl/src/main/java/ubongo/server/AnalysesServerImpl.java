@@ -27,7 +27,8 @@ public class AnalysesServerImpl implements AnalysesServer {
 
     private AnalysesServerImpl(Configuration configuration, String unitSettingsDirPath) {
         persistence = new PersistenceImpl(unitSettingsDirPath,
-                configuration.getDbConnectionProperties(), configuration.getSshConnectionProperties());
+                configuration.getDbConnectionProperties(), configuration.getSshConnectionProperties(),
+                configuration.getMachines());
         execution = new ExecutionImpl(persistence, configuration.getMachines());
     }
 
@@ -54,7 +55,7 @@ public class AnalysesServerImpl implements AnalysesServer {
         String outputPath = "/specific/a/home/cc/students/cs/razregev/workspace/fmri/rabbitTests/unit7Outputs";
         Unit unit = new BaseUnit(7);
 
-        Task taskToExec = new Task(id, unit, machine, TaskStatus.PROCESSING, inputPath, outputPath);
+//        Task taskToExec = new Task(id, unit, machine, TaskStatus.PROCESSING, inputPath, outputPath);
 //        executionProxy.execute(taskToExec,queueManager);
 //        logger.info("Start...");
 //        Properties props = parseCommandLineArgs(args);
@@ -101,46 +102,60 @@ public class AnalysesServerImpl implements AnalysesServer {
 
     @Override
     public List<Machine> getAllMachines() {
-        return null;
+        return execution.getAllMachines();
     }
 
     @Override
-    public void runFlow(long flowId) {
-
+    public void runFlow(int flowId) {
+        execution.runFlow(flowId);
     }
 
     @Override
     public void killTask(Task task) {
-
+        execution.killTask(task);
     }
 
     @Override
-    public long createFlow(String studyName, Path studyRootDir) {
-        return 0;
+    public int createFlow(String studyName, List<Task> tasks) {
+        try {
+            return persistence.createFlow(studyName, tasks);
+        } catch (PersistenceException e) {
+            // TODO handle exception in createFlow
+            return 42;
+        }
     }
 
     @Override
-    public void cancelFlow(long flowId) {
-
+    public void cancelFlow(int flowId) {
+        persistence.cancelFlow(flowId);
     }
 
     @Override
-    public void addTasks(List<Task> tasks) {
-
-    }
-
-    @Override
-    public List<Task> getTasks(long flowId) {
-        return null;
+    public List<Task> getTasks(int flowId) {
+        try {
+            return persistence.getTasks(flowId);
+        } catch (PersistenceException e) {
+            // TODO handle exception in getTasks
+            return null;
+        }
     }
 
     @Override
     public void cancelTask(Task task) {
-
+        try {
+            persistence.cancelTask(task);
+        } catch (PersistenceException e) {
+            // TODO handle exception in cancelTask
+        }
     }
 
     @Override
     public List<Unit> getAllUnits() {
-        return null;
+        try {
+            return persistence.getAllUnits();
+        } catch (PersistenceException e) {
+            // TODO handle exception in getAllUnits
+            return null;
+        }
     }
 }

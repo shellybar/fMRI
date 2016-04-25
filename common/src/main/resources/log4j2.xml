@@ -1,14 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration>
-
-    <!--<Properties>-->
-        <!--<Property name="log-pattern">%d{yyyy-MM-dd HH:mm:ss} %-5level [%t] %c{1} - %msg%n</Property>-->
-    <!--</Properties>-->
-
     <Appenders>
-        <RollingFile name="file-log" fileName="${sys:log.directory}/server.${date:yyyy-MM-dd}.log"
-                     filePattern="${sys:log.directory}/server.%d{yyyy-MM-dd}.log"
-                     immediateFlush="false" append="true">
+        <RollingFile name="file-log" fileName="${sys:log_directory}/server.${date:yyyy-MM-dd}.log"
+                     filePattern="${sys:log_directory}/server.%d{yyyy-MM-dd}.log"
+                     immediateFlush="true" append="true">
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} %-5level [%t] %c{1} - %msg%n"/>
             <Policies>
                 <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
@@ -20,7 +15,7 @@
     </Appenders>
 
     <Loggers>
-        <Logger name="edu.tau.eng.neuroscience.mri" level="debug" additivity="false">
+        <Logger name="ubongo" level="debug" additivity="false">
             <AppenderRef ref="console"/>
             <AppenderRef ref="file-log"/>
         </Logger>
