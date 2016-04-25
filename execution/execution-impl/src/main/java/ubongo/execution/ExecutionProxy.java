@@ -4,10 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import ubongo.common.constants.MachineConstants;
 import ubongo.common.constants.SystemConstants;
-import ubongo.common.datatypes.Machine;
-import ubongo.common.datatypes.MachineStatistics;
-import ubongo.common.datatypes.RabbitData;
-import ubongo.common.datatypes.Task;
+import ubongo.common.datatypes.*;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.Channel;
@@ -48,7 +45,7 @@ public enum ExecutionProxy {
 
     private int executeTaskOnTheMachine(Task task) {
         logger.info("Sending request to run unit on the machine. Task id = [" + task.getId() + "]");
-        final String QUEUE_NAME =  SystemConstants.UBONGO_RABBIT_QUEUE;
+        final String QUEUE_NAME =  SystemConstants.UBONGO_RABBIT_TASKS_QUEUE;
         int returnCode = MachineConstants.BASE_UNIT_FAILURE;
         try {
             ConnectionFactory factory = new ConnectionFactory();
@@ -64,6 +61,8 @@ public enum ExecutionProxy {
             returnCode = MachineConstants.BASE_UNIT_COMPLETED;
         } catch (Exception e){
             logger.error("Failed sending task to machine. Task id = [" + task.getId() + "] Machine = [" + task.getMachine().getAddress() + "] error: " + e.getMessage());
+            task.setStatus(TaskStatus.FAILED);
+            queueManager.updateTaskAfterExecution(task);
         }
         return returnCode;
     }

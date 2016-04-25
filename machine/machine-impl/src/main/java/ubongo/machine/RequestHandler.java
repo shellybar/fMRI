@@ -1,9 +1,13 @@
 package ubongo.machine;
 
-
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
 import ubongo.common.constants.MachineConstants;
+import ubongo.common.constants.SystemConstants;
 import ubongo.common.datatypes.RabbitData;
 import ubongo.common.datatypes.Task;
+import ubongo.common.datatypes.TaskStatus;
 import ubongo.common.exceptions.NetworkException;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -11,14 +15,9 @@ import ubongo.common.networkUtils.FilesClient;
 
 import java.io.*;
 
-
 /**
  * RequestHandler is called by the MachineServer when a new request arrives.
  * When a request arrive - the RequestHandler create the required objects and call the MachineControllerImpl.
- *
- * RECEIVE_FILES_REQUEST format: RECEIVE_FILES_REQUEST CONNECTION_PORT NUM_OF_FILES
- * BASE_UNIT_REQUEST format:  TODO
- *
  */
 
 public class RequestHandler extends Thread {
@@ -47,11 +46,17 @@ public class RequestHandler extends Thread {
                 String outputFilesDir = this.baseDir + File.separator  + task.getId() + "_out";
                 String inputFilesDir = this.baseDir + File.separator  + task.getId() + "_in";
                 handleBaseUnitRequest(inputFilesDir, outputFilesDir, task);
+            } else if (rabbitMessage.getMessage().equals(MachineConstants.KILL_TASK_REQUEST)){
+                handleKillRequest(task);
             }
         } catch (Exception e) {
             logger.error("Failed handling request: " + e.getMessage());
         }
     }
+
+    private void handleKillRequest(Task task) {
+    }
+
 
     private boolean handleReceiveFiles(String inputFilesDir, String filesSourceDir){
         boolean success = true;
@@ -67,13 +72,12 @@ public class RequestHandler extends Thread {
         try{
             inputDir.mkdir();
             result = true;
-        }
-        catch(SecurityException se){
-            logger.error("Failed to create input Dir " + inputFilesDir); // TODO handle this !
+        } catch(SecurityException se){
+            logger.error("Failed to create input Dir " + inputFilesDir);
             return false;
         }
         if(!result) {
-            logger.error("Failed to create input Dir " + inputFilesDir); // TODO handle this !
+            logger.error("Failed to create input Dir " + inputFilesDir);
             return false;
         }
 
@@ -85,7 +89,6 @@ public class RequestHandler extends Thread {
             logger.error("Failed receiving files from server " + e.getMessage());
             return false;
         }
-
         return success;
     }
 
@@ -93,32 +96,53 @@ public class RequestHandler extends Thread {
         logger.info("handleBaseUnitRequest - start. task ID = " +task.getId() +"]" );
 
         if (!handleReceiveFiles(inputFilesDir, task.getInputPath())){
-            // TODO - update task failure!
-            return;
+            updateTaskFailure(task);
         }
-
         File outputDir = new File(outputFilesDir);
         if (outputDir.exists()) {
             logger.error("output Dir already exists..."); // TODO handle this !
             return;
         }
         boolean result = false;
-        try{
+        try {
             outputDir.mkdir();
             result = true;
-        }
-        catch(SecurityException se){
-            logger.error("Failed to create input Dir " + outputFilesDir); // TODO handle this !
+        } catch (SecurityException se){
+            logger.error("Failed to create output Dir " + outputFilesDir);
+            updateTaskFailure(task);
             return;
         }
         if(!result) {
-            logger.error("Failed to create input Dir " + outputFilesDir); // TODO handle this !
+            logger.error("Failed to create output Dir " + outputFilesDir);
+            updateTaskFailure(task);
             return;
         }
-
         MachineController machineController = new MachineControllerImpl();
         machineController.run(task);
-
     }
 
+    private void updateTaskFailure(Task task) {
+        updateTaskStatus(task, TaskStatus.FAILED);
+    }
+
+    public void updateTaskStatus(Task task, TaskStatus status) {
+        logger.info("Sending task update to server. Task id = [" + task.getId() + "]");
+        final String QUEUE_NAME =  SystemConstants.UBONGO_SERVER_TASKS_STATUS_QUEUE;
+        try {
+            ConnectionFactory factory = new ConnectionFactory();
+            factory.setHost(serverAddress);
+            Connection connection = factory.newConnection();
+            Channel channel = connection.createChannel();
+            channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+            task.setStatus(status);
+            RabbitData message = new RabbitData(task, MachineConstants.UPDATE_TASK_REQUEST);
+            channel.basicPublish("", QUEUE_NAME, null, message.getBytes());
+            logger.debug(" [x] Sent '" + message.getMessage() + "'");
+            channel.close();
+            connection.close();
+        } catch (Exception e){
+            logger.error("Failed sending task status to server. Task id = [" + task.getId() + "] Status = [" +
+                    status.toString() + "] error: " + e.getMessage());
+        }
+    }
 }

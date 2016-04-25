@@ -17,6 +17,8 @@ import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import org.apache.commons.cli.*;
 
 /**
@@ -31,10 +33,12 @@ public class MachineServer {
 
     private List<Task> runningTasks;
     private MachineStatistics machineStatistics;
+    static String serverAddress;
 
     public MachineServer() {
         runningTasks = new ArrayList<>();
         this.machineStatistics = new MachineStatistics(runningTasks);
+        serverAddress = MachineConstants.SERVER_FALLBACK;
     }
 
     public void start() {
@@ -46,41 +50,45 @@ public class MachineServer {
         logger.info("Initializing machine-server...");
         MachineServer machineServer = new MachineServer();
         // machineServer.start(); // TODO remove comment
-        final String QUEUE_NAME = SystemConstants.UBONGO_RABBIT_QUEUE;
-
+        final String TASKS_QUEUE_NAME = SystemConstants.UBONGO_RABBIT_TASKS_QUEUE;
+        final String KILL_TASKS_QUEUE_NAME = SystemConstants.UBONGO_RABBIT_KILL_TASKS_QUEUE;
         try {
-            ConnectionFactory factory = new ConnectionFactory();
-            factory.setHost("localhost");
-            Connection connection = factory.newConnection();
-            Channel channel = connection.createChannel();
-            channel.queueDeclare(QUEUE_NAME, false, false, false, null);
-            System.out.println(" [*] Waiting for messages. To exit press CTRL+C");
-
-            Consumer consumer = new DefaultConsumer(channel) {
-                @Override
-                public void handleDelivery(String consumerTag, com.rabbitmq.client.Envelope envelope, AMQP.BasicProperties properties, byte[] body)
-                        throws IOException {
-                    String serverAddress = MachineConstants.SERVER_FALLBACK;
-                    try {
-                        RabbitData message = RabbitData.fromBytes(body);
-                        System.out.println(" [x] Received '" + message.getMessage() + "'");
-                        String baseDir = "";
-                        Properties props = parseCommandLineArgs(args);
-                        baseDir = props.getProperty(ARG_DIR);
-                        serverAddress = props.getProperty(ARG_SERVER);
-                        logger.info("Server address: [" + serverAddress + "], base directory path: [" + baseDir + "]");
-                        RequestHandler requestHandler = new RequestHandler(message, serverAddress, baseDir);
-                        logger.debug("Starting RequestHandler thread...");
-                        requestHandler.start();
-                    } catch (Exception e){
-                        throw new IOException(e);
-                    }
-                }
-            };
-            channel.basicConsume(QUEUE_NAME, true, consumer);
+            System.out.println(" [*] Waiting for new tasks. To exit press CTRL+C");
+            tasksListener(args, TASKS_QUEUE_NAME, '+');
+            tasksListener(args, KILL_TASKS_QUEUE_NAME, 'x');
         } catch (Exception e){
             logger.error("Failed receiving message via rabbit mq error: " + e.getMessage());
         }
+    }
+
+    private static void tasksListener(final String[] args, String queue, char actionSign) throws IOException, TimeoutException {
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost("localhost");
+        Connection connection = factory.newConnection();
+        Channel channel = connection.createChannel();
+        channel.queueDeclare(queue, false, false, false, null);
+        Consumer consumer = new DefaultConsumer(channel) {
+            @Override
+            public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body)
+                    throws IOException {
+
+                try {
+                    RabbitData message = RabbitData.fromBytes(body);
+                    System.out.println(" ["+actionSign+"] Received '" + message.getMessage() + "'");
+                    String baseDir = "";
+                    Properties props = parseCommandLineArgs(args);
+                    baseDir = props.getProperty(ARG_DIR);
+                    serverAddress = props.getProperty(ARG_SERVER);
+                    logger.info("Server address: [" + serverAddress + "], base directory path: [" + baseDir + "]");
+                    RequestHandler requestHandler = new RequestHandler(message, serverAddress, baseDir);
+                    logger.debug("Starting RequestHandler thread...");
+                    requestHandler.start();
+                } catch (Exception e){
+                    throw new IOException(e);
+                }
+            }
+        };
+        channel.basicConsume(queue, true, consumer);
     }
 
     private void trackMachinePerformance() {
@@ -93,7 +101,7 @@ public class MachineServer {
     private static Properties parseCommandLineArgs(String[] args) throws ParseException {
         Options options = new Options();
         options.addOption(buildOption("Server Address", "The IP or host name of the server", ARG_SERVER));
-        options.addOption(buildOption("Base Directory", "The path to the directory where filed will be stored", ARG_DIR));
+        options.addOption(buildOption("Base Directory", "The path to the directory where files will be stored", ARG_DIR));
         CommandLineParser parser = new DefaultParser();
         CommandLine line = parser.parse(options, args);
 
