@@ -43,29 +43,32 @@ public class DBProxy {
 
     private boolean debug = false;
 
-    public DBProxy(UnitFetcher unitFetcher, String configurationFilePath) throws DBProxyException {
-        this(unitFetcher, configurationFilePath, false);
+    public DBProxy(UnitFetcher unitFetcher, DBConnectionProperties dbConnectionProperties) {
+        this(unitFetcher, dbConnectionProperties, false);
     }
 
-    public DBProxy(UnitFetcher unitFetcher, String configurationFilePath, boolean debug) throws DBProxyException {
-        dbProperties = loadDbConfig(configurationFilePath);
-        useSSH = false;
+    public DBProxy(UnitFetcher unitFetcher, DBConnectionProperties dbConnectionProperties,
+                   boolean debug) {
+        dbProperties = dbConnectionProperties;
         this.unitFetcher = unitFetcher;
+        useSSH = false;
         this.debug = debug;
     }
 
-    public DBProxy(UnitFetcher unitFetcher, String dbConfigurationFilePath, String sshConfigurationFilePath) throws DBProxyException {
-        dbProperties = loadDbConfig(dbConfigurationFilePath);
-        sshProperties = loadSshConfig(sshConfigurationFilePath);
-        this.unitFetcher = unitFetcher;
+    public DBProxy(UnitFetcher unitFetcher, DBConnectionProperties dbConnectionProperties,
+                   SSHConnectionProperties sshConnectionProperties) {
+        this(unitFetcher, dbConnectionProperties);
+        sshProperties = sshConnectionProperties;
         useSSH = true;
     }
 
     /**
      * For debugging and tests
      */
-    public DBProxy(UnitFetcher unitFetcher, String dbConfigurationFilePath, String sshConfigurationFilePath, boolean debug) throws DBProxyException {
-        this(unitFetcher, dbConfigurationFilePath, sshConfigurationFilePath);
+    public DBProxy(UnitFetcher unitFetcher, DBConnectionProperties dbConnectionProperties,
+                   SSHConnectionProperties sshConnectionProperties,
+                   boolean debug) {
+        this(unitFetcher, dbConnectionProperties, sshConnectionProperties);
         this.debug = debug;
     }
 
@@ -236,7 +239,7 @@ public class DBProxy {
             } else {
                 statement.setNull(3, Types.INTEGER);
             }
-            statement.setInt(4, task.getId()); // id of task to update
+            statement.setLong(4, task.getId()); // id of task to update
             int numRowsUpdated = executeUpdate(statement);
             if (numRowsUpdated != 1) {
                 // TODO handle update failure
@@ -327,48 +330,6 @@ public class DBProxy {
             url = "jdbc:mysql://" + dbProperties.getHost() + ":" + dbProperties.getPort() + "/" + dbProperties.getSchema();
         }
         return url;
-    }
-
-    private DBConnectionProperties loadDbConfig(String configFilePath) throws DBProxyException {
-        DBConnectionProperties dbConnectionProperties = null;
-        File file = new File(configFilePath);
-        logger.debug("Loading DB Connection configuration details from " + file.getAbsolutePath() + "...");
-        try {
-            JAXBContext jaxbContext = JAXBContext.newInstance(DBConnectionProperties.class);
-            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-            dbConnectionProperties = (DBConnectionProperties) unmarshaller.unmarshal(file);
-        } catch (JAXBException e) {
-            String originalMsg = e.getMessage();
-            String msg = "Failed to parse Database Connection configuration file (file path: "
-                    + file.getAbsolutePath() + "). " + ((originalMsg == null) ? "" : "Details: " + originalMsg);
-            logger.error(msg);
-        }
-        if (dbConnectionProperties == null) {
-            throw new DBProxyException("Failed to retrieve Database Connection configuration. " +
-                            "Make sure that " + file.getAbsolutePath() + " exists and is configured correctly");
-        }
-        return dbConnectionProperties;
-    }
-
-    private SSHConnectionProperties loadSshConfig(String configFilePath) throws DBProxyException {
-        SSHConnectionProperties sshConnectionProperties = null;
-        File file = new File(configFilePath);
-        logger.debug("Loading SSH Connection configuration details from " + file.getAbsolutePath() + "...");
-        try {
-            JAXBContext jaxbContext = JAXBContext.newInstance(SSHConnectionProperties.class);
-            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-            sshConnectionProperties = (SSHConnectionProperties) unmarshaller.unmarshal(file);
-        } catch (JAXBException e) {
-            String originalMsg = e.getMessage();
-            String msg = "Failed to parse SSH Connection configuration file (file path: "
-                    + file.getAbsolutePath() + "). " + ((originalMsg == null) ? "" : "Details: " + originalMsg);
-            logger.error(msg);
-        }
-        if (sshConnectionProperties == null) {
-            throw new DBProxyException("Failed to retrieve SSH Connection configuration. " +
-                            "Make sure that " + file.getAbsolutePath() + " exists and is configured correctly");
-        }
-        return sshConnectionProperties;
     }
 
     private int getFreeLocalPort() {

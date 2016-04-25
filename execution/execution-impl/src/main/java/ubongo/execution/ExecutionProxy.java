@@ -30,21 +30,23 @@ public enum ExecutionProxy {
      */
     public void execute(Task task, QueueManager queueManager) {
         this.queueManager = queueManager;
-        int returnCode = excecuteTaskOnTheMachine(task);
-        /* TODO continue - check return code etc. update queue manager */
-
-
+        int returnCode = executeTaskOnTheMachine(task);
+        // TODO continue - check return code etc. update queue manager
 
         // TODO move this part of the code to the method called by the client after execution (it's here only to test the dispatcher)
         //task.setStatus(TaskStatus.COMPLETED);
         //queueManager.updateTaskAfterExecution(task);
     }
 
+    public void killTask(Task task) {
+        // TODO task.getMachine() and then send a command to the machine to kill the task
+    }
+
     public MachineStatistics getStatistics(Machine machine) {
         return new MachineStatistics(null); // TODO
     }
 
-    public int excecuteTaskOnTheMachine(Task task) {
+    private int executeTaskOnTheMachine(Task task) {
         logger.info("Sending request to run unit on the machine. Task id = [" + task.getId() + "]");
         final String QUEUE_NAME =  SystemConstants.UBONGO_RABBIT_QUEUE;
         int returnCode = MachineConstants.BASE_UNIT_FAILURE;

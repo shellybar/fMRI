@@ -5,16 +5,13 @@ import org.apache.logging.log4j.Logger;
 import ubongo.common.datatypes.Machine;
 import ubongo.common.datatypes.Task;
 import ubongo.common.datatypes.TaskStatus;
-import ubongo.common.datatypes.Unit;
 import ubongo.execution.exceptions.MachinesManagementException;
 import ubongo.execution.exceptions.QueueManagementException;
 import ubongo.persistence.Persistence;
 import ubongo.persistence.PersistenceException;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.stream.Collectors;
 
 public class QueueManager {
 
@@ -37,13 +34,10 @@ public class QueueManager {
     private ExecutorService consumers;
     private ExecutorService producer;
 
-    public QueueManager(Persistence persistence, MachinesManager machinesManager) {
+    QueueManager(Persistence persistence, MachinesManager machinesManager) {
         this.executionProxy = ExecutionProxy.getInstance();
         this.persistence = persistence;
         this.machinesManager = machinesManager;
-    }
-
-    public QueueManager() { // TODO remove this
     }
 
     public void start() throws QueueManagementException {
@@ -61,41 +55,9 @@ public class QueueManager {
         logger.debug("Created queue producer thread");
     }
 
-    public void shutdownNow() {
+    public void stop() {
         producer.shutdownNow();
         consumers.shutdownNow();
-    }
-
-    public void enqueue(Unit unit) {
-        List<Unit> units = new ArrayList<>();
-        units.add(unit);
-        enqueue(units);
-    }
-
-    public void enqueue(List<Unit> units) {
-        // Convert list of units to list of tasks
-        List<Task> tasks = units.stream()
-                .map((unit) -> {
-                    Task task = new Task();
-                    task.setUnit(unit);
-                    task.setStatus(TaskStatus.NEW);
-                    return task;
-                }).collect(Collectors.<Task> toList());
-
-        // add tasks to DB and notify producer thread
-        synchronized(producerLock) {
-            producerMayWork = false;
-        }
-        try {
-            persistence.addTasks(tasks);
-        } catch (PersistenceException e) {
-            logger.fatal("Failed to add tasks to DB");
-            ExecutionImpl.notifyFatal(e); // TODO what now?
-        }
-        synchronized(producerLock) {
-            producerMayWork = true;
-            producerLock.notify();
-        }
     }
 
     /**

@@ -10,7 +10,10 @@ import org.apache.commons.cli.*;
 import ubongo.execution.Execution;
 import ubongo.execution.ExecutionImpl;
 import ubongo.persistence.Persistence;
+import ubongo.persistence.PersistenceException;
 import ubongo.persistence.PersistenceImpl;
+
+import javax.xml.bind.UnmarshalException;
 
 public class AnalysesServerImpl implements AnalysesServer {
 
@@ -22,33 +25,26 @@ public class AnalysesServerImpl implements AnalysesServer {
     Persistence persistence;
     Execution execution;
 
-    private AnalysesServerImpl() {
-        persistence = new PersistenceImpl();
-        execution = new ExecutionImpl();
-    }
-
-    private void start() {
-        persistence.start();
-        execution.start();
-    }
-
-    private void stop() {
-        execution.stop();
-        persistence.stop();
+    private AnalysesServerImpl(Configuration configuration, String unitSettingsDirPath) {
+        persistence = new PersistenceImpl(unitSettingsDirPath,
+                configuration.getDbConnectionProperties(), configuration.getSshConnectionProperties());
+        execution = new ExecutionImpl(persistence, configuration.getMachines());
     }
 
     public static void main(String[] args) throws ParseException {
 
+        // initialize analysis server
         String configPath = System.getProperty(CONFIG_PATH);
         String unitsDirPath = System.getProperty(UNITS_DIR_PATH);
-
-        // TODO load configuration
-
-        AnalysesServer analysesServer = new AnalysesServerImpl();
-
-        ExecutionProxy executionProxy = ExecutionProxy.getInstance();
-        QueueManager queueManager = new QueueManager();
-
+        if (validateSystemVariables(configPath, unitsDirPath)) return;
+        Configuration configuration;
+        try {
+            configuration = Configuration.loadConfiguration(CONFIG_PATH);
+        } catch (UnmarshalException e) {
+            System.out.println(e.getMessage());
+            return;
+        }
+        AnalysesServer analysesServer = new AnalysesServerImpl(configuration, unitsDirPath);
 
         int id = 1;
         Machine machine = new Machine();
@@ -58,9 +54,8 @@ public class AnalysesServerImpl implements AnalysesServer {
         String outputPath = "/specific/a/home/cc/students/cs/razregev/workspace/fmri/rabbitTests/unit7Outputs";
         Unit unit = new BaseUnit(7);
 
-
         Task taskToExec = new Task(id, unit, machine, TaskStatus.PROCESSING, inputPath, outputPath);
-        executionProxy.execute(taskToExec,queueManager);
+//        executionProxy.execute(taskToExec,queueManager);
 //        logger.info("Start...");
 //        Properties props = parseCommandLineArgs(args);
 //        Execution dispatcher = new ExecutionImpl(props);
@@ -70,6 +65,38 @@ public class AnalysesServerImpl implements AnalysesServer {
 //        unit.setId(1);
 //        unit.setParameterValues("{}"); // TODO unit.setInputPath("serverWorkspace"); change this protocol - pass a task
 //        dispatcher.run(null, unit);
+    }
+
+    private static boolean validateSystemVariables(String configPath, String unitsDirPath) {
+        if (configPath == null || unitsDirPath == null) {
+            String pattern = "Please supply %1$s path as run parameter: -%2$s=<path>";
+            if (configPath == null) {
+                System.out.format(pattern, "configuration", CONFIG_PATH);
+            }
+            if (unitsDirPath == null) {
+                System.out.format(pattern, "units directory", UNITS_DIR_PATH);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private void start() {
+        try {
+            persistence.start();
+        } catch (PersistenceException e) {
+            System.out.println("Failed to start system persistence. Details:\n" + e.getMessage());
+        }
+        execution.start();
+    }
+
+    private void stop() {
+        execution.stop();
+        try {
+            persistence.stop();
+        } catch (PersistenceException e) {
+            // do nothing (the error is already logged in persistence)
+        }
     }
 
     @Override

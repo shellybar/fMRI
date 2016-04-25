@@ -21,42 +21,20 @@ public class MachinesManager {
 
     private static Logger logger = LogManager.getLogger(MachinesManager.class);
     private final ScheduledExecutorService statisticsUpdateScheduler = Executors.newScheduledThreadPool(1);
-    private static List<Machine> machines;
+    private List<Machine> machines;
     private ExecutionProxy executionProxy;
-    private String machinesConfigFilePath;
 
-    public MachinesManager(ExecutionProxy executionProxy, String machinesConfigFilePath) {
+    MachinesManager(List<Machine> machines, ExecutionProxy executionProxy) {
         this.executionProxy = executionProxy;
-        this.machinesConfigFilePath = machinesConfigFilePath;
+        this.machines = machines;
     }
 
-    public void start() throws MachinesManagementException {
-        machines = loadMachines();
+    public void start() {
         initPeriodicalStatisticsUpdate(2, TimeUnit.HOURS);
     }
 
-    /**
-     * @return list of machines from the configuration file
-     */
-    public List<Machine> loadMachines() throws MachinesManagementException {
-        List<Machine> machines = null;
-        // TODO BASE_DIR should come from command line arguments
-        File file = new File(machinesConfigFilePath);
-        try {
-            JAXBContext jaxbContext = JAXBContext.newInstance(MachinesList.class);
-            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-            machines = ((MachinesList) unmarshaller.unmarshal(file)).getMachines();
-        } catch (JAXBException e) {
-            String originalMsg = e.getMessage();
-            String msg = "Failed to parse machines configuration file: " + file.getAbsolutePath() + "" +
-                    ((originalMsg == null) ? "" : ". Details: " + originalMsg);
-            logger.error(msg);
-        }
-        if (machines == null || machines.isEmpty()) {
-            throw new MachinesManagementException(
-                    "No machines found. Please make sure machines are configured in the server.");
-        }
-        return machines;
+    public void stop() {
+        statisticsUpdateScheduler.shutdownNow();
     }
 
     public Machine getAvailableMachine() throws MachinesManagementException {
@@ -76,15 +54,8 @@ public class MachinesManager {
         return mostAvailableMachine;
     }
 
-    // TODO or let the machines send heartbeats?
     private void initPeriodicalStatisticsUpdate(int interval, TimeUnit intervalUnits) {
         statisticsUpdateScheduler.scheduleAtFixedRate(() -> {
-            try {
-                machines = loadMachines();
-            } catch (MachinesManagementException e) {
-                ExecutionImpl.notifyFatal(e);
-                // TODO what now?
-            }
             for (Machine machine: machines) {
                 MachineStatistics machineStatistics = executionProxy.getStatistics(machine);
                 machine.setStatistics(machineStatistics);
