@@ -25,6 +25,10 @@
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/gson-2.6.1/gson-2.6.1.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/rabbitmq-java-client-bin-3.6.1/rabbitmq-client.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/commons-io-2.5/commons-io-2.5.jar" path-in-jar="/" />
+      <element id="module-output" name="persistence-api" />
+      <element id="module-output" name="persistence-impl" />
+      <element id="module-output" name="server-api" />
+      <element id="module-output" name="server-impl" />
     </root>
   </artifact>
 </component>
