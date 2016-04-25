@@ -26,21 +26,21 @@ public interface Persistence {
      * @return flowId in DB
      * @throws PersistenceException
      */
-    long createFlow(String studyName, List<Task> tasks) throws PersistenceException;
+    int createFlow(String studyName, List<Task> tasks) throws PersistenceException;
 
-    void startFlow(long flowId);
+    void startFlow(int flowId);
 
-    void cancelFlow(long flowId);
+    void cancelFlow(int flowId);
 
     List<Task> getNewTasks() throws PersistenceException;
 
     void updateTaskStatus(Task task) throws PersistenceException;
 
-    List<Task> getTasks(long flowId) throws PersistenceException;
+    List<Task> getTasks(int flowId) throws PersistenceException;
 
     void cancelTask(Task task) throws PersistenceException;
 
-    Unit getUnit(long unitId) throws PersistenceException;
+    Unit getUnit(int unitId) throws PersistenceException;
 
     List<Unit> getAllUnits() throws PersistenceException;
 

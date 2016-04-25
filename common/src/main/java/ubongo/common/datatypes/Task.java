@@ -4,16 +4,20 @@ import java.io.Serializable;
 
 public class Task implements Serializable{
 
-    private long id;
-    private long flowId; // TODO add to constructor + add getter/setter
+    private int id;
+    private int flowId;
+    private int serialNumber;
     private Unit unit;
     private Machine machine;
     private TaskStatus status;
     private String inputPath;
     private String outputPath;
 
-    public Task(long id, Unit unit, Machine machine, TaskStatus status, String inputPath, String outputPath) {
+    public Task(int id, int flowId, int serialNumber, Unit unit, Machine machine,
+                TaskStatus status, String inputPath, String outputPath) {
         this.id = id;
+        this.flowId = flowId;
+        this.serialNumber = serialNumber;
         this.unit = unit;
         this.machine = machine;
         this.status = status;
@@ -32,11 +36,11 @@ public class Task implements Serializable{
         return outputPath;
     }
 
-    public long getId() {
+    public int getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(int id) {
         this.id = id;
     }
 
@@ -64,4 +68,19 @@ public class Task implements Serializable{
         this.status = status;
     }
 
+    public int getFlowId() {
+        return flowId;
+    }
+
+    public void setFlowId(int flowId) {
+        this.flowId = flowId;
+    }
+
+    public int getSerialNumber() {
+        return serialNumber;
+    }
+
+    public void setSerialNumber(int serialNumber) {
+        this.serialNumber = serialNumber;
+    }
 }

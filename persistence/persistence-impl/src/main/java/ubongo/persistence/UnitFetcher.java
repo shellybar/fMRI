@@ -36,12 +36,12 @@ public class UnitFetcher {
      * @return Unit object with the data corresponding to unitId.
      * @throws UnitFetcherException if unit with unitId does not exist
      */
-    public Unit getUnit(long unitId) throws UnitFetcherException {
+    public Unit getUnit(int unitId) throws UnitFetcherException {
         File file = getUnitSettingsFile(unitId);
         return getUnit(file, unitId);
     }
 
-    private Unit getUnit(File file, long unitId) throws UnitFetcherException {
+    private Unit getUnit(File file, int unitId) throws UnitFetcherException {
         BaseUnit unit = null;
         try {
             JAXBContext jaxbContext = JAXBContext.newInstance(BaseUnit.class);
@@ -68,13 +68,13 @@ public class UnitFetcher {
         for (File file: files) {
             Matcher matcher = DIGITS_PATTERN.matcher(file.getName());
             if (matcher.find()) {
-                units.add(getUnit(file, Long.parseLong(matcher.group())));
+                units.add(getUnit(file, Integer.parseInt(matcher.group())));
             }
         }
         return units;
     }
 
-    private File getUnitSettingsFile(long unitId) {
+    private File getUnitSettingsFile(int unitId) {
         String pattern = "unit_%03d.xml";
         return new File(unitSettingsDirPath, String.format(pattern, unitId));
     }

@@ -50,17 +50,17 @@ public class PersistenceImpl implements Persistence {
     }
 
     @Override
-    public long createFlow(String studyName, List<Task> tasks) throws PersistenceException {
+    public int createFlow(String studyName, List<Task> tasks) throws PersistenceException {
         return 0; // TODO call dbProxy
     }
 
     @Override
-    public void startFlow(long flowId) {
+    public void startFlow(int flowId) {
         // TODO call dbProxy - update tasks linked to flow - turn to status NEW (status on insert would be CREATED)
     }
 
     @Override
-    public void cancelFlow(long flowId) {
+    public void cancelFlow(int flowId) {
         // TODO call dbProxy
     }
 
@@ -75,7 +75,7 @@ public class PersistenceImpl implements Persistence {
     }
 
     @Override
-    public List<Task> getTasks(long flowId) throws PersistenceException {
+    public List<Task> getTasks(int flowId) throws PersistenceException {
         return null; // TODO call dbProxy
     }
 
@@ -85,7 +85,7 @@ public class PersistenceImpl implements Persistence {
     }
 
     @Override
-    public Unit getUnit(long unitId) throws PersistenceException {
+    public Unit getUnit(int unitId) throws PersistenceException {
         return unitFetcher.getUnit(unitId);
     }
 

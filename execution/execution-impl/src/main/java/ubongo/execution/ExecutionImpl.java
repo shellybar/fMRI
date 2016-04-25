@@ -38,7 +38,7 @@ public class ExecutionImpl implements Execution {
     }
 
     @Override
-    public void runFlow(long flowId) {
+    public void runFlow(int flowId) {
         persistence.startFlow(flowId);
     }
 

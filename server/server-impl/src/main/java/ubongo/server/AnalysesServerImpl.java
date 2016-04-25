@@ -54,7 +54,7 @@ public class AnalysesServerImpl implements AnalysesServer {
         String outputPath = "/specific/a/home/cc/students/cs/razregev/workspace/fmri/rabbitTests/unit7Outputs";
         Unit unit = new BaseUnit(7);
 
-        Task taskToExec = new Task(id, unit, machine, TaskStatus.PROCESSING, inputPath, outputPath);
+//        Task taskToExec = new Task(id, unit, machine, TaskStatus.PROCESSING, inputPath, outputPath);
 //        executionProxy.execute(taskToExec,queueManager);
 //        logger.info("Start...");
 //        Properties props = parseCommandLineArgs(args);
@@ -105,7 +105,7 @@ public class AnalysesServerImpl implements AnalysesServer {
     }
 
     @Override
-    public void runFlow(long flowId) {
+    public void runFlow(int flowId) {
         execution.runFlow(flowId);
     }
 
@@ -115,7 +115,7 @@ public class AnalysesServerImpl implements AnalysesServer {
     }
 
     @Override
-    public long createFlow(String studyName, List<Task> tasks) {
+    public int createFlow(String studyName, List<Task> tasks) {
         try {
             return persistence.createFlow(studyName, tasks);
         } catch (PersistenceException e) {
@@ -125,12 +125,12 @@ public class AnalysesServerImpl implements AnalysesServer {
     }
 
     @Override
-    public void cancelFlow(long flowId) {
+    public void cancelFlow(int flowId) {
         persistence.cancelFlow(flowId);
     }
 
     @Override
-    public List<Task> getTasks(long flowId) {
+    public List<Task> getTasks(int flowId) {
         try {
             return persistence.getTasks(flowId);
         } catch (PersistenceException e) {
@@ -154,6 +154,7 @@ public class AnalysesServerImpl implements AnalysesServer {
             return persistence.getAllUnits();
         } catch (PersistenceException e) {
             // TODO handle exception in getAllUnits
+            return null;
         }
     }
 }

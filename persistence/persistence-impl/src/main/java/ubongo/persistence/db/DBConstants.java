@@ -11,4 +11,6 @@ public class DBConstants {
     public final static String TASKS_UNIT_PARAMS = "unit_params";
     public final static String TASKS_MACHINE_ID = "machine_id";
 
+    public final static String FLOWS_TABLE_NAME = "flows";
+
 }

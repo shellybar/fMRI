@@ -8,5 +8,14 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="persistence-api" />
+    <orderEntry type="module" module-name="persistence-impl" />
+    <orderEntry type="module" module-name="common" />
+    <orderEntry type="module" module-name="execution-api" />
+    <orderEntry type="module" module-name="execution-impl" />
+    <orderEntry type="module" module-name="machine-api" />
+    <orderEntry type="module" module-name="machine-impl" />
+    <orderEntry type="module" module-name="server-api" />
+    <orderEntry type="module" module-name="server-impl" />
   </component>
 </module>

@@ -4,7 +4,6 @@ import ubongo.common.datatypes.Unit;
 import ubongo.execution.Execution;
 import ubongo.execution.ExecutionException;
 import ubongo.execution.ExecutionImpl;
-import ubongo.execution.UnitFetcher;
 
 import java.io.File;
 import java.util.Properties;
@@ -18,7 +17,7 @@ import static ubongo.common.constants.SystemConstants.SSH_CONFIG_FILE_PATH;
 
 
 public class DispatcherIntegrationTest {
-
+/* TODO fix text
     public static void main(String[] args) throws ExecutionException {
 
         Properties props = new Properties();
@@ -35,5 +34,5 @@ public class DispatcherIntegrationTest {
         unit.setParameterValues("{\"myFile\":\"Test file path\", \"myStr\":\"Test string\"}");
         dispatcher.run(null, unit);
     }
-
+*/
 }

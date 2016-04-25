@@ -11,15 +11,15 @@ public interface AnalysesServer {
 
     List<Machine> getAllMachines();
 
-    void runFlow(long flowId);
+    void runFlow(int flowId);
 
     void killTask(Task task);
 
-    long createFlow(String studyName, List<Task> tasks);
+    int createFlow(String studyName, List<Task> tasks);
 
-    void cancelFlow(long flowId);
+    void cancelFlow(int flowId);
 
-    List<Task> getTasks(long flowId);
+    List<Task> getTasks(int flowId);
 
     void cancelTask(Task task);
 

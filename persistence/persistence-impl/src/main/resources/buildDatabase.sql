@@ -1,9 +1,10 @@
 # noinspection SqlNoDataSourceInspectionForFile
 
-# drop tables
+# drop
+DROP TRIGGER IF EXISTS before_update_tasks;
 DROP TABLE IF EXISTS tasks;
-DROP TABLE IF EXISTS units;
 DROP TABLE IF EXISTS flows;
+DROP TABLE IF EXISTS units;
 
 # units table
 CREATE TABLE units (
@@ -32,7 +33,8 @@ CREATE TABLE tasks (
   task_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   status VARCHAR(20) NOT NULL,
   flow_id INT UNSIGNED NOT NULL,
-  analysis_unit_id INT UNSIGNED NOT NULL, # internal unit_id from units table
+  serial_in_flow INT UNSIGNED NOT NULL,
+  unit_id INT UNSIGNED NOT NULL,
   unit_params BLOB NULL,
   machine_id INT UNSIGNED NULL,
   insertion_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -40,12 +42,6 @@ CREATE TABLE tasks (
   completion_time TIMESTAMP NULL,
   PRIMARY KEY (task_id),
   UNIQUE INDEX task_id_UNIQUE (task_id ASC),
-  INDEX fk_unit_id_idx (analysis_unit_id ASC),
-  CONSTRAINT fk_unit_id
-    FOREIGN KEY (analysis_unit_id)
-    REFERENCES units (analysis_unit_id)
-    ON DELETE RESTRICT
-    ON UPDATE CASCADE,
   INDEX fk_flow_id_idx (flow_id ASC),
   CONSTRAINT fk_flow_id
     FOREIGN KEY (flow_id)
@@ -55,7 +51,6 @@ CREATE TABLE tasks (
   ENGINE = InnoDB;
 
 # triggers on tasks table
-DROP TRIGGER IF EXISTS before_update_tasks;
 DELIMITER $$
 CREATE TRIGGER before_update_tasks BEFORE UPDATE ON tasks
 FOR EACH ROW BEGIN SET
