@@ -13,10 +13,6 @@ import ubongo.common.networkUtils.SSHConnectionProperties;
 import ubongo.persistence.exceptions.DBProxyException;
 import ubongo.persistence.UnitFetcher;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
-import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.sql.*;

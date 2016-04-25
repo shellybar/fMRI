@@ -15,11 +15,9 @@ public interface AnalysesServer {
 
     void killTask(Task task);
 
-    long createFlow(String studyName, Path studyRootDir);
+    long createFlow(String studyName, List<Task> tasks);
 
     void cancelFlow(long flowId);
-
-    void addTasks(List<Task> tasks);
 
     List<Task> getTasks(long flowId);
 

@@ -101,46 +101,59 @@ public class AnalysesServerImpl implements AnalysesServer {
 
     @Override
     public List<Machine> getAllMachines() {
-        return null;
+        return execution.getAllMachines();
     }
 
     @Override
     public void runFlow(long flowId) {
-
+        execution.runFlow(flowId);
     }
 
     @Override
     public void killTask(Task task) {
-
+        execution.killTask(task);
     }
 
     @Override
-    public long createFlow(String studyName, Path studyRootDir) {
-        return 0;
+    public long createFlow(String studyName, List<Task> tasks) {
+        try {
+            return persistence.createFlow(studyName, tasks);
+        } catch (PersistenceException e) {
+            // TODO handle exception in createFlow
+            return 42;
+        }
     }
 
     @Override
     public void cancelFlow(long flowId) {
-
-    }
-
-    @Override
-    public void addTasks(List<Task> tasks) {
-
+        persistence.cancelFlow(flowId);
     }
 
     @Override
     public List<Task> getTasks(long flowId) {
-        return null;
+        try {
+            return persistence.getTasks(flowId);
+        } catch (PersistenceException e) {
+            // TODO handle exception in getTasks
+            return null;
+        }
     }
 
     @Override
     public void cancelTask(Task task) {
-
+        try {
+            persistence.cancelTask(task);
+        } catch (PersistenceException e) {
+            // TODO handle exception in cancelTask
+        }
     }
 
     @Override
     public List<Unit> getAllUnits() {
-        return null;
+        try {
+            return persistence.getAllUnits();
+        } catch (PersistenceException e) {
+            // TODO handle exception in getAllUnits
+        }
     }
 }
