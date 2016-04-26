@@ -2,7 +2,7 @@ package ubongo.common.datatypes;
 
 import java.io.Serializable;
 
-public class Task implements Serializable{
+public class Task implements Serializable {
 
     private int id;
     private int flowId;

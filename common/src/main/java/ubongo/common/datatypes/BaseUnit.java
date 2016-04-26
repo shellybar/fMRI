@@ -16,7 +16,7 @@ import java.util.Map;
 
 @XmlRootElement(name = "unit")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class BaseUnit implements Unit, ExecutableObj, Serializable {
+public class BaseUnit implements Unit, Serializable {
 
     private static Logger logger = LogManager.getLogger(BaseUnit.class);
 
@@ -120,17 +120,5 @@ public class BaseUnit implements Unit, ExecutableObj, Serializable {
             logger.fatal("Failed to set parameter values for unit from JSON: " + json);
             throw new JsonParseException(e.getMessage());
         }
-    }
-
-    @Override
-    public String getExecutionInputs() {
-        StringBuilder sb = new StringBuilder();
-        List<UnitParameter> inputParams = this.getParameters();
-        for (UnitParameter param :inputParams ){
-            sb.append(" \"");
-            sb.append(param.getValue());
-            sb.append("\"");
-        }
-        return sb.toString();
     }
 }
