@@ -15,6 +15,7 @@ import java.util.List;
 
 public class PersistenceTest {
 
+    private static final boolean DEBUG = true;
     private static final String CONFIG_PATH = "config";
     private static final String UNITS_DIR_PATH = "units_path";
 
@@ -32,12 +33,12 @@ public class PersistenceTest {
         assert(configPath != null && unitsDirPath != null);
         Configuration configuration = Configuration.loadConfiguration(configPath);
         persistence = new PersistenceImpl(unitsDirPath, configuration.getDbConnectionProperties(),
-                configuration.getSshConnectionProperties(), configuration.getMachines(), false); // TODO change to true for debug!
+                configuration.getSshConnectionProperties(), configuration.getMachines(), DEBUG);
         persistence.start();
-        // TODO clean debug tables in DB - maybe create and then delete
     }
 
     public static void close() throws PersistenceException {
+        ((PersistenceImpl) persistence).clearDebugData();
         persistence.stop();
     }
 
@@ -49,12 +50,12 @@ public class PersistenceTest {
         Task task1 = new Task(0, 0, 0, unit, null,
                 TaskStatus.CREATED, new Context("study1", "subject1", null));
         Task task2 = new Task(0, 0, 0, unit, null,
-                TaskStatus.NEW, new Context("study2", "subject2", "run"));
+                TaskStatus.NEW, new Context("study1", "subject2", "run"));
         List<Task> tasks = new ArrayList<>();
         tasks.add(task1);
         tasks.add(task2);
 
-        int flowId = persistence.createFlow("study5", tasks); // TODO generate random
+        int flowId = persistence.createFlow("study1", tasks);
         persistence.startFlow(flowId);
         List<Task> returnedTasks = persistence.getNewTasks();
         Task retrievedTask = returnedTasks.get(0);

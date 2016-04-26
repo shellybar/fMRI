@@ -152,7 +152,7 @@ public class DBProxy {
         connect();
         String tableName = getTableName(DBConstants.TASKS_TABLE_NAME);
         try {
-            String sql = Queries.getQuery("update_task_status")
+            String sql = Queries.getQuery(DBConstants.QUERY_UPDATE_TASK_STATUS)
                     .replace("$tasksTable", tableName);
             PreparedStatement statement = connection.prepareStatement(sql);
             String status = getStatusString(task.getStatus());
@@ -202,7 +202,7 @@ public class DBProxy {
                 logger.warn(errMsg);
                 throw new DBProxyException(errMsg);
             }
-            String sql = Queries.getQuery("create_flow")
+            String sql = Queries.getQuery(DBConstants.QUERY_CREATE_FLOW)
                     .replace("$flowsTable", flowsTableName)
                     .replace("$tasksTable", tasksTableName)
                     .replace("$values", values);
@@ -224,7 +224,7 @@ public class DBProxy {
         connect();
         String tasksTableName = getTableName(DBConstants.TASKS_TABLE_NAME);
         try {
-            String sql = Queries.getQuery("start_flow")
+            String sql = Queries.getQuery(DBConstants.QUERY_START_FLOW)
                     .replace("$tasksTable", tasksTableName);
             PreparedStatement statement =
                     connection.prepareStatement(sql);
@@ -259,6 +259,26 @@ public class DBProxy {
 
     public List<Task> getTasks(int flowId) throws DBProxyException {
         return getTasks(DBConstants.QUERY_GET_FLOW_TASKS, flowId);
+    }
+
+    public void clearAllDebugTables() throws DBProxyException {
+        connect();
+        String tasksTableName = getTableName(DBConstants.TASKS_TABLE_NAME, true);
+        String flowsTableName = getTableName(DBConstants.FLOWS_TABLE_NAME, true);
+        String unitsTableName = getTableName(DBConstants.UNITS_TABLE_NAME, true);
+        try {
+            String sql = Queries.getQuery(DBConstants.QUERY_CLEAR_TABLES)
+                    .replace("$tasksTable", tasksTableName)
+                    .replace("$flowsTable", flowsTableName)
+                    .replace("$unitsTable", unitsTableName);
+            PreparedStatement statement =
+                    connection.prepareStatement(sql);
+            executeUpdate(statement);
+        } catch (SQLException e) {
+            String errorMsg = "Failed to clear debug tables";
+            logSqlException(e, errorMsg);
+            throw new DBProxyException(errorMsg, e);
+        }
     }
 
     private List<Task> getTasks(String queryName) throws DBProxyException {
@@ -427,8 +447,11 @@ public class DBProxy {
         return dbProperties.getUser();
     }
 
-    private String getTableName(String baseTableName) {
+    private String getTableName(String baseTableName, boolean debug) {
         return ((!debug)?"":DBConstants.DEBUG_PREFIX) + baseTableName;
     }
 
+    private String getTableName(String baseTableName) {
+        return getTableName(baseTableName, debug);
+    }
 }
