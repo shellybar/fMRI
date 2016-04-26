@@ -49,9 +49,7 @@ public class SystemTest {
 
     public static void runTestFlow() throws PersistenceException {
         Unit unit = analysesServer.getAllUnits().get(0);
-        UnitParameter parameter = new UnitParameter();
-        parameter.setValue("mySubject");
-        parameter.setName("subject");
+        unit.setParameterValues("{\"subject\":\"mySubject\"}");
         Task task1 = new Task(0, 0, 0, unit, null,
                 TaskStatus.CREATED, new Context("myStudy", "mySubject", null));
         List<Task> tasks = new ArrayList<>();
