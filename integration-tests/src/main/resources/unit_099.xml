@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<unit id="99">
+    <name>TestUnit</name>
+    <description>Integration tests unit</description>
+    <input-files>C:/Temp/ubongo/studies/{study}/{subject}/{run}/(.*).dcm</input-files>
+    <output-dir>C:/Temp/ubongo/studies/{study}/{subject}/anatomy/rawDCMs/</output-dir>
+    <parameters>
+        <string-parameter>
+            <name>subject</name>
+            <display>subject name</display>
+            <default>{subject}</default>
+        </string-parameter>
+    </parameters>
+</unit>

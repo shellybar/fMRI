@@ -16,7 +16,7 @@ import java.util.Map;
 
 @XmlRootElement(name = "unit")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class BaseUnit implements Unit, Serializable {
+public class BaseUnit implements Unit, Serializable, Cloneable {
 
     private static Logger logger = LogManager.getLogger(BaseUnit.class);
 
@@ -120,5 +120,10 @@ public class BaseUnit implements Unit, Serializable {
             logger.fatal("Failed to set parameter values for unit from JSON: " + json);
             throw new JsonParseException(e.getMessage());
         }
+    }
+
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone();
     }
 }

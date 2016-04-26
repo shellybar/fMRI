@@ -6,7 +6,7 @@ import java.util.List;
  * Unit is the basic fMRI service that runs on a machine.
  * It contains all the information required to run an fMRI script/program.
  */
-public interface Unit {
+public interface Unit extends Cloneable {
 
     int getId();
 
@@ -33,6 +33,8 @@ public interface Unit {
     String getOutputDir();
 
     void setOutputDir(String outputDir);
+
+    Object clone() throws CloneNotSupportedException;
 
     static String getUnitFileName(long unitId, String suffix) {
         String pattern = "unit_%03d" + suffix;

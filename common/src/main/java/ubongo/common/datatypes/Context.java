@@ -1,6 +1,6 @@
 package ubongo.common.datatypes;
 
-public class Context {
+public class Context implements Cloneable {
 
     private String study;
     private String subject;
@@ -36,5 +36,10 @@ public class Context {
 
     public void setRun(String run) {
         this.run = run;
+    }
+
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone();
     }
 }

@@ -22,7 +22,7 @@ public class DispatcherIntegrationTest {
 
         Properties props = new Properties();
         props.setProperty(UNIT_SETTINGS_DIR_PATH,
-                new File(DispatcherIntegrationTest.class.getClassLoader().getResource("unit_007.xml").getFile()).getParent());
+                new File(DispatcherIntegrationTest.class.getClassLoader().getResource("unit_099.xml").getFile()).getParent());
         props.setProperty(DB_CONFIG_FILE_PATH, new File(BASE_DIR.getAbsolutePath(), "configs/db_connection.xml").getAbsolutePath());
         props.setProperty(SSH_CONFIG_FILE_PATH, new File(BASE_DIR.getAbsolutePath(), "configs/ssh_connection.xml").getAbsolutePath());
         props.setProperty(MACHINES_CONFIG_FILE_PATH, new File(BASE_DIR.getAbsolutePath(), "configs/machines.xml").getAbsolutePath());

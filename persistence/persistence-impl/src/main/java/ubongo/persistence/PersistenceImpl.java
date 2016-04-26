@@ -49,7 +49,7 @@ public class PersistenceImpl implements Persistence {
 
     @Override
     public void createAnalysis(String analysisName, List<Unit> units) throws PersistenceException {
-        // TODO call dbProxy
+        dbProxy.createAnalysis(analysisName, units);
     }
 
     @Override
@@ -64,7 +64,7 @@ public class PersistenceImpl implements Persistence {
 
     @Override
     public void cancelFlow(int flowId) {
-        // TODO call dbProxy
+        dbProxy.cancelFlow(flowId);
     }
 
     @Override
@@ -79,12 +79,12 @@ public class PersistenceImpl implements Persistence {
 
     @Override
     public List<Task> getTasks(int flowId) throws PersistenceException {
-        return null; // TODO call dbProxy
+        return dbProxy.getTasks(flowId);
     }
 
     @Override
     public void cancelTask(Task task) throws PersistenceException {
-        // TODO call dbProxy
+        dbProxy.cancelTask(task);
     }
 
     @Override
