@@ -56,6 +56,19 @@ public class QueueManager {
         logger.debug("Created queue producer thread");
     }
 
+    public void startFlow(int flowId) throws PersistenceException {
+
+        // start flow in DB and notify producer thread
+        synchronized(producerLock) {
+            producerMayWork = false;
+        }
+        persistence.startFlow(flowId);
+        synchronized(producerLock) {
+            producerMayWork = true;
+            producerLock.notify();
+        }
+    }
+
     public void stop() {
         producer.shutdownNow();
         consumers.shutdownNow();

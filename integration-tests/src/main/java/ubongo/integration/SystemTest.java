@@ -24,10 +24,10 @@ public class SystemTest {
     public static void main(String[] args) throws Exception {
         init();
         runTestFlow();
-        close();
     }
 
     public static void init() throws UnmarshalException, PersistenceException {
+
         // initialize analysis server
         String configPath = System.getProperty(CONFIG_PATH);
         String unitsDirPath = System.getProperty(UNITS_DIR_PATH);
@@ -38,8 +38,19 @@ public class SystemTest {
             System.out.println(e.getMessage());
             throw new PersistenceException(e.getMessage());
         }
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                try {
+                    SystemTest.close();
+                } catch (PersistenceException e) {
+                    // do nothing
+                }
+            }
+        });
         analysesServer = new AnalysesServerImpl(configuration, unitsDirPath, DEBUG);
         analysesServer.start();
+        ((AnalysesServerImpl) analysesServer).clearDebugData();
     }
 
     public static void close() throws PersistenceException {
@@ -59,6 +70,7 @@ public class SystemTest {
 
         int flowId = analysesServer.createFlow("study1", tasks);
         analysesServer.runFlow(flowId);
+        while (true); // TODO change to something nicer
     }
 
 }
