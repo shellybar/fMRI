@@ -29,6 +29,7 @@
       <element id="module-output" name="persistence-impl" />
       <element id="module-output" name="server-api" />
       <element id="module-output" name="server-impl" />
+      <element id="module-output" name="integration-tests" />
     </root>
   </artifact>
 </component>

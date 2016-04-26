@@ -1,9 +1,6 @@
 package ubongo.integration;
 
-import ubongo.common.datatypes.Context;
-import ubongo.common.datatypes.Task;
-import ubongo.common.datatypes.TaskStatus;
-import ubongo.common.datatypes.Unit;
+import ubongo.common.datatypes.*;
 import ubongo.persistence.PersistenceException;
 import ubongo.server.AnalysesServer;
 import ubongo.server.AnalysesServerImpl;
@@ -41,11 +38,7 @@ public class SystemTest {
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
-                try {
-                    SystemTest.close();
-                } catch (PersistenceException e) {
-                    // do nothing
-                }
+                analysesServer.stop();
             }
         });
         analysesServer = new AnalysesServerImpl(configuration, unitsDirPath, DEBUG);
@@ -53,20 +46,16 @@ public class SystemTest {
         ((AnalysesServerImpl) analysesServer).clearDebugData();
     }
 
-    public static void close() throws PersistenceException {
-        ((AnalysesServerImpl) analysesServer).clearDebugData();
-        analysesServer.stop();
-    }
 
     public static void runTestFlow() throws PersistenceException {
         Unit unit = analysesServer.getAllUnits().get(0);
+        UnitParameter parameter = new UnitParameter();
+        parameter.setValue("mySubject");
+        parameter.setName("subject");
         Task task1 = new Task(0, 0, 0, unit, null,
-                TaskStatus.CREATED, new Context("study1", "subject1", null));
-        Task task2 = new Task(0, 0, 0, unit, null,
-                TaskStatus.NEW, new Context("study1", "subject2", "run"));
+                TaskStatus.CREATED, new Context("myStudy", "mySubject", null));
         List<Task> tasks = new ArrayList<>();
         tasks.add(task1);
-        tasks.add(task2);
 
         int flowId = analysesServer.createFlow("study1", tasks);
         analysesServer.runFlow(flowId);
