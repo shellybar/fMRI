@@ -45,8 +45,6 @@ public class PersistenceTest {
     public static void createFlow() throws PersistenceException {
 
         Unit unit = persistence.getUnit(1);
-        unit.setParameterValues("{\"srcFile\":\"source_path\", \"destFile\":\"destination_path\"}");
-
         Task task1 = new Task(0, 0, 0, unit, null,
                 TaskStatus.CREATED, new Context("study1", "subject1", null));
         Task task2 = new Task(0, 0, 0, unit, null,

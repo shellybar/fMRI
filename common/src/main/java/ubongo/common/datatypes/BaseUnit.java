@@ -20,14 +20,25 @@ public class BaseUnit implements Unit, ExecutableObj, Serializable {
 
     private static Logger logger = LogManager.getLogger(BaseUnit.class);
 
-    @XmlAttribute private int id;
-    @XmlElement private String inputPath;
-    @XmlElement private String description;
-    @XmlElement private String relativePath;
-    @XmlElementWrapper(name = "parameters")
+    @XmlElement
+    private String name;
+
+    @XmlElement
+    private String description;
+
+    @XmlAttribute
+    private int id;
+
+    @XmlElement (name = "input-files")
+    private String inputPaths;
+
+    @XmlElement (name = "output-dir")
+    private String outputDir;
+
+    @XmlElementWrapper (name = "parameters")
     @XmlElements({
-            @XmlElement(name = "string-parameter", type = StringUnitParameter.class),
-            @XmlElement(name = "file-parameter", type = FileUnitParameter.class)
+            @XmlElement (name = "string-parameter", type = StringUnitParameter.class),
+            @XmlElement (name = "file-parameter", type = FileUnitParameter.class)
     })
     private List<UnitParameter> parameters = new ArrayList<>();
 
@@ -35,40 +46,64 @@ public class BaseUnit implements Unit, ExecutableObj, Serializable {
         this.id = id;
     }
 
-    public BaseUnit() {
-    }
+    public BaseUnit() {}
 
     @Override
     public int getId() {
         return id;
     }
 
+    @Override
     public void setId(int id) {
         this.id = id;
     }
 
+    @Override
     public String getDescription() {
         return description;
     }
 
+    @Override
     public void setDescription(String description) {
         this.description = description;
     }
 
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public String getOutputDir() {
+        return outputDir;
+    }
+
+    @Override
+    public void setOutputDir(String outputDir) {
+        this.outputDir = outputDir;
+    }
+
+    @Override
     public List<UnitParameter> getParameters() {
         return parameters;
     }
 
     @Override
-    public String getInputPath() { /* TODO do! */
-        return inputPath;
+    public String getInputPaths() { /* TODO do! */
+        return inputPaths;
     }
 
     @Override
-    public void setInputPath(String inputPath) {
-        this.inputPath = inputPath;
+    public void setInputPaths(String inputPaths) {
+        this.inputPaths = inputPaths;
     }
 
+    @Override
     public void setParameters(List<UnitParameter> parameters) {
         this.parameters = parameters;
     }
@@ -97,13 +132,5 @@ public class BaseUnit implements Unit, ExecutableObj, Serializable {
             sb.append("\"");
         }
         return sb.toString();
-    }
-
-    public String getRelativePath() {
-        return relativePath;
-    }
-
-    public void setRelativePath(String relativePath) {
-        this.relativePath = relativePath;
     }
 }

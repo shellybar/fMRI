@@ -7,9 +7,9 @@
     <output-dir>/specific/a/home/cc/students/csguests/shellybar/fmri/fMRIPiplineSystem/Experiments/{study}/{subject}/{anatomy}/rawDCMs/</output-dir>
     <parameters> <!-- parameters that go in the script - anything other than the input/output files -->
         <string-parameter>
-            <name>{subject}</name>
+            <name>subject</name>
             <display>subject name</display>
-            <default></default>
+            <default>{subject}</default>
         </string-parameter>
     </parameters>
 </unit>

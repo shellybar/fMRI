@@ -8,10 +8,6 @@ import java.util.List;
  */
 public interface Unit {
 
-    /**
-     * a unique identifier of the unit as saved in the configuration files or DB.
-     * @return the unit's id.
-     */
     int getId();
 
     void setId(int id);
@@ -26,12 +22,17 @@ public interface Unit {
 
     void setParameterValues(String json);
 
-    /**
-     * @return the path which holds the task input files
-     */
-    String getInputPath();
+    String getInputPaths();
 
-    void setInputPath(String inputPath);
+    void setInputPaths(String inputPath);
+
+    String getName();
+
+    void setName(String name);
+
+    String getOutputDir();
+
+    void setOutputDir(String outputDir);
 
     static String getUnitFileName(long unitId, String suffix) {
         String pattern = "unit_%03d" + suffix;
