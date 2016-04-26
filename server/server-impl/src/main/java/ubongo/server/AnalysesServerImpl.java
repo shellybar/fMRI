@@ -23,14 +23,20 @@ public class AnalysesServerImpl implements AnalysesServer {
 
     private static Logger logger = LogManager.getLogger(AnalysesServerImpl.class);
 
-    Persistence persistence;
-    Execution execution;
+    private Persistence persistence;
+    private Execution execution;
+    private boolean debug;
 
-    public AnalysesServerImpl(Configuration configuration, String unitSettingsDirPath) { // TODO - need to be private
+    public AnalysesServerImpl(Configuration configuration, String unitSettingsDirPath) {
+        this(configuration, unitSettingsDirPath, false);
+    }
+
+    public AnalysesServerImpl(Configuration configuration, String unitSettingsDirPath, boolean debug) {
+        this.debug = debug;
         persistence = new PersistenceImpl(unitSettingsDirPath,
                 configuration.getDbConnectionProperties(), configuration.getSshConnectionProperties(),
-                configuration.getMachines());
-        execution = new ExecutionImpl(persistence, configuration.getMachines());
+                configuration.getMachines(), debug);
+        execution = new ExecutionImpl(persistence, configuration.getMachines(), debug);
     }
 
     public static void main(String[] args) throws ParseException {
@@ -55,18 +61,6 @@ public class AnalysesServerImpl implements AnalysesServer {
         String inputPath= "/specific/a/home/cc/students/cs/razregev/workspace/fmri/rabbitTests/unit7Inputs";
         String outputPath = "/specific/a/home/cc/students/cs/razregev/workspace/fmri/rabbitTests/unit7Outputs";
         Unit unit = new BaseUnit(7);
-
-//        Task taskToExec = new Task(id, unit, machine, TaskStatus.PROCESSING, inputPath, outputPath);
-//        executionProxy.execute(taskToExec,queueManager);
-//        logger.info("Start...");
-//        Properties props = parseCommandLineArgs(args);
-//        Execution dispatcher = new ExecutionImpl(props);
-//        dispatcher.start();
-//
-//        Unit unit = new BaseUnit();
-//        unit.setId(1);
-//        unit.setParameterValues("{}"); // TODO unit.setInputPaths("serverWorkspace"); change this protocol - pass a task
-//        dispatcher.run(null, unit);
     }
 
     private static boolean validateSystemVariables(String configPath, String unitsDirPath) {
@@ -83,6 +77,7 @@ public class AnalysesServerImpl implements AnalysesServer {
         return false;
     }
 
+    @Override
     public void start() { // TODO should be private
         try {
             persistence.start();
@@ -92,7 +87,8 @@ public class AnalysesServerImpl implements AnalysesServer {
         execution.start();
     }
 
-    private void stop() {
+    @Override
+    public void stop() {
         execution.stop();
         try {
             persistence.stop();
@@ -157,6 +153,14 @@ public class AnalysesServerImpl implements AnalysesServer {
         } catch (PersistenceException e) {
             // TODO handle exception in getAllUnits
             return null;
+        }
+    }
+
+    public void clearDebugData() {
+        try {
+            ((PersistenceImpl) persistence).clearDebugData();
+        } catch (PersistenceException e) {
+            // do nothing - it is only relevant for tests and the exception is already logged
         }
     }
 }

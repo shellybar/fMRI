@@ -19,8 +19,14 @@ public class ExecutionImpl implements Execution {
     private MachinesManager machinesManager;
     private QueueManager queueManager;
     private ExecutionProxy executionProxy;
+    private boolean debug; // TODO currently not used!
 
     public ExecutionImpl(Persistence persistence, List<Machine> machines) {
+        this(persistence, machines, false);
+    }
+
+    public ExecutionImpl(Persistence persistence, List<Machine> machines, boolean debug) {
+        this.debug = debug;
         this.persistence = persistence;
         executionProxy = ExecutionProxy.getInstance();
         machinesManager = new MachinesManager(machines, executionProxy);
