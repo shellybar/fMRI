@@ -30,6 +30,7 @@ public class Task implements Serializable {
     public String getInputPath() {
         if (inputPath == null) {
             // TODO compute from context params (subject, run...)
+            inputPath = unit.getInputPaths();
         }
         return inputPath;
     }
@@ -37,6 +38,7 @@ public class Task implements Serializable {
     public String getOutputPath() {
         if (outputPath == null) {
             // TODO compute from context params (subject, run...)
+            outputPath = unit.getOutputDir();
         }
         return outputPath;
     }
