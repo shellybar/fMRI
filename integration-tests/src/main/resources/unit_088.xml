@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<unit id="88">
+    <name>TestUnit2</name>
+    <description>Integration tests unit</description>
+    <input-files>C:/Temp/ubongo/studies/{study}/{subject}/(.*)/(.*).dcm</input-files>
+    <output-dir>C:/Temp/ubongo/studies/{study}/{subject}/anatomy/rawDCMs/</output-dir>
+    <parameters>
+        <string-parameter>
+            <name>subject</name>
+            <display>subject name</display>
+            <default>{subject}</default>
+        </string-parameter>
+        <string-parameter>
+            <name>feeling</name>
+            <display>feeling</display>
+            <default>happiness</default>
+        </string-parameter>
+    </parameters>
+</unit>

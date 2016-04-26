@@ -16,7 +16,7 @@ import java.util.Map;
 
 @XmlRootElement(name = "unit")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class BaseUnit implements Unit, ExecutableObj, Serializable {
+public class BaseUnit implements Unit, Serializable, Cloneable {
 
     private static Logger logger = LogManager.getLogger(BaseUnit.class);
 
@@ -123,14 +123,7 @@ public class BaseUnit implements Unit, ExecutableObj, Serializable {
     }
 
     @Override
-    public String getExecutionInputs() {
-        StringBuilder sb = new StringBuilder();
-        List<UnitParameter> inputParams = this.getParameters();
-        for (UnitParameter param :inputParams ){
-            sb.append(" \"");
-            sb.append(param.getValue());
-            sb.append("\"");
-        }
-        return sb.toString();
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone();
     }
 }

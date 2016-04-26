@@ -329,8 +329,8 @@ public class DBProxy {
                 resultSet.getInt(DBConstants.TASKS_SERIAL_NUM),
                 unit,
                 machineId == 0 ? null : machines.get(machineId),
-                TaskStatus.valueOf(resultSet.getString(DBConstants.TASKS_TASK_STATUS).toUpperCase()),
-                context
+                context,
+                TaskStatus.valueOf(resultSet.getString(DBConstants.TASKS_TASK_STATUS).toUpperCase())
         );
     }
 
