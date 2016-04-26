@@ -6,6 +6,7 @@ import ubongo.common.datatypes.Unit;
 import ubongo.common.networkUtils.SSHConnectionProperties;
 import ubongo.persistence.db.DBConnectionProperties;
 import ubongo.persistence.db.DBProxy;
+import ubongo.persistence.exceptions.DBProxyException;
 
 import java.util.List;
 
@@ -94,6 +95,10 @@ public class PersistenceImpl implements Persistence {
     @Override
     public List<Unit> getAllUnits() throws PersistenceException {
         return unitFetcher.getAllUnits();
+    }
+
+    public void clearDebugData() throws PersistenceException {
+        dbProxy.clearAllDebugTables();
     }
 
 }

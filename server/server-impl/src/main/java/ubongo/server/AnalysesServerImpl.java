@@ -65,7 +65,7 @@ public class AnalysesServerImpl implements AnalysesServer {
 //
 //        Unit unit = new BaseUnit();
 //        unit.setId(1);
-//        unit.setParameterValues("{}"); // TODO unit.setInputPath("serverWorkspace"); change this protocol - pass a task
+//        unit.setParameterValues("{}"); // TODO unit.setInputPaths("serverWorkspace"); change this protocol - pass a task
 //        dispatcher.run(null, unit);
     }
 
