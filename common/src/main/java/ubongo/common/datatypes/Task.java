@@ -39,11 +39,11 @@ public class Task implements Serializable {
     public Task() {}
 
     public String getInputPath() {
-        return unit == null ? null : unit.getInputPaths();
+        return unit == null ? null : ContextLevel.replaceAll(unit.getInputPaths(), context);
     }
 
     public String getOutputPath() {
-        return unit == null ? null : unit.getOutputDir();
+        return unit == null ? null : ContextLevel.replaceAll(unit.getOutputDir(), context);
     }
 
     public int getId() {
@@ -220,6 +220,18 @@ public class Task implements Serializable {
                 case subject: context.setSubject(value); break;
                 case run: context.setRun(value);
             }
+        }
+
+        private String replaceAll(String source, String value) {
+            return source.replaceAll("\\{" + name + "\\}", value);
+        }
+
+        public static String replaceAll(String source, Context context) {
+            String dest = source;
+            for (ContextLevel level : ContextLevel.values()) {
+                dest = level.replaceAll(dest, level.getStringFromContext(context));
+            }
+            return dest;
         }
     }
 

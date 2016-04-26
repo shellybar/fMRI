@@ -7,6 +7,7 @@ import com.sun.istack.internal.NotNull;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import ubongo.common.Utils;
 import ubongo.common.datatypes.*;
 import ubongo.persistence.exceptions.UnitFetcherException;
 import ubongo.common.networkUtils.SSHConnection;
@@ -351,7 +352,7 @@ public class DBProxy {
             }
 
             // we insert a flow to the DB before inserting tasks so LAST_INSERT_ID() returns the flowId
-            valuesList.add(concatStrings(
+            valuesList.add(Utils.concatStrings(
                     "('", getStatusString(task.getStatus()), "', LAST_INSERT_ID(), ",
                     Integer.toString(task.getSerialNumber()), ", ",
                     ((unit == null)?"NULL":Integer.toString(unit.getId())), ", ",
@@ -361,14 +362,6 @@ public class DBProxy {
             ));
         }
         return StringUtils.join(valuesList, ',');
-    }
-
-    private String concatStrings(String ... strings) {
-        StringBuilder sb = new StringBuilder();
-        for (String string : strings) {
-            sb.append(string);
-        }
-        return sb.toString();
     }
 
     private String getStatusString(TaskStatus status) {
