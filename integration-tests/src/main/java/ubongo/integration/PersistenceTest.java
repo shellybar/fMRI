@@ -2,7 +2,6 @@ package ubongo.integration;
 
 import ubongo.common.datatypes.Context;
 import ubongo.common.datatypes.Task;
-import ubongo.common.datatypes.TaskStatus;
 import ubongo.common.datatypes.Unit;
 import ubongo.persistence.Persistence;
 import ubongo.persistence.PersistenceException;
@@ -23,40 +22,52 @@ public class PersistenceTest {
 
     public static void main(String[] args) throws Exception {
         init();
-        createFlow();
+        int flowId = createFlow();
+        startFlow(flowId);
         close();
     }
 
-    public static void init() throws UnmarshalException, PersistenceException {
+    private static void init() throws UnmarshalException, PersistenceException {
         String configPath = System.getProperty(CONFIG_PATH);
         String unitsDirPath = System.getProperty(UNITS_DIR_PATH);
         assert(configPath != null && unitsDirPath != null);
         Configuration configuration = Configuration.loadConfiguration(configPath);
         persistence = new PersistenceImpl(unitsDirPath, configuration.getDbConnectionProperties(),
                 configuration.getSshConnectionProperties(), configuration.getMachines(), DEBUG);
+        // TODO create temp folders
         persistence.start();
-    }
-
-    public static void close() throws PersistenceException {
         ((PersistenceImpl) persistence).clearDebugData();
-        persistence.stop();
     }
 
-    public static void createFlow() throws PersistenceException {
-        Unit unit = persistence.getUnit(1);
-        Task task1 = new Task(0, 0, 0, unit, null,
-                TaskStatus.CREATED, new Context("study1", "subject1", null));
-        Task task2 = new Task(0, 0, 0, unit, null,
-                TaskStatus.NEW, new Context("study1", "subject2", "run"));
-        List<Task> tasks = new ArrayList<>();
-        tasks.add(task1);
-        tasks.add(task2);
+    private static void close() throws PersistenceException {
+        persistence.stop();
+        // TODO delete temp folders
+    }
 
-        int flowId = persistence.createFlow("study1", tasks);
+    private static int createFlow() throws Exception {
+
+        Context context = new Context("study_2", ".*", ".*");
+        List<Task> tasks = new ArrayList<>();
+        List<Unit> units = new ArrayList<>();
+        units.add(persistence.getUnit(88));
+        units.add(persistence.getUnit(99));
+
+        int i = 0;
+        for (Unit unit : units) {
+            tasks.addAll(Task.createTasks(unit, context, i++));
+        }
+
+        int flowId = persistence.createFlow("study_2", tasks);
+        List<Task> returnedTasks = persistence.getTasks(flowId);
+        // TODO assert
+        return flowId;
+    }
+
+    private static void startFlow(int flowId) throws PersistenceException {
         persistence.startFlow(flowId);
         List<Task> returnedTasks = persistence.getNewTasks();
         Task retrievedTask = returnedTasks.get(0);
-        assert(retrievedTask.getUnit().getId() == unit.getId()); // TODO assert more things
+        // TODO assert
     }
 
 }

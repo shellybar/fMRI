@@ -1,20 +1,8 @@
 package ubongo.common.constants;
 
-import java.io.File;
-
-
 public class SystemConstants {
 
-    // TODO remove - get this info from command line arguments if necessary
-    private static String baseStr = System.getenv("MRI_BASE_DIR");
-    static {
-        if (baseStr == null) {
-            baseStr = new File(System.getenv("TEMP"), "mri").getAbsolutePath();
-        }
-    }
-    public static final File BASE_DIR = new File(baseStr);
-
-    public static final int NETWORK_RETRIES =5;
+    public static final int NETWORK_RETRIES = 5;
     public static final int SLEEP_BETWEEN_NETWORK_RETRIES = 1000;
 
     public static final String UBONGO_RABBIT_TASKS_QUEUE = "ubongo_tasks";

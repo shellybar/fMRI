@@ -13,7 +13,6 @@ public class Machine implements Serializable {
 
     @XmlAttribute private int id;
     @XmlElement private String address;
-    @XmlElement private int port;
     @XmlElement private MachineStatistics machineStatistics;
 
     public MachineStatistics getMachineStatistics() {
@@ -40,11 +39,4 @@ public class Machine implements Serializable {
         this.machineStatistics = machineStatistics;
     }
 
-    public int getPort() {
-        return port;
-    }
-
-    public void setPort(int port) {
-        this.port = port;
-    } // TODO remove port - we don't use it anymore.
 }

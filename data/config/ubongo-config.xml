@@ -20,7 +20,6 @@
     <machines>
         <machine id="1">
             <address>rack-hezi-01</address>
-            <port>49876</port>
         </machine>
     </machines>
 

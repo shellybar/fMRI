@@ -8,10 +8,11 @@ package ubongo.common.datatypes;
  * This may also include other information such as whether this parameter is required, etc.
  * This class is extended by several specific parameter classes for the different parameters types.
  */
-public class UnitParameter {
+public class UnitParameter implements Cloneable {
 
     private String name;
     private String display;
+
     private String value;
 
     public String getName() {
@@ -36,6 +37,11 @@ public class UnitParameter {
 
     public void setDisplay(String display) {
         this.display = display;
+    }
+
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone();
     }
 
 }
