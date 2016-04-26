@@ -24,14 +24,14 @@ public class SftpManager {
     private String sftpUri;
     private FileSystemManager fsManager = null;
 
-    public SftpManager(String machine, String remoteDir, String localDir) throws NetworkException{
+    public SftpManager(SSHConnectionProperties sshProperties, String machine, String remoteDir, String localDir) throws NetworkException{
         this.machine = machine;
         this.remoteDir = remoteDir;
         this.localDir = localDir;
         //sshProperties.getUser(),
                 //sshProperties.getPassword()
-        this.user = "razregev"; // TODO get from conf - create a new user;
-        this.password = ""; // TODO get from conf - create a new user;
+        this.user = sshProperties.getUser();
+        this.password = sshProperties.getPassword();
         this.sftpUri = "sftp://" + user + ":" + password +  "@" + machine + remoteDir + "/";
 
         logger.info("SftpManager was initiated. Machine=" + this.machine+" remoteDir= "+this.remoteDir+ " destDir = " +this.localDir);

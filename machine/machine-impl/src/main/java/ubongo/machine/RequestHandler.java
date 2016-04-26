@@ -12,6 +12,7 @@ import ubongo.common.datatypes.TaskStatus;
 import ubongo.common.exceptions.NetworkException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import ubongo.common.networkUtils.SSHConnectionProperties;
 import ubongo.common.networkUtils.SftpManager;
 
 import java.io.*;
@@ -28,21 +29,27 @@ public class RequestHandler extends Thread {
     private String baseDir; // The root directory where the files should be stored
     private String unitsDir; // The directory where the units should be stored, related to the base dir
     private String serverAddress; // Address of the program server
+    private String configPath; // The directory where the configuration files should be stored
     private RabbitData rabbitMessage;
+    private SSHConnectionProperties sshConnectionProperties;
 
-    public RequestHandler(RabbitData rabbitMessage, String serverAddress, String baseDir, String unitsDir) {
+    public RequestHandler(RabbitData rabbitMessage, String serverAddress, String baseDir, String unitsDir, String configPath) {
         super("RequestHandler");
         this.baseDir = baseDir;
         this.unitsDir = unitsDir;
         this.serverAddress = serverAddress;
         this.rabbitMessage = rabbitMessage;
-        logger.debug("serverAddress = [" + serverAddress+"] baseDir = ["+baseDir+"] message = ["+ rabbitMessage.getMessage() + "]");
+        this.configPath = configPath;
+        logger.debug("serverAddress = [" + serverAddress+"] baseDir = ["+baseDir+"] configPath = ["+configPath+"] " +
+                "unitsDir = ["+unitsDir+"] message = ["+ rabbitMessage.getMessage() + "]");
     }
 
     @Override
     public void run() {
         logger.debug("run() - Start");
         try {
+            Configuration configuration = Configuration.loadConfiguration(configPath);
+            sshConnectionProperties = configuration.getSshConnectionProperties();
             Task task = rabbitMessage.getTask();
             logger.info("Parsed request = [" + rabbitMessage.getMessage() + " " + task.getId() +"]");
 
@@ -87,7 +94,7 @@ public class RequestHandler extends Thread {
 
         SftpManager filesClient = null;
         try {
-            filesClient = new SftpManager(serverAddress, filesSourceDir, inputFilesDir);
+            filesClient = new SftpManager(sshConnectionProperties, serverAddress, filesSourceDir, inputFilesDir);
             filesClient.getFilesFromServer();
         } catch (NetworkException e) {
             logger.error("Failed receiving files from server " + e.getMessage());
@@ -155,7 +162,7 @@ public class RequestHandler extends Thread {
                 "] to server = [" + serverAddress + "] destination files dir = [" + task.getOutputPath() + "]" );
         SftpManager filesUploader = null;
         try {
-            filesUploader = new SftpManager(serverAddress, task.getOutputPath(), outputDir);
+            filesUploader = new SftpManager(sshConnectionProperties, serverAddress, task.getOutputPath(), outputDir);
             filesUploader.uploadFilesToServer();
         } catch (NetworkException e) {
             logger.error("Failed uploading files to server " + e.getMessage());

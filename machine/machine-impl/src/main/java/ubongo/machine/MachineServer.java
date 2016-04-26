@@ -30,6 +30,8 @@ public class MachineServer {
     public static final String ARG_SERVER = "server";
     public static final String ARG_DIR = "base_dir";
     public static final String ARG_UNITS = "units_dir";
+    private static final String CONFIG_PATH = "config";
+
     private static Logger logger = LogManager.getLogger(MachineServer.class);
 
     private List<Task> runningTasks;
@@ -55,14 +57,14 @@ public class MachineServer {
         final String KILL_TASKS_QUEUE_NAME = SystemConstants.UBONGO_RABBIT_KILL_TASKS_QUEUE;
         try {
             System.out.println(" [*] Waiting for new tasks. To exit press CTRL+C");
-            tasksListener(args, TASKS_QUEUE_NAME, '+');
-            tasksListener(args, KILL_TASKS_QUEUE_NAME, 'x');
+            tasksListener(TASKS_QUEUE_NAME, '+');
+            tasksListener(KILL_TASKS_QUEUE_NAME, 'x');
         } catch (Exception e){
             logger.error("Failed receiving message via rabbit mq error: " + e.getMessage());
         }
     }
 
-    private static void tasksListener(final String[] args, String queue, char actionSign) throws IOException, TimeoutException {
+    private static void tasksListener(String queue, char actionSign) throws IOException, TimeoutException {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost("localhost");
         Connection connection = factory.newConnection();
@@ -75,12 +77,12 @@ public class MachineServer {
                 try {
                     RabbitData message = RabbitData.fromBytes(body);
                     System.out.println(" ["+actionSign+"] Received '" + message.getMessage() + "'");
-                    Properties props = parseCommandLineArgs(args);
-                    String baseDir = props.getProperty(ARG_DIR);
-                    String unitsDir = props.getProperty(ARG_UNITS);
-                    serverAddress = props.getProperty(ARG_SERVER);
+                    String baseDir = System.getProperty(ARG_DIR);
+                    String unitsDir = System.getProperty(ARG_UNITS);
+                    serverAddress = System.getProperty(ARG_SERVER);
+                    String configPath = System.getProperty(CONFIG_PATH);
                     logger.info("Server address: [" + serverAddress + "], base directory path: [" + baseDir + "]");
-                    RequestHandler requestHandler = new RequestHandler(message, serverAddress, baseDir, unitsDir);
+                    RequestHandler requestHandler = new RequestHandler(message, serverAddress, baseDir, unitsDir, configPath);
                     logger.debug("Starting RequestHandler thread...");
                     requestHandler.start();
                 } catch (Exception e){
