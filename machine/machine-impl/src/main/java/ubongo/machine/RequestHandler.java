@@ -76,7 +76,7 @@ public class RequestHandler extends Thread {
 
         File inputDir = new File(inputFilesDir);
         if (inputDir.exists()) {
-            logger.error("input Dir already exists..."); // TODO handle this !
+            logger.error("input Dir already exists...");
             return false;
         }
         boolean result = false;
@@ -107,6 +107,7 @@ public class RequestHandler extends Thread {
         logger.info("handleBaseUnitRequest - start. task ID = " +task.getId() +"]" );
         if (!handleReceiveFiles(inputFilesDir, task.getInputPath())){
             updateTaskFailure(task);
+            return;
         }
         File outputDir = new File(outputFilesDir);
         if (outputDir.exists()) {
