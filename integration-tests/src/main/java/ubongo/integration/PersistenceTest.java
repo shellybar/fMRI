@@ -1,5 +1,6 @@
 package ubongo.integration;
 
+import ubongo.common.datatypes.Context;
 import ubongo.common.datatypes.Task;
 import ubongo.common.datatypes.TaskStatus;
 import ubongo.common.datatypes.Unit;
@@ -31,7 +32,7 @@ public class PersistenceTest {
         assert(configPath != null && unitsDirPath != null);
         Configuration configuration = Configuration.loadConfiguration(configPath);
         persistence = new PersistenceImpl(unitsDirPath, configuration.getDbConnectionProperties(),
-                configuration.getSshConnectionProperties(), false); // TODO change to true for debug!
+                configuration.getSshConnectionProperties(), configuration.getMachines(), false); // TODO change to true for debug!
         persistence.start();
         // TODO clean debug tables in DB - maybe create and then delete
     }
@@ -46,9 +47,9 @@ public class PersistenceTest {
         unit.setParameterValues("{\"srcFile\":\"source_path\", \"destFile\":\"destination_path\"}");
 
         Task task1 = new Task(0, 0, 0, unit, null,
-                TaskStatus.CREATED, "input_path1", "output_path1");
+                TaskStatus.CREATED, new Context("study1", "subject1", null));
         Task task2 = new Task(0, 0, 0, unit, null,
-                TaskStatus.NEW, "input_path2", "output_path2");
+                TaskStatus.NEW, new Context("study2", "subject2", "run"));
         List<Task> tasks = new ArrayList<>();
         tasks.add(task1);
         tasks.add(task2);

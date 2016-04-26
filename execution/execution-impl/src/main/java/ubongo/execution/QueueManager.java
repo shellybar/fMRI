@@ -13,6 +13,7 @@ import ubongo.persistence.PersistenceException;
 import java.util.List;
 import java.util.concurrent.*;
 
+// TODO execute tasks only after their predecessor has completed
 public class QueueManager {
 
     // max time (in milliseconds) the producer thread awaits to be notified of new tasks.

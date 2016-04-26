@@ -29,11 +29,13 @@ public enum ExecutionProxy {
      */
     public void execute(Task task, QueueManager queueManager) {
         this.queueManager = queueManager;
-        sendRequestToMachine(task, SystemConstants.UBONGO_RABBIT_TASKS_QUEUE ,MachineConstants.BASE_UNIT_REQUEST );
+        sendRequestToMachine(task, SystemConstants.UBONGO_RABBIT_TASKS_QUEUE,
+                MachineConstants.BASE_UNIT_REQUEST );
     }
 
     public void killTask(Task task) {
-        sendRequestToMachine(task, SystemConstants.UBONGO_RABBIT_KILL_TASKS_QUEUE ,MachineConstants.KILL_TASK_REQUEST );
+        sendRequestToMachine(task, SystemConstants.UBONGO_RABBIT_KILL_TASKS_QUEUE,
+                MachineConstants.KILL_TASK_REQUEST );
     }
 
     public MachineStatistics getStatistics(Machine machine) {
@@ -42,15 +44,14 @@ public enum ExecutionProxy {
 
     private void sendRequestToMachine(Task task, String queue, String request) {
         logger.info("Sending request to run unit on the machine. Task id = [" + task.getId() + "]");
-        final String QUEUE_NAME =  queue;
         try {
             ConnectionFactory factory = new ConnectionFactory();
             factory.setHost(task.getMachine().getAddress());
             Connection connection = factory.newConnection();
             Channel channel = connection.createChannel();
-            channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+            channel.queueDeclare(queue, false, false, false, null);
             RabbitData message = new RabbitData(task, request);
-            channel.basicPublish("", QUEUE_NAME, null, message.getBytes());
+            channel.basicPublish("", queue, null, message.getBytes());
             logger.debug(" [x] Sent '" + message.getMessage() + "'");
             channel.close();
             connection.close();
