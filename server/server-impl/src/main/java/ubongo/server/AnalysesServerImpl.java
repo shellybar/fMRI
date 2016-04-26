@@ -26,7 +26,7 @@ public class AnalysesServerImpl implements AnalysesServer {
     Persistence persistence;
     Execution execution;
 
-    private AnalysesServerImpl(Configuration configuration, String unitSettingsDirPath) {
+    public AnalysesServerImpl(Configuration configuration, String unitSettingsDirPath) { // TODO - need to be private
         persistence = new PersistenceImpl(unitSettingsDirPath,
                 configuration.getDbConnectionProperties(), configuration.getSshConnectionProperties(),
                 configuration.getMachines());
@@ -41,7 +41,7 @@ public class AnalysesServerImpl implements AnalysesServer {
         if (validateSystemVariables(configPath, unitsDirPath)) return;
         Configuration configuration;
         try {
-            configuration = Configuration.loadConfiguration(CONFIG_PATH);
+            configuration = Configuration.loadConfiguration(configPath);
         } catch (UnmarshalException e) {
             System.out.println(e.getMessage());
             return;
@@ -83,7 +83,7 @@ public class AnalysesServerImpl implements AnalysesServer {
         return false;
     }
 
-    private void start() {
+    public void start() { // TODO should be private
         try {
             persistence.start();
         } catch (PersistenceException e) {

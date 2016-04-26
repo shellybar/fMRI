@@ -43,7 +43,6 @@ public class PersistenceTest {
     }
 
     public static void createFlow() throws PersistenceException {
-
         Unit unit = persistence.getUnit(1);
         Task task1 = new Task(0, 0, 0, unit, null,
                 TaskStatus.CREATED, new Context("study1", "subject1", null));
