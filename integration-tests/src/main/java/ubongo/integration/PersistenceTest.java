@@ -2,7 +2,6 @@ package ubongo.integration;
 
 import ubongo.common.datatypes.Context;
 import ubongo.common.datatypes.Task;
-import ubongo.common.datatypes.TaskStatus;
 import ubongo.common.datatypes.Unit;
 import ubongo.persistence.Persistence;
 import ubongo.persistence.PersistenceException;

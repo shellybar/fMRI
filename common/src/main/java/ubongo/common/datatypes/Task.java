@@ -1,9 +1,7 @@
 package ubongo.common.datatypes;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.lang.reflect.Method;
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -118,11 +116,8 @@ public class Task implements Serializable {
     private static void createTasks(List<Task> tasks, Unit originalUnit, Context originalContext, int serialNumber)
             throws IllegalArgumentException, IOException, CloneNotSupportedException {
 
-        Unit unit = (Unit) originalUnit.clone();
-        Context context = (Context) originalContext.clone();
-
-        String inputPattern = unit.getInputPaths();
-        String outputPattern = unit.getOutputDir();
+        String inputPattern = originalUnit.getInputPaths();
+        String outputPattern = originalUnit.getOutputDir();
         Matcher inputMatcher = VAR_PATTERN.matcher(inputPattern);
         String inputVar = inputMatcher.find() ? inputMatcher.group(1) : null;
         if (inputVar == null) { // stop condition
@@ -130,10 +125,10 @@ public class Task implements Serializable {
             Matcher outputMatcher = VAR_PATTERN.matcher(outputPattern);
             if (outputMatcher.find()) {
                 throw new IllegalArgumentException(
-                        "Some variable in the output directory of unit " + unit.getId() +
+                        "Some variable in the output directory of unit " + originalUnit.getId() +
                         " is redundant and inconsistent with the amount of variables in the input paths");
             }
-            Task task = new Task(serialNumber, unit, context);
+            Task task = new Task(serialNumber, (Unit) originalUnit.clone(), originalContext);
             tasks.add(task);
         } else {
             // next line may throw IllegalArgumentException
@@ -142,15 +137,17 @@ public class Task implements Serializable {
             String[] inputPathParts = inputPattern.split(inputVarEnclosed);
             String inputPrefix = inputPathParts[0];
             String inputSuffix = inputPathParts.length > 1 ? inputPathParts[1] : "";
-            String contextPart = contextLevel.getStringFromContext(context);
+            String contextPart = contextLevel.getStringFromContext(originalContext);
 
             if (contextPart == null) {
                 throw new IllegalArgumentException("Variable {" + inputVar + "} is not a valid variable name");
             }
             if (!contextPart.equals(WILDCARD)) {
+                Unit unit = (Unit) originalUnit.clone();
                 unit.setInputPaths(inputPrefix + contextPart + inputSuffix);
                 unit.setOutputDir(outputPattern.replaceAll(inputVarEnclosed, contextPart));
-                updateUnitParameters(unit, inputVarEnclosed, contextPart);
+                Context context = updateParamsAndContext(originalContext, unit, contextLevel,
+                        inputVarEnclosed, contextPart);
                 createTasks(tasks, unit, context, serialNumber);
             } else {
                 Path dir = Paths.get(inputPrefix);
@@ -163,17 +160,27 @@ public class Task implements Serializable {
                     }
                 }
                 for (Path subDir : subDirs) {
+                    Unit unit = (Unit) originalUnit.clone();
                     unit.setInputPaths(subDir.toString().replaceAll("\\\\", "/") + inputSuffix);
                     String value = subDir.getFileName().toString();
                     unit.setOutputDir(outputPattern.replaceAll(inputVarEnclosed, value));
-                    updateUnitParameters(unit, inputVarEnclosed, value);
+                    Context context = updateParamsAndContext(originalContext, unit, contextLevel,
+                            inputVarEnclosed, value);
                     List<Task> furtherTasks = new ArrayList<>();
-                    contextLevel.updateContext(context, value);
                     createTasks(furtherTasks, unit, context, serialNumber);
                     tasks.addAll(furtherTasks);
                 }
             }
         }
+    }
+
+    private static Context updateParamsAndContext(Context originalContext, Unit unit,
+                                                  ContextLevel contextLevel, String inputVarEnclosed,
+                                                  String contextPart) throws CloneNotSupportedException {
+        updateUnitParameters(unit, inputVarEnclosed, contextPart);
+        Context context = (Context) originalContext.clone();
+        contextLevel.updateContext(context, contextPart);
+        return context;
     }
 
     private static void updateUnitParameters(Unit unit, String inputVarEnclosed, String value) {

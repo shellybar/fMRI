@@ -124,6 +124,12 @@ public class BaseUnit implements Unit, Serializable, Cloneable {
 
     @Override
     public Object clone() throws CloneNotSupportedException {
-        return super.clone();
+        BaseUnit baseUnit = (BaseUnit) super.clone();
+        List<UnitParameter> newParams = new ArrayList<>();
+        for (UnitParameter param : baseUnit.parameters) {
+            newParams.add((UnitParameter) param.clone());
+        }
+        baseUnit.parameters = newParams;
+        return baseUnit;
     }
 }
