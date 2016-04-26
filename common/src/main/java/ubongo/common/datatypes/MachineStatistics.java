@@ -1,12 +1,13 @@
 package ubongo.common.datatypes;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * MachineStatistics encapsulated all performance metrics of a machine
  * (e.g., CPU average consumption).
  */
-public class MachineStatistics {
+public class MachineStatistics implements Serializable {
 
     private static final double alpha = 0.1;
 

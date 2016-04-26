@@ -9,7 +9,7 @@ public class MachineConstants {
     public static final String UPDATE_TASK_REQUEST = "Update task status";
 
     public static final String INPUT_DIR_SUFFIX = "_in";
-    public static final String OUTPUT_DIR_SUFFIX = "_iout";
+    public static final String OUTPUT_DIR_SUFFIX = "_out";
 
 
 

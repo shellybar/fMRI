@@ -10,8 +10,8 @@ import ubongo.common.datatypes.RabbitData;
 import ubongo.common.datatypes.Task;
 import ubongo.common.datatypes.TaskStatus;
 import ubongo.common.exceptions.NetworkException;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import ubongo.common.networkUtils.SftpManager;
 
 import java.io.*;
@@ -122,7 +122,7 @@ public class RequestHandler extends Thread {
             return;
         }
         MachineController machineController = new MachineControllerImpl();
-        boolean success = machineController.run(task, Paths.get(baseDir, unitsDir));
+        boolean success = machineController.run(task, Paths.get(baseDir, unitsDir), Paths.get(baseDir));
         if (success){
             // need to send the output files to the server.
             if (sendOutputFilesToServer(task, outputFilesDir))
@@ -133,7 +133,7 @@ public class RequestHandler extends Thread {
             updateTaskFailure(task);
         }
         // delete local input & output dirs
-        cleanLocalDirectories(inputFilesDir, outputFilesDir);
+        cleanLocalDirectories(inputFilesDir, outputFilesDir); // TODO
     }
 
     private void cleanLocalDirectories(String inputFilesDir, String outputFilesDir) {
@@ -155,7 +155,7 @@ public class RequestHandler extends Thread {
                 "] to server = [" + serverAddress + "] destination files dir = [" + task.getOutputPath() + "]" );
         SftpManager filesUploader = null;
         try {
-            filesUploader = new SftpManager(serverAddress, outputDir, task.getOutputPath());
+            filesUploader = new SftpManager(serverAddress, task.getOutputPath(), outputDir);
             filesUploader.uploadFilesToServer();
         } catch (NetworkException e) {
             logger.error("Failed uploading files to server " + e.getMessage());
@@ -184,7 +184,7 @@ public class RequestHandler extends Thread {
             task.setStatus(status);
             RabbitData message = new RabbitData(task, MachineConstants.UPDATE_TASK_REQUEST);
             channel.basicPublish("", QUEUE_NAME, null, message.getBytes());
-            logger.debug(" [+] Sent '" + message.getMessage() + "'");
+            logger.debug(" [!] Sent '" + message.getMessage() + "'");
             channel.close();
             connection.close();
         } catch (Exception e){

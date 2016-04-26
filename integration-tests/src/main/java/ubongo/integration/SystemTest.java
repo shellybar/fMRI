@@ -55,7 +55,7 @@ public class SystemTest {
         List<Task> tasks = new ArrayList<>();
         tasks.add(task1);
 
-        int flowId = analysesServer.createFlow("study1", tasks);
+        int flowId = analysesServer.createFlow("myStudy", tasks);
         analysesServer.runFlow(flowId);
         while (true); // TODO change to something nicer
     }

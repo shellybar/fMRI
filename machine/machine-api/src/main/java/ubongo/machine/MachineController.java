@@ -28,6 +28,6 @@ public interface MachineController {
      * @param unitsDir is the directory where the unit files are stored on the machine
      * @return true iff run ended successfully
      */
-    boolean run(Task task, Path unitsDir);
+    boolean run(Task task, Path unitsDir, Path baseDir);
 
 }

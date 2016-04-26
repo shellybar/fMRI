@@ -1,6 +1,5 @@
 package ubongo.common.networkUtils;
 
-import org.apache.commons.vfs2.impl.StandardFileSystemManager;
 import org.apache.commons.vfs2.provider.sftp.SftpFileSystemConfigBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,7 +37,6 @@ public class SftpManager {
         logger.info("SftpManager was initiated. Machine=" + this.machine+" remoteDir= "+this.remoteDir+ " destDir = " +this.localDir);
     }
 
-
     /**
      * Receives files using SFTP.
      * Used for receiving files from the main files server to the machines.
@@ -49,7 +47,7 @@ public class SftpManager {
             SftpFileSystemConfigBuilder.getInstance().setUserDirIsRoot(opts, false);
             fsManager = VFS.getManager();
 
-            // List all the files in that directory.Try to give the directory path
+            // List all the files in that directory.
 
             FileObject localFileObject=fsManager.resolveFile(sftpUri,opts);
 
@@ -62,7 +60,7 @@ public class SftpManager {
                 FileObject localFile = fsManager.resolveFile(file.getAbsolutePath(),opts);
                 FileObject remoteFile = fsManager.resolveFile(sftpUri+ "/" + fileName, opts);
                 localFile.copyFrom(remoteFile, Selectors.SELECT_SELF);
-                logger.info("File download successful: " + fileName);
+                logger.info("File downloaded successfully: " + fileName);
             }
         }
         catch (Exception ex) {
@@ -77,34 +75,27 @@ public class SftpManager {
      */
     public void uploadFilesToServer() throws NetworkException{
         try {
-            StandardFileSystemManager manager = new StandardFileSystemManager();
-            //Initializes the file manager
-            manager.init();
+            FileSystemOptions opts = new FileSystemOptions();
+            SftpFileSystemConfigBuilder.getInstance().setUserDirIsRoot(opts, false);
+            fsManager = VFS.getManager();
+
             File folder = new File(localDir);
             File[] listOfToUploadFiles = folder.listFiles();
+            logger.debug("localDir = " + localDir);
 
-            for (File fileToUpload : listOfToUploadFiles){
-                if (!fileToUpload.exists())
+            for (File fileToUpload : listOfToUploadFiles) {
+                if (!fileToUpload.exists()) {
+                    logger.error("Error. Local file not found : " + fileToUpload.getName());
                     throw new NetworkException("Error. Local file not found");
+                }
                 String fileName = fileToUpload.getName();
-
-                //Setup our SFTP configuration
-                FileSystemOptions opts = new FileSystemOptions();
-                SftpFileSystemConfigBuilder.getInstance().setStrictHostKeyChecking(
-                        opts, "no");
-                SftpFileSystemConfigBuilder.getInstance().setUserDirIsRoot(opts, true);
-                SftpFileSystemConfigBuilder.getInstance().setTimeout(opts, 10000);
-
-                String sftpUri = this.sftpUri + fileToUpload;
-                // Create local file object
-                FileObject localFile = manager.resolveFile(fileToUpload.getAbsolutePath());
-
-                // Create remote file object
-                FileObject remoteFile = manager.resolveFile(sftpUri, opts);
-
-                // Copy local file to sftp server
+                logger.debug("uploading : " + fileName);
+                FileObject localFile = fsManager.resolveFile(fileToUpload.getAbsolutePath(),opts);
+                FileObject remoteFile = fsManager.resolveFile(sftpUri+ "/" + fileName, opts);
+                logger.debug("local file object : " + localFile.getName());
+                logger.debug("remote file object : " + remoteFile.getName());
                 remoteFile.copyFrom(localFile, Selectors.SELECT_SELF);
-                System.out.println("File upload successful " + fileName);
+                logger.info("File uploaded successfully: " + fileName);
             }
         }
         catch (Exception ex) {
@@ -112,6 +103,5 @@ public class SftpManager {
         }
         return;
     }
-
 
 }
