@@ -19,7 +19,7 @@
 
     <machines>
         <machine id="1">
-            <address>127.0.0.1</address>
+            <address>rack-hezi-01</address>
             <port>49876</port>
         </machine>
     </machines>

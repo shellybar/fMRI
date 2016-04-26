@@ -25,4 +25,6 @@ public interface AnalysesServer {
 
     List<Unit> getAllUnits();
 
+    public void start();
+
 }

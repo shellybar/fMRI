@@ -7,6 +7,8 @@ import ubongo.common.datatypes.Unit;
 import ubongo.persistence.Persistence;
 import ubongo.persistence.PersistenceException;
 import ubongo.persistence.PersistenceImpl;
+import ubongo.server.AnalysesServer;
+import ubongo.server.AnalysesServerImpl;
 import ubongo.server.Configuration;
 
 import javax.xml.bind.UnmarshalException;
@@ -35,6 +37,7 @@ public class PersistenceTest {
                 configuration.getSshConnectionProperties(), configuration.getMachines(), false); // TODO change to true for debug!
         persistence.start();
         // TODO clean debug tables in DB - maybe create and then delete
+        initializeAnalysisServer();
     }
 
     public static void close() throws PersistenceException {
@@ -42,7 +45,6 @@ public class PersistenceTest {
     }
 
     public static void createFlow() throws PersistenceException {
-
         Unit unit = persistence.getUnit(1);
         unit.setParameterValues("{\"srcFile\":\"source_path\", \"destFile\":\"destination_path\"}");
 
@@ -54,11 +56,41 @@ public class PersistenceTest {
         tasks.add(task1);
         tasks.add(task2);
 
-        int flowId = persistence.createFlow("study5", tasks); // TODO generate random
+        int flowId = persistence.createFlow("testFlow3", tasks); // TODO generate random
         persistence.startFlow(flowId);
         List<Task> returnedTasks = persistence.getNewTasks();
         Task retrievedTask = returnedTasks.get(0);
         assert(retrievedTask.getUnit().getId() == unit.getId()); // TODO assert more things
+    }
+
+    public static void initializeAnalysisServer() throws PersistenceException {
+        // initialize analysis server
+        String configPath = System.getProperty(CONFIG_PATH);
+        String unitsDirPath = System.getProperty(UNITS_DIR_PATH);
+        if (validateSystemVariables(configPath, unitsDirPath)) return;
+        Configuration configuration;
+        try {
+            configuration = Configuration.loadConfiguration(configPath);
+        } catch (UnmarshalException e) {
+            System.out.println(e.getMessage());
+            throw new PersistenceException(e.getMessage());
+        }
+        AnalysesServer analysesServer = new AnalysesServerImpl(configuration, unitsDirPath);
+        analysesServer.start();
+    }
+
+    private static boolean validateSystemVariables(String configPath, String unitsDirPath) {
+        if (configPath == null || unitsDirPath == null) {
+            String pattern = "Please supply %1$s path as run parameter: -%2$s=<path>";
+            if (configPath == null) {
+                System.out.format(pattern, "configuration", CONFIG_PATH);
+            }
+            if (unitsDirPath == null) {
+                System.out.format(pattern, "units directory", UNITS_DIR_PATH);
+            }
+            return true;
+        }
+        return false;
     }
 
 }

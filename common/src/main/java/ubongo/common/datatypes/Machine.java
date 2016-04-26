@@ -46,5 +46,5 @@ public class Machine implements Serializable {
 
     public void setPort(int port) {
         this.port = port;
-    }
+    } // TODO remove port - we don't use it anymore.
 }
