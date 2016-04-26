@@ -15,6 +15,7 @@ import ubongo.persistence.PersistenceImpl;
 
 import javax.xml.bind.UnmarshalException;
 
+// TODO break tasks to sub-tasks when task should be run for multiple subjects, runs, etc.
 public class AnalysesServerImpl implements AnalysesServer {
 
     private static final String CONFIG_PATH = "config";

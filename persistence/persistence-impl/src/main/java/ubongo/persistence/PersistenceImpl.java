@@ -6,7 +6,6 @@ import ubongo.common.datatypes.Unit;
 import ubongo.common.networkUtils.SSHConnectionProperties;
 import ubongo.persistence.db.DBConnectionProperties;
 import ubongo.persistence.db.DBProxy;
-import ubongo.persistence.exceptions.DBProxyException;
 
 import java.util.List;
 
