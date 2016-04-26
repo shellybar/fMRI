@@ -21,7 +21,6 @@ public class Task implements Serializable {
     private static final Pattern VAR_PATTERN = Pattern.compile("\\{(.*?)\\}");
     private static final String WILDCARD = ".*";
 
-    // TODO no need to get id and flowId as they will be overridden by ids in DB
     public Task(int serialNumber, Unit unit, Context context) {
         this(0, 0, serialNumber, unit, null, context, TaskStatus.CREATED);
     }

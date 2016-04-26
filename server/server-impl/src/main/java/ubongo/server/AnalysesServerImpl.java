@@ -4,7 +4,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import ubongo.common.datatypes.*;
 
-import java.nio.file.Path;
 import java.util.List;
 import org.apache.commons.cli.*;
 import ubongo.execution.Execution;
@@ -15,7 +14,6 @@ import ubongo.persistence.PersistenceImpl;
 
 import javax.xml.bind.UnmarshalException;
 
-// TODO break tasks to sub-tasks when task should be run for multiple subjects, runs, etc.
 public class AnalysesServerImpl implements AnalysesServer {
 
     private static final String CONFIG_PATH = "config";
@@ -53,14 +51,6 @@ public class AnalysesServerImpl implements AnalysesServer {
             return;
         }
         AnalysesServer analysesServer = new AnalysesServerImpl(configuration, unitsDirPath);
-
-        int id = 1;
-        Machine machine = new Machine();
-        machine.setPort(1234);
-        machine.setAddress("rack-hezi-01");
-        String inputPath= "/specific/a/home/cc/students/cs/razregev/workspace/fmri/rabbitTests/unit7Inputs";
-        String outputPath = "/specific/a/home/cc/students/cs/razregev/workspace/fmri/rabbitTests/unit7Outputs";
-        Unit unit = new BaseUnit(7);
     }
 
     private static boolean validateSystemVariables(String configPath, String unitsDirPath) {
