@@ -26,7 +26,7 @@ public class ExecutionImpl implements Execution {
         machinesManager = new MachinesManager(machines, executionProxy);
         queueManager = new QueueManager(persistence, machinesManager);
         try {
-            tasksStatusListener(queueManager);
+            tasksStatusListener();
         } catch (Exception e) {
             notifyFatal(e);
         }
@@ -74,7 +74,7 @@ public class ExecutionImpl implements Execution {
         // TODO notify UI, try to solve based on type of error...
     }
 
-    private static void tasksStatusListener(QueueManager queueManager) throws IOException, TimeoutException {
+    private void tasksStatusListener() throws IOException, TimeoutException {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost("localhost");
         Connection connection = factory.newConnection();
