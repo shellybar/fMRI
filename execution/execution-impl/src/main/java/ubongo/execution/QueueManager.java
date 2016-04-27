@@ -52,6 +52,7 @@ public class QueueManager {
     }
 
     public void start() throws QueueManagementException {
+        logger.info("Starting Queue Manager");
         initQueue();
     }
 
@@ -59,11 +60,8 @@ public class QueueManager {
         consumers = Executors.newFixedThreadPool(NUM_CONSUMER_THREADS);
         for (int i = 0; i < NUM_CONSUMER_THREADS; i++)
             consumers.execute(new Consumer(queue, persistence));
-        logger.debug("Created " + NUM_CONSUMER_THREADS + " queue consumer thread"
-                + ((NUM_CONSUMER_THREADS > 1)?"s":""));
         producer = Executors.newSingleThreadExecutor();
         producer.execute(new Producer(queue, persistence));
-        logger.debug("Created queue producer thread");
     }
 
     public void startFlow(int flowId) throws PersistenceException {
@@ -159,7 +157,6 @@ public class QueueManager {
         public void run() {
             try {
                 while (true) {
-                    logger.debug("Waiting to take task from queue");
                     Task task = queue.take();
                     Task currTask = (Task) task.clone();
                     synchronized (consumerLock) {
@@ -167,16 +164,11 @@ public class QueueManager {
                             consumerLock.wait();
                         }
                     }
-                    logger.debug("Retrieved task from queue: taskId=" + currTask.getId()
-                            + ", unitId=" + currTask.getUnit().getId());
                     if (!taskReadyForExecute(currTask)) {
                         continue;
                     }
                     Machine machine = machinesManager.getAvailableMachine();
                     currTask.setMachine(machine);
-                    logger.debug("Allocated machine (machineId=" + machine.getId()
-                            + ") for task (taskId=" + currTask.getId() + ")");
-                    logger.debug("Updating task's status in DB to 'Processing' (taskId=" + currTask.getId() + ")");
                     currTask.setStatus(TaskStatus.PROCESSING);
                     synchronized (taskIdsInCancel) {
                         if (taskIdsInCancel.contains(currTask.getId())) {
@@ -184,7 +176,9 @@ public class QueueManager {
                         }
                     }
                     persistence.updateTaskStatus(currTask);
-                    logger.debug("Sending task for execution (taskId=" + currTask.getId() + ")");
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Sending task for execution (taskId=" + currTask.getId() + ")");
+                    }
                     executionProxy.execute(currTask, QueueManager.this);
                 }
             } catch (InterruptedException e) {
@@ -300,7 +294,9 @@ public class QueueManager {
                     }
                     for (Task task: tasks) {
                         Task currTask = (Task) task.clone();
-                        logger.debug("Adding new task to queue (taskId=" + currTask.getId() + ")");
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("Adding new task to queue (taskId=" + currTask.getId() + ")");
+                        }
                         synchronized (consumerLock) {
                             producerUpdatingDatabase = true;
                         }
@@ -320,7 +316,6 @@ public class QueueManager {
                                 continue;
                             }
                             currTask.setStatus(TaskStatus.PENDING);
-                            logger.debug("Updating task's status in DB to 'Pending' (taskId=" + currTask.getId() + ")");
                             persistence.updateTaskStatus(currTask);
                         }
                         synchronized (consumerLock) {
@@ -330,7 +325,9 @@ public class QueueManager {
                     }
                 }
             } catch (InterruptedException e) {
-                logger.debug("Queue producer thread shutting down after interrupt");
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Queue producer thread shutting down after interrupt");
+                }
             } catch (PersistenceException e) {
                 // TODO handle PersistenceException in queue producer
             } catch (CloneNotSupportedException e) {

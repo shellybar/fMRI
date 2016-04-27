@@ -45,8 +45,10 @@ public class RequestHandler extends Thread {
         this.serverAddress = serverAddress;
         this.rabbitMessage = rabbitMessage;
         this.configPath = configPath;
-        logger.debug("serverAddress = [" + serverAddress+"] baseDir = ["+baseDir+"] configPath = ["+configPath+"] " +
-                "unitsDir = ["+unitsDir+"] message = ["+ rabbitMessage.getMessage() + "]");
+        if (logger.isDebugEnabled()) {
+            logger.debug("serverAddress = [" + serverAddress + "] baseDir = [" + baseDir + "] configPath = [" + configPath + "] " +
+                    "unitsDir = [" + unitsDir + "] message = [" + rabbitMessage.getMessage() + "]");
+        }
     }
 
     @Override
@@ -279,7 +281,9 @@ public class RequestHandler extends Thread {
             task.setStatus(status);
             RabbitData message = new RabbitData(task, MachineConstants.UPDATE_TASK_REQUEST);
             channel.basicPublish("", QUEUE_NAME, null, message.getBytes());
-            logger.debug(" [!] Sent '" + message.getMessage() + "'");
+            if (logger.isDebugEnabled()) {
+                logger.debug(" [!] Sent '" + message.getMessage() + "'");
+            }
             channel.close();
             connection.close();
         } catch (Exception e){
