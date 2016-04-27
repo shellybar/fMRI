@@ -94,7 +94,7 @@ public class DBProxy {
                 String driver = "com.mysql.jdbc.Driver";
                 try {
                     Class.forName(driver);
-                    connection = DriverManager.getConnection(getActualUrl(), getUser()+"d", dbProperties.getPassword());
+                    connection = DriverManager.getConnection(getActualUrl(), getUser(), dbProperties.getPassword());
                 } catch (SQLException e) {
                     String errorMsg = String.format("Failed to connect to the database (url: %s; user: %s)", getUrl(), getUser());
                     // TODO log errorMsg?

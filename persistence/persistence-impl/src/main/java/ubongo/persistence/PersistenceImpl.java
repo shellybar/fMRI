@@ -63,11 +63,8 @@ public class PersistenceImpl implements Persistence {
                 dbProxy.createAnalysis(analysisName, units);
                 return;
             } catch (DBProxyException e) {
-                Throwable t = e.getCause();
-                if (numRetries == MAX_NUM_RETRIES || !(t instanceof SQLException)
-                        || !sqlExceptionHandler.isRecoverable((SQLException) t)) {
-                    throw e;
-                }
+                DBProxyException ret;
+                if ((ret = handleDbProxyException(e, numRetries)) != null) throw ret;
             }
         }
         throw new PersistenceException("Unknown reason"); // not possible
@@ -85,11 +82,8 @@ public class PersistenceImpl implements Persistence {
             try {
                 return dbProxy.getAnalysis(analysisName);
             } catch (DBProxyException e) {
-                Throwable t = e.getCause();
-                if (numRetries == MAX_NUM_RETRIES || !(t instanceof SQLException)
-                        || !sqlExceptionHandler.isRecoverable((SQLException) t)) {
-                    throw e;
-                }
+                DBProxyException ret;
+                if ((ret = handleDbProxyException(e, numRetries)) != null) throw ret;
             }
         }
         throw new PersistenceException("Unknown reason"); // not possible
@@ -102,11 +96,8 @@ public class PersistenceImpl implements Persistence {
             try {
                 return dbProxy.createFlow(studyName, tasks);
             } catch (DBProxyException e) {
-                Throwable t = e.getCause();
-                if (numRetries == MAX_NUM_RETRIES || !(t instanceof SQLException)
-                        || !sqlExceptionHandler.isRecoverable((SQLException) t)) {
-                    throw e;
-                }
+                DBProxyException ret;
+                if ((ret = handleDbProxyException(e, numRetries)) != null) throw ret;
             }
         }
         throw new PersistenceException("Unknown reason"); // not possible
@@ -120,11 +111,8 @@ public class PersistenceImpl implements Persistence {
                 dbProxy.startFlow(flowId);
                 return;
             } catch (DBProxyException e) {
-                Throwable t = e.getCause();
-                if (numRetries == MAX_NUM_RETRIES || !(t instanceof SQLException)
-                        || !sqlExceptionHandler.isRecoverable((SQLException) t)) {
-                    throw e;
-                }
+                DBProxyException ret;
+                if ((ret = handleDbProxyException(e, numRetries)) != null) throw ret;
             }
         }
         throw new PersistenceException("Unknown reason"); // not possible
@@ -137,11 +125,8 @@ public class PersistenceImpl implements Persistence {
             try {
                 return dbProxy.cancelFlow(flowId);
             } catch (DBProxyException e) {
-                Throwable t = e.getCause();
-                if (numRetries == MAX_NUM_RETRIES || !(t instanceof SQLException)
-                        || !sqlExceptionHandler.isRecoverable((SQLException) t)) {
-                    throw e;
-                }
+                DBProxyException ret;
+                if ((ret = handleDbProxyException(e, numRetries)) != null) throw ret;
             }
         }
         throw new PersistenceException("Unknown reason"); // not possible
@@ -160,11 +145,8 @@ public class PersistenceImpl implements Persistence {
                 dbProxy.updateStatus(task);
                 return;
             } catch (DBProxyException e) {
-                Throwable t = e.getCause();
-                if (numRetries == MAX_NUM_RETRIES || !(t instanceof SQLException)
-                        || !sqlExceptionHandler.isRecoverable((SQLException) t)) {
-                    throw e;
-                }
+                DBProxyException ret;
+                if ((ret = handleDbProxyException(e, numRetries)) != null) throw ret;
             }
         }
         throw new PersistenceException("Unknown reason"); // not possible
@@ -178,11 +160,8 @@ public class PersistenceImpl implements Persistence {
                 dbProxy.updateStatus(waitingTasks);
                 return;
             } catch (DBProxyException e) {
-                Throwable t = e.getCause();
-                if (numRetries == MAX_NUM_RETRIES || !(t instanceof SQLException)
-                        || !sqlExceptionHandler.isRecoverable((SQLException) t)) {
-                    throw e;
-                }
+                DBProxyException ret;
+                if ((ret = handleDbProxyException(e, numRetries)) != null) throw ret;
             }
         }
         throw new PersistenceException("Unknown reason"); // not possible
@@ -195,11 +174,8 @@ public class PersistenceImpl implements Persistence {
             try {
                 return dbProxy.getTasks(flowId);
             } catch (DBProxyException e) {
-                Throwable t = e.getCause();
-                if (numRetries == MAX_NUM_RETRIES || !(t instanceof SQLException)
-                        || !sqlExceptionHandler.isRecoverable((SQLException) t)) {
-                    throw e;
-                }
+                DBProxyException ret;
+                if ((ret = handleDbProxyException(e, numRetries)) != null) throw ret;
             }
         }
         throw new PersistenceException("Unknown reason"); // not possible
@@ -212,11 +188,8 @@ public class PersistenceImpl implements Persistence {
             try {
                 return dbProxy.cancelTask(task);
             } catch (DBProxyException e) {
-                Throwable t = e.getCause();
-                if (numRetries == MAX_NUM_RETRIES || !(t instanceof SQLException)
-                        || !sqlExceptionHandler.isRecoverable((SQLException) t)) {
-                    throw e;
-                }
+                DBProxyException ret;
+                if ((ret = handleDbProxyException(e, numRetries)) != null) throw ret;
             }
         }
         throw new PersistenceException("Unknown reason"); // not possible
@@ -234,6 +207,15 @@ public class PersistenceImpl implements Persistence {
 
     public void clearDebugData() throws PersistenceException {
         new DBMethodInvoker<>(sqlExceptionHandler, dbProxy::clearAllDebugTables).invoke();
+    }
+
+    private DBProxyException handleDbProxyException(DBProxyException e, int numRetries) {
+        Throwable t = e.getCause();
+        if (numRetries == MAX_NUM_RETRIES || !(t instanceof SQLException)
+                || !sqlExceptionHandler.isRecoverable((SQLException) t)) {
+            return e;
+        }
+        return null;
     }
 
     private class DBMethodInvoker<T> {
