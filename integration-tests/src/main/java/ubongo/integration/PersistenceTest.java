@@ -66,8 +66,18 @@ public class PersistenceTest {
     protected List<Unit> createAnalysis(List<Unit> units) throws PersistenceException {
         String analysis = "analysis1";
         persistence.createAnalysis(analysis, units);
-        List<Unit> retrievedUnits = persistence.getAnalysis(analysis);
-        // TODO assert
+        List<String> analysisNames = persistence.getAnalysisNames();
+        assert analysisNames != null && analysisNames.size() == 1;
+        String retrievedAnalysisName = analysisNames.get(0);
+        assert analysis.equals(retrievedAnalysisName);
+        List<Unit> retrievedUnits = persistence.getAnalysis(retrievedAnalysisName);
+        assert retrievedUnits != null && retrievedUnits.size() == 2;
+        for (int i = 0; i < units.size(); i++) {
+            Unit currUnit = units.get(i);
+            Unit currRetUnit = retrievedUnits.get(i);
+            assert currRetUnit != null && currUnit.getId() == currRetUnit.getId() &&
+                    currUnit.getInputPaths().equals(currRetUnit.getInputPaths());
+        }
         return retrievedUnits;
     }
 

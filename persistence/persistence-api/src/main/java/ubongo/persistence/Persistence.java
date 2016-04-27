@@ -21,6 +21,8 @@ public interface Persistence {
      */
     void createAnalysis(String analysisName, List<Unit> units) throws PersistenceException;
 
+    List<String> getAnalysisNames() throws PersistenceException;
+
     List<Unit> getAnalysis(String analysisName) throws PersistenceException;
 
     /**

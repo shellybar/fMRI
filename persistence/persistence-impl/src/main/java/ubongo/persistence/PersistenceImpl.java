@@ -9,7 +9,6 @@ import ubongo.persistence.db.DBProxy;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 public class PersistenceImpl implements Persistence {
 
@@ -51,6 +50,11 @@ public class PersistenceImpl implements Persistence {
     @Override
     public void createAnalysis(String analysisName, List<Unit> units) throws PersistenceException {
         dbProxy.createAnalysis(analysisName, units);
+    }
+
+    @Override
+    public List<String> getAnalysisNames() throws PersistenceException {
+        return dbProxy.getAnalysisNames();
     }
 
     @Override
