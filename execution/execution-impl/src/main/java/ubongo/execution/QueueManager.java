@@ -106,7 +106,7 @@ public class QueueManager {
         }
     }
 
-    synchronized private void handleCompletedTask(Task task) throws PersistenceException {
+    synchronized private boolean handleCompletedTask(Task task) throws PersistenceException {
         TaskKey key = new TaskKey(task);
         Set<Integer> taskIdsMap = setLocatorMap.get(key);
         if (taskIdsMap != null) {
@@ -119,8 +119,10 @@ public class QueueManager {
                 persistence.updateTasksStatus(waitingTasks);
                 dependencyMap.remove(taskIdsMap);
                 setLocatorMap.remove(key);
+                return true;
             }
         }
+        return false;
     }
 
     private class Consumer extends Thread {
@@ -194,11 +196,13 @@ public class QueueManager {
                     storeDependencies(task, taskStream);
                     // after storing, we need to verify no dependent was completed in the meanwhile
                     // if it were, check if we can run now (return false anyway)
-                    Stream<Task> completedTaskStream =
+                    List<Task> completedTasks =
                             persistence.getTasks(task.getFlowId()).stream()
                             .filter(t -> t.getSerialNumber() == serial &&
-                                    t.getStatus() == TaskStatus.COMPLETED);
-                    completedTaskStream.forEach(QueueManager.this::handleCompletedTask); // TODO continue...
+                                    t.getStatus() == TaskStatus.COMPLETED).collect(Collectors.toList());
+                    for (Task completedTask : completedTasks) {
+                        if (handleCompletedTask(completedTask)) break;
+                    }
                 }
                 updatingDependencies = false;
             }

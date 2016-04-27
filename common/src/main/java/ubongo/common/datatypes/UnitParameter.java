@@ -1,6 +1,11 @@
 package ubongo.common.datatypes;
 
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+
 /**
  * A UnitParameter encapsulates the information about a parameter that a unit may require.
  * For instance, if a unit requires a string, we want to have an identifying name for the parameter,
@@ -8,12 +13,15 @@ package ubongo.common.datatypes;
  * This may also include other information such as whether this parameter is required, etc.
  * This class is extended by several specific parameter classes for the different parameters types.
  */
+@XmlRootElement
+@XmlAccessorType(XmlAccessType.FIELD)
 public class UnitParameter implements Cloneable {
 
     private String name;
     private String display;
 
-    private String value;
+    @XmlElement(name = "default")
+    protected String value;
 
     public String getName() {
         return name;
