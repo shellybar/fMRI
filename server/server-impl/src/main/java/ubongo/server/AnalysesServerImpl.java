@@ -68,7 +68,7 @@ public class AnalysesServerImpl implements AnalysesServer {
     }
 
     @Override
-    public void start() { // TODO should be private
+    public void start() {
         try {
             persistence.start();
         } catch (PersistenceException e) {
@@ -107,15 +107,19 @@ public class AnalysesServerImpl implements AnalysesServer {
         try {
             return persistence.createFlow(studyName, tasks);
         } catch (PersistenceException e) {
-            // TODO handle exception in createFlow
+            // TODO handle PersistenceException in createFlow
             return 42;
         }
     }
 
     @Override
     public void cancelFlow(int flowId) {
-        List<Task> tasksToKill = persistence.cancelFlow(flowId);
-        tasksToKill.forEach(task -> execution.killTask(task));
+        try {
+            List<Task> tasksToKill = persistence.cancelFlow(flowId);
+            tasksToKill.forEach(task -> execution.killTask(task));
+        } catch (PersistenceException e) {
+            // TODO handle PersistenceException in cancelFlow
+        }
     }
 
     @Override
@@ -131,11 +135,14 @@ public class AnalysesServerImpl implements AnalysesServer {
     @Override
     public void cancelTask(Task task) {
         try {
+            ((ExecutionImpl) execution).notifyQueueBeforeCancel(task);
             if (!persistence.cancelTask(task)) {
                 killTask(task); // task could not be canceled - need to be killed
             }
         } catch (PersistenceException e) {
             // TODO handle exception in cancelTask
+        } finally {
+            ((ExecutionImpl) execution).notifyQueueAfterCancel(task);
         }
     }
 

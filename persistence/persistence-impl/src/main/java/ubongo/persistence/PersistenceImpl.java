@@ -6,6 +6,7 @@ import ubongo.common.datatypes.Unit;
 import ubongo.common.networkUtils.SSHConnectionProperties;
 import ubongo.persistence.db.DBConnectionProperties;
 import ubongo.persistence.db.DBProxy;
+import ubongo.persistence.exceptions.DBProxyException;
 
 import java.util.Collection;
 import java.util.List;
@@ -73,7 +74,7 @@ public class PersistenceImpl implements Persistence {
     }
 
     @Override
-    public List<Task> cancelFlow(int flowId) {
+    public List<Task> cancelFlow(int flowId) throws PersistenceException {
         return dbProxy.cancelFlow(flowId);
     }
 

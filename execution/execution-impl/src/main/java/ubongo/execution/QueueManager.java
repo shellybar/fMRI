@@ -42,6 +42,9 @@ public class QueueManager {
     private final Map<TaskKey, DependencyKey> setLocatorMap = new HashMap<>();
     private boolean updatingDependencies = false;
 
+    // task canceling mechanism
+    private final Set<Integer> taskIdsInCancel = new HashSet<>();
+
     QueueManager(Persistence persistence, MachinesManager machinesManager) {
         this.executionProxy = ExecutionProxy.getInstance();
         this.persistence = persistence;
@@ -130,6 +133,18 @@ public class QueueManager {
         return false;
     }
 
+    protected void aboutToCancel(Task task) {
+        synchronized (taskIdsInCancel) {
+            taskIdsInCancel.add(task.getId());
+        }
+    }
+
+    protected void cancelCompleted(Task task) {
+        synchronized (taskIdsInCancel) {
+            taskIdsInCancel.remove(task.getId());
+        }
+    }
+
     private class Consumer extends Thread {
 
         BlockingQueue<Task> queue;
@@ -163,6 +178,11 @@ public class QueueManager {
                             + ") for task (taskId=" + currTask.getId() + ")");
                     logger.debug("Updating task's status in DB to 'Processing' (taskId=" + currTask.getId() + ")");
                     currTask.setStatus(TaskStatus.PROCESSING);
+                    synchronized (taskIdsInCancel) {
+                        if (taskIdsInCancel.contains(currTask.getId())) {
+                            continue;
+                        }
+                    }
                     persistence.updateTaskStatus(currTask);
                     logger.debug("Sending task for execution (taskId=" + currTask.getId() + ")");
                     executionProxy.execute(currTask, QueueManager.this);
@@ -295,9 +315,14 @@ public class QueueManager {
                                 producerUpdatingDatabase = true;
                             }
                         }
-                        currTask.setStatus(TaskStatus.PENDING);
-                        logger.debug("Updating task's status in DB to 'Pending' (taskId=" + currTask.getId() + ")");
-                        persistence.updateTaskStatus(currTask);
+                        synchronized (taskIdsInCancel) {
+                            if (taskIdsInCancel.contains(currTask.getId())) {
+                                continue;
+                            }
+                            currTask.setStatus(TaskStatus.PENDING);
+                            logger.debug("Updating task's status in DB to 'Pending' (taskId=" + currTask.getId() + ")");
+                            persistence.updateTaskStatus(currTask);
+                        }
                         synchronized (consumerLock) {
                             producerUpdatingDatabase = false;
                             consumerLock.notifyAll();

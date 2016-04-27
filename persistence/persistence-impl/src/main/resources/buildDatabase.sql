@@ -42,6 +42,7 @@ CREATE TABLE tasks (
   insertion_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   execution_time TIMESTAMP NULL,
   completion_time TIMESTAMP NULL,
+  last_updated TIMESTAMP NULL,
   PRIMARY KEY (task_id),
   UNIQUE INDEX task_id_UNIQUE (task_id ASC),
   INDEX fk_flow_id_idx (flow_id ASC),
@@ -59,7 +60,8 @@ FOR EACH ROW BEGIN SET
 NEW.execution_time = (CASE WHEN NEW.status = 'Processing'
   THEN NOW() ELSE OLD.execution_time END),
 NEW.completion_time = (CASE WHEN NEW.status = 'Completed'
-  THEN NOW() ELSE OLD.completion_time END);
+  THEN NOW() ELSE OLD.completion_time END),
+NEW.last_updated = NOW();
 END
 $$ DELIMITER ;
 
@@ -107,6 +109,7 @@ CREATE TABLE zz_debug_tasks (
   insertion_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   execution_time TIMESTAMP NULL,
   completion_time TIMESTAMP NULL,
+  last_updated TIMESTAMP NULL,
   PRIMARY KEY (task_id),
   UNIQUE INDEX zz_debug_task_id_UNIQUE (task_id ASC),
   INDEX zz_debug_fk_flow_id_idx (flow_id ASC),
@@ -124,6 +127,7 @@ FOR EACH ROW BEGIN SET
 NEW.execution_time = (CASE WHEN NEW.status = 'Processing'
   THEN NOW() ELSE OLD.execution_time END),
 NEW.completion_time = (CASE WHEN NEW.status = 'Completed'
-  THEN NOW() ELSE OLD.completion_time END);
+  THEN NOW() ELSE OLD.completion_time END),
+NEW.last_updated = NOW();
 END
 $$ DELIMITER ;
