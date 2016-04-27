@@ -12,7 +12,6 @@ public class UnitParameter implements Cloneable {
 
     private String name;
     private String display;
-
     private String value;
 
     public String getName() {
