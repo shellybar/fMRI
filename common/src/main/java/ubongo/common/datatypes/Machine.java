@@ -27,7 +27,7 @@ public class Machine implements Serializable {
         return address;
     }
 
-    public void setIds(int id) {
+    public void setId(int id) {
         this.id = id;
     }
 

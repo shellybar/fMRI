@@ -213,6 +213,7 @@ public class DBProxy {
         }
     }
 
+    // TODO populate units with parameters from the last run (query tasks for these unitIds)?
     public List<Unit> getAnalysis(String analysisName) throws DBProxyException, UnitFetcherException {
         connect();
         List<Unit> units = new ArrayList<>();
@@ -314,6 +315,7 @@ public class DBProxy {
             return true;
         }).collect(Collectors.toList());
         for (Task task : tasksToCancel) {
+            task.setStatus(TaskStatus.CANCELED);
             cancelTask(task);
         }
         return tasks.stream()

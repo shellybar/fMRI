@@ -33,6 +33,9 @@ public class PersistenceTest {
         units = persistenceTest.createAnalysis(units);
         int flowId = persistenceTest.createFlow(units);
         persistenceTest.startFlow(flowId);
+        persistenceTest.cancelFlow(persistenceTest.createFlow(units, "study_1"), flowId);
+
+        // finish
         persistenceTest.close();
     }
 
@@ -83,8 +86,12 @@ public class PersistenceTest {
 
     // Important: this method is used by ExecutionTest as well
     protected int createFlow(List<Unit> units) throws Exception {
+        return createFlow(units, STUDY);
+    }
 
-        Context context = new Context(STUDY, ".*", ".*");
+    protected int createFlow(List<Unit> units, String study) throws Exception {
+
+        Context context = new Context(study, ".*", ".*");
         List<Task> tasks = new ArrayList<>();
 
         int i = 0;
@@ -92,11 +99,11 @@ public class PersistenceTest {
             tasks.addAll(Task.createTasks(unit, context, i++));
         }
 
-        int flowId = persistence.createFlow(STUDY, tasks);
+        int flowId = persistence.createFlow(study, tasks);
 
         // assertions
         List<Task> returnedTasks = persistence.getTasks(flowId);
-        assertReturnedTasks(returnedTasks, TaskStatus.CREATED);
+        assertReturnedTasks(returnedTasks, TaskStatus.CREATED, study);
         return flowId;
     }
 
@@ -106,7 +113,44 @@ public class PersistenceTest {
         assertReturnedTasks(returnedTasks, TaskStatus.NEW);
     }
 
+    private void cancelFlow(int flowId, int oldFlowId) throws Exception {
+        List<Task> oldFlowTasksBefore = persistence.getTasks(oldFlowId);
+        List<Task> tasks = persistence.getTasks(flowId);
+        assert tasks != null && tasks.size() == 6;
+        TaskStatus[] statuses = {
+                TaskStatus.PROCESSING,
+                TaskStatus.PENDING,
+                TaskStatus.NEW,
+                TaskStatus.COMPLETED,
+                TaskStatus.FAILED,
+                TaskStatus.STOPPED
+        };
+        for (int i = 0; i < statuses.length; i++) {
+            tasks.get(i).setStatus(statuses[i]);
+        }
+        Machine machine = new Machine();
+        machine.setId(666);
+        tasks.get(0).setMachine(machine);
+        persistence.updateTasksStatus(tasks);
+        List<Task> taskToKill = persistence.cancelFlow(flowId);
+        assert taskToKill != null && taskToKill.size() == 1;
+        assert taskToKill.get(0).getId() == tasks.get(0).getId();
+        List<Task> oldFlowTasksAfter = persistence.getTasks(oldFlowId);
+        assert oldFlowTasksAfter.size() == oldFlowTasksBefore.size();
+        for (int i = 0; i < oldFlowTasksBefore.size(); i++) {
+            assert oldFlowTasksAfter.get(i).getStatus() == oldFlowTasksBefore.get(i).getStatus();
+        }
+        List<Task> newFlowTasks = persistence.getTasks(flowId);
+        assert newFlowTasks.size() == tasks.size();
+        assert newFlowTasks.get(1).getStatus() == TaskStatus.CANCELED;
+        assert newFlowTasks.get(2).getStatus() == TaskStatus.CANCELED;
+    }
+
     private static void assertReturnedTasks(List<Task> returnedTasks, TaskStatus status) {
+        assertReturnedTasks(returnedTasks, status, STUDY);
+    }
+
+    private static void assertReturnedTasks(List<Task> returnedTasks, TaskStatus status, String study) {
         String regex = "(.*)\\{(.*)\\}(.*)";
         assert returnedTasks.size() == 6; // 6 total tasks (2 + 4)
         // only two distinct tasks
@@ -120,7 +164,7 @@ public class PersistenceTest {
                     assert task.getContext().getSubject().equals(param.getValue());
                 }
             });
-            assert STUDY.equals(task.getContext().getStudy()); // the STUDY is as expected
+            assert study.equals(task.getContext().getStudy()); // the STUDY is as expected
             assert task.getStatus() == status; // all tasks are in status 'Created'
         }
     }
