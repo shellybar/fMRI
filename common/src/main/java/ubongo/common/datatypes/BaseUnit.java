@@ -94,7 +94,7 @@ public class BaseUnit implements Unit, Serializable, Cloneable {
     }
 
     @Override
-    public String getInputPaths() { /* TODO do! */
+    public String getInputPaths() {
         return inputPaths;
     }
 

@@ -18,17 +18,10 @@ import ubongo.persistence.UnitFetcher;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-/**
- * This class manages the communication with the DB to separate
- * queue management logic (QueueManager) and DB implementation details.
- */
 public class DBProxy {
 
     // TODO add retry mechanism to all methods that send statements to the DB
@@ -185,8 +178,22 @@ public class DBProxy {
         }
     }
 
+    public void updateStatus(Collection<Task> tasks) {
+        //TODO
+    }
+
     public void createAnalysis(String analysisName, List<Unit> units) {
         // TODO
+    }
+
+    public List<Unit> getAnalysis(String analysisName) {
+        // TODO add to API
+        return null;
+    }
+
+    public List<String> getAnalysisNames() {
+        // TODO add to API
+        return null;
     }
 
     public int createFlow(String studyName, List<Task> tasks) throws DBProxyException {
@@ -238,12 +245,14 @@ public class DBProxy {
         }
     }
 
-    public void cancelFlow(int flowId) {
-        // TODO
+    public List<Task> cancelFlow(int flowId) {
+        // TODO cancel tasks and return tasksToKill
+        return null;
     }
 
-    public void cancelTask(Task task) {
-        // TODO
+    public boolean cancelTask(Task task) {
+        // TODO if task is processing in DB then need to kill. In queue manager - if want to execute - make sure not canceled
+        return false;
     }
 
     public Task getTask(int id) throws DBProxyException {
