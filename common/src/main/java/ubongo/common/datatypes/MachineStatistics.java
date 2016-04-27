@@ -1,7 +1,6 @@
 package ubongo.common.datatypes;
 
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * MachineStatistics encapsulated all performance metrics of a machine
@@ -11,14 +10,14 @@ public class MachineStatistics implements Serializable {
 
     private static final double alpha = 0.1;
 
-    List<Task> runningTasks;
+    int runningTasksNum;
     double cpuUsage;
     double memoryUsage;
 
-    public MachineStatistics(List<Task> runningTasks) {
+    public MachineStatistics(int runningTasksNum) {
         this.cpuUsage = 0;
         this.memoryUsage = 0.5;
-        this.runningTasks = runningTasks;
+        this.runningTasksNum = runningTasksNum;
     }
 
     public void updateCpuUsage(double current) {
@@ -38,7 +37,7 @@ public class MachineStatistics implements Serializable {
     }
 
     public int getNumOfRunningTasks() {
-        return runningTasks.size();
+        return runningTasksNum;
     }
 
     /**

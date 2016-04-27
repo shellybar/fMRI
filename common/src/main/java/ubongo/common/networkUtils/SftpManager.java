@@ -22,7 +22,7 @@ public class SftpManager {
     private String sftpUri;
     private FileSystemManager fsManager = null;
 
-    public SftpManager(SSHConnectionProperties sshProperties, String machine, String remoteDir, String localDir) throws NetworkException{
+    public SftpManager(SSHConnectionProperties sshProperties, String machine, String remoteDir, String localDir) {
         this.machine = machine;
         this.remoteDir = remoteDir;
         this.localDir = localDir;
@@ -37,25 +37,27 @@ public class SftpManager {
      * Receives files using SFTP.
      * Used for receiving files from the main files server to the machines.
      */
-    public void getFilesFromServer() throws NetworkException{
+    public void getFilesFromServer() throws Throwable {
         Optional<String> fileRegex = getFileRegexFromInputDirRegex();
         List<String> localDirs = new ArrayList<>();
+        handleStopInterrupt();
         try {
             String remoteDirPath = remoteDir;
             if (!remoteDir.endsWith(File.separator)){
                 remoteDirPath = remoteDir.substring(0, remoteDir.lastIndexOf(File.separator));
             }
-            if (logger.isDebugEnabled()) {
-                logger.debug("getting directories for regex " + remoteDirPath);
-            }
+            logger.debug("getting directories for regex " + remoteDirPath);
+            handleStopInterrupt();
             getDirectoriesFromRegex(localDirs, remoteDirPath);
         } catch (FileSystemException e) {
+            handleIfItCausedByInterrupt(e);
             String error = "Failed getting input files directories from regex";
-            logger.error(error);
+            logger.error(error, e);
             throw new NetworkException(error);
         }
         for (String currRemotelDir : localDirs) {
             logger.info("Downloading files from : " + currRemotelDir);
+            handleStopInterrupt();
             getFilesFromServerByDirectory(currRemotelDir, fileRegex);
         }
     }
@@ -64,14 +66,13 @@ public class SftpManager {
         if (remoteDir.endsWith(File.separator))
             return Optional.empty();
         String dirParts[] = remoteDir.split(File.separator);
-        logger.info("Input files regex : " + dirParts[dirParts.length -1]);
+        logger.info("Input files regex : " + dirParts[dirParts.length - 1]);
         return Optional.of(dirParts[dirParts.length -1]);
     }
 
-    private void getDirectoriesFromRegex(List<String> dirs, String currDir) throws FileSystemException {
-        if (logger.isDebugEnabled()) {
-            logger.debug("getDirectoriesFromRegex currDir: " + currDir);
-        }
+    private void getDirectoriesFromRegex(List<String> dirs, String currDir) throws FileSystemException, InterruptedException {
+        handleStopInterrupt();
+        logger.debug("getDirectoriesFromRegex currDir: " + currDir);
         String dirParts[] = currDir.split(File.separator+"\\(.*?\\)"+File.separator);
         String prefixString = dirParts[0];
         if (dirParts.length == 1){
@@ -81,25 +82,19 @@ public class SftpManager {
             FileObject currDirObject = fsManager.resolveFile(dirToAddSftpUri, opts);
             File currDirFile = new File(currDirObject.getName().getPath());
             if ((currDirFile.list() != null) && (currDirFile.list().length > 0)) {
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Current path is not empty: " + prefixString);
-                }
+                logger.debug("Current path is not empty: " + prefixString);
                 dirs.add(prefixString);
             } else {
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Current path is empty, dumping it: " + prefixString);
-                }
+                logger.debug("Current path is empty, dumping it: " + prefixString);
             }
             return;
         }
         String currRegex = currDir.substring(dirParts[0].length() + 1, currDir.indexOf(dirParts[1]) - 1);
-        if (logger.isDebugEnabled()) {
-            logger.debug("currRegex: " + currRegex);
-        }
+        logger.debug("currRegex: " + currRegex);
         String suffixString = currDir.substring(currDir.indexOf(dirParts[1]));
         String currSftpUri = "sftp://" + user + ":" + password +  "@" + machine + prefixString + File.separator;
         fsManager = VFS.getManager();
-
+        handleStopInterrupt();
         FileSystemOptions opts = new FileSystemOptions();
         FileObject localFileObject=fsManager.resolveFile(currSftpUri,opts);
         File file = new File(localFileObject.getName().getPath());
@@ -110,21 +105,21 @@ public class SftpManager {
             }
         });
         for ( String currSubDir : directories ){
+            handleStopInterrupt();
             if (currSubDir.matches(currRegex)) {
                 String currPath = prefixString + File.separator + currSubDir +File.separator + suffixString;
                 String currDirSftpUri = "sftp://" + user + ":" + password + "@" + machine + currPath + File.separator;
                 FileObject currDirObject = fsManager.resolveFile(currDirSftpUri, opts);
-                if (logger.isDebugEnabled()) {
-                    logger.debug("currDirObject: " + currDirObject.getName());
-                }
+                logger.debug("currDirObject: " + currDirObject.getName());
                 getDirectoriesFromRegex(dirs, currPath);
-            } else if (logger.isDebugEnabled()) {
+            } else {
                 logger.debug("Directory " + currSubDir + " doesn't match pattern " + currRegex);
             }
         }
     }
 
-    private void getFilesFromServerByDirectory(String currRemotelDir, Optional<String> fileRegex) throws NetworkException{
+    private void getFilesFromServerByDirectory(String currRemotelDir, Optional<String> fileRegex) throws Throwable {
+        handleStopInterrupt();
         String currSftpUri = "sftp://" + user + ":" + password +  "@" + machine + currRemotelDir + "/";
         try {
             FileSystemOptions opts = new FileSystemOptions();
@@ -137,11 +132,10 @@ public class SftpManager {
 
             FileObject[] children = localFileObject.getChildren();
             for ( int i = 0; i < children.length; i++ ){
+                handleStopInterrupt();
                 String fileName = children[ i ].getName().getBaseName();
                 if ((fileRegex.isPresent()) && !(fileName.matches(fileRegex.get()))) {
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("File " + fileName + " doesn't match pattern " + fileRegex.get());
-                    }
+                    logger.debug("File " + fileName + " doesn't match pattern " + fileRegex.get());
                     continue;
                 }
                 String filepath = localDir + File.separator  + fileName;
@@ -152,30 +146,41 @@ public class SftpManager {
                 localFile.copyFrom(remoteFile, Selectors.SELECT_SELF);
                 logger.info("File downloaded successfully: " + fileName);
             }
-        }
-        catch (Exception ex) {
+        } catch (FileSystemException ex) {
+            handleIfItCausedByInterrupt(ex);
+            logger.error("sftp error", ex);
             throw new NetworkException(ex.getMessage());
         }
         return;
+    }
+
+    private void handleIfItCausedByInterrupt(Throwable e) throws Throwable {
+        while (e != null){
+            e = e.getCause();
+            if ((e instanceof InterruptedException) || (e instanceof InterruptedIOException)) {
+                logger.info("handleIfItCausedByInterrupt - throw");
+                throw new InterruptedException(e.getMessage());
+            }
+        }
     }
 
     /**
      * Uploads files using SFTP.
      * Used for sending files from the machine to the main files server.
      */
-    public void uploadFilesToServer() throws NetworkException{
+    public void uploadFilesToServer() throws Throwable {
         try {
+            handleStopInterrupt();
             FileSystemOptions opts = new FileSystemOptions();
             SftpFileSystemConfigBuilder.getInstance().setUserDirIsRoot(opts, false);
             fsManager = VFS.getManager();
 
             File folder = new File(localDir);
             File[] listOfToUploadFiles = folder.listFiles();
-            if (logger.isDebugEnabled()) {
-                logger.debug("localDir = " + localDir);
-            }
+            logger.debug("localDir = " + localDir);
 
             for (File fileToUpload : listOfToUploadFiles) {
+                handleStopInterrupt();
                 if (!fileToUpload.exists()) {
                     logger.error("Error. Local file not found : " + fileToUpload.getName());
                     throw new NetworkException("Error. Local file not found");
@@ -186,11 +191,19 @@ public class SftpManager {
                 remoteFile.copyFrom(localFile, Selectors.SELECT_SELF);
                 logger.info("File uploaded successfully: " + fileName);
             }
-        }
-        catch (Exception ex) {
+        } catch (FileSystemException ex) {
+            handleIfItCausedByInterrupt(ex);
+            logger.error("sftp error", ex);
             throw new NetworkException(ex.getMessage());
         }
         return;
+    }
+
+    private void handleStopInterrupt() throws InterruptedException {
+        if (Thread.currentThread().isInterrupted()){
+            logger.info("sftp manager - Received interrupt exception.");
+            throw new InterruptedException("Received interrupt exception.");
+        }
     }
 
 }

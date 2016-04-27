@@ -39,11 +39,11 @@ public enum ExecutionProxy {
     }
 
     public MachineStatistics getStatistics(Machine machine) {
-        return new MachineStatistics(null); // TODO
+        return new MachineStatistics(0); // TODO
     }
 
     private void sendRequestToMachine(Task task, String queue, String request) {
-        logger.info("Sending request to run unit on the machine. Task id = [" + task.getId() + "]");
+        logger.info("Sending request to the machine. Queue = [" + queue+ "] RequestTask = [ "+ request+ "] id = [" + task.getId() + "]");
         try {
             ConnectionFactory factory = new ConnectionFactory();
             factory.setHost(task.getMachine().getAddress());
