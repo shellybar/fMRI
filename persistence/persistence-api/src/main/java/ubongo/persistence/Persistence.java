@@ -3,7 +3,9 @@ package ubongo.persistence;
 import ubongo.common.datatypes.Task;
 import ubongo.common.datatypes.Unit;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 public interface Persistence {
 
@@ -30,18 +32,19 @@ public interface Persistence {
 
     void startFlow(int flowId) throws PersistenceException;
 
-    void cancelFlow(int flowId);
+    List<Task> cancelFlow(int flowId);
 
     List<Task> getNewTasks() throws PersistenceException;
 
     void updateTaskStatus(Task task) throws PersistenceException;
 
+    void updateTasksStatus(Collection<Task> waitingTasks) throws PersistenceException;
+
     List<Task> getTasks(int flowId) throws PersistenceException;
 
-    void cancelTask(Task task) throws PersistenceException;
+    boolean cancelTask(Task task) throws PersistenceException;
 
     Unit getUnit(int unitId) throws PersistenceException;
 
     List<Unit> getAllUnits() throws PersistenceException;
-
 }

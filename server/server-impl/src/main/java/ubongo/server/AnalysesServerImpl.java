@@ -114,7 +114,8 @@ public class AnalysesServerImpl implements AnalysesServer {
 
     @Override
     public void cancelFlow(int flowId) {
-        persistence.cancelFlow(flowId);
+        List<Task> tasksToKill = persistence.cancelFlow(flowId);
+        tasksToKill.forEach(task -> execution.killTask(task));
     }
 
     @Override
@@ -130,7 +131,9 @@ public class AnalysesServerImpl implements AnalysesServer {
     @Override
     public void cancelTask(Task task) {
         try {
-            persistence.cancelTask(task);
+            if (!persistence.cancelTask(task)) {
+                killTask(task); // task could not be canceled - need to be killed
+            }
         } catch (PersistenceException e) {
             // TODO handle exception in cancelTask
         }

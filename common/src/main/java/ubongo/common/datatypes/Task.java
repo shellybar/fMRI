@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Task implements Serializable {
+public class Task implements Serializable, Cloneable {
 
     private int id;
     private int flowId;
@@ -228,11 +228,18 @@ public class Task implements Serializable {
 
         public static String replaceAll(String source, Context context) {
             String dest = source;
-            for (ContextLevel level : ContextLevel.values()) {
-                dest = level.replaceAll(dest, level.getStringFromContext(context));
+            if (dest != null) {
+                for (ContextLevel level : ContextLevel.values()) {
+                    dest = level.replaceAll(dest, level.getStringFromContext(context));
+                }
             }
             return dest;
         }
+    }
+
+    @Override
+    synchronized public Object clone() throws CloneNotSupportedException {
+        return super.clone();
     }
 
 }
