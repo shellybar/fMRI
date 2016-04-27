@@ -17,8 +17,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.apache.commons.cli.*;
-
 /**
  * MachineServer run on each machine all the time, and listens to socket requests.
  * When a request arrives - the MachineServer creates the required objects and call the MachineControllerImpl.

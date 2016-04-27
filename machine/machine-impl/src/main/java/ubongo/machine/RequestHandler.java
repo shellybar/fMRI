@@ -68,8 +68,10 @@ public class RequestHandler extends Thread {
             }
         } catch (InterruptedException ie) {
             try {
-                handleStopInterrupt();
+                logger.debug("InterruptedException - calling handleStopInterrupt");
+                handleStopInterrupt(true);
             } catch (HandledInterruptedException e) {
+                logger.debug("HandledInterruptedException");
                 // do nothing :)
             }
         } catch (HandledInterruptedException hie) {
@@ -78,8 +80,9 @@ public class RequestHandler extends Thread {
             logger.error("Failed handling request: " + e.getMessage(), e);
         } catch (Throwable throwable) {
             if (throwable instanceof InterruptedException) {
+                logger.debug("(throwable instanceof InterruptedException");
                 try {
-                    handleStopInterrupt();
+                    handleStopInterrupt(true);
                 } catch (HandledInterruptedException e) {
                     // do nothing :)
                 }
@@ -208,6 +211,15 @@ public class RequestHandler extends Thread {
             updateTaskStopped(task);
             throw new HandledInterruptedException("Safely stopped thread of task " + task.getId());
         }
+    }
+
+    private void handleStopInterrupt(boolean wasThrown) throws HandledInterruptedException {
+        logger.info("Thread: [" + Thread.currentThread().getName() + "] " +
+                    "isInterrupted. Stopping ...");
+        removeThreadFromCollection();
+        cleanLocalDirectories();
+        updateTaskStopped(task);
+        logger.info("Safely stopped thread of task " + task.getId());
     }
 
     private void cleanLocalDirectories() {
