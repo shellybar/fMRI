@@ -24,8 +24,6 @@ import java.util.stream.Collectors;
 
 public class DBProxy {
 
-    // TODO add retry mechanism to all methods that send statements to the DB
-
     private static Logger logger = LogManager.getLogger(DBProxy.class);
 
     private Session sshSession;
