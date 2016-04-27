@@ -13,6 +13,7 @@ import com.rabbitmq.client.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -26,6 +27,8 @@ import org.apache.commons.cli.*;
  * When a request arrives - the MachineServer creates the required objects and call the MachineControllerImpl.
  */
 public class MachineServer {
+
+    public static Map<String, Thread> unitThreads;
 
     public static final String ARG_SERVER = "server";
     public static final String ARG_DIR = "base_dir";
@@ -82,7 +85,8 @@ public class MachineServer {
                     serverAddress = System.getProperty(ARG_SERVER);
                     String configPath = System.getProperty(CONFIG_PATH);
                     logger.info("Server address: [" + serverAddress + "], base directory path: [" + baseDir + "]");
-                    RequestHandler requestHandler = new RequestHandler(message, serverAddress, baseDir, unitsDir, configPath);
+                    String threadName = getThreadName(message);
+                    RequestHandler requestHandler = new RequestHandler(threadName, message, serverAddress, baseDir, unitsDir, configPath);
                     logger.debug("Starting RequestHandler thread...");
                     requestHandler.start();
                 } catch (Exception e){
@@ -91,6 +95,10 @@ public class MachineServer {
             }
         };
         channel.basicConsume(queue, true, consumer);
+    }
+
+    private static String getThreadName(RabbitData message) {
+        return message.getMessage() + message.getTask().getId();
     }
 
     private void trackMachinePerformance() {
