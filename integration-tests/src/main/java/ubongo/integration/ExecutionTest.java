@@ -38,7 +38,7 @@ public class ExecutionTest {
 
         long failed, pending, completed;
         boolean bad;
-        int flowId = persistenceTest.createFlow();
+        int flowId = persistenceTest.createFlow(persistenceTest.prepareUnits());
         execution.runFlow(flowId); // kicks start queue into action
 
         // at this point tasks with serial number 0 should be 'Failed' and serial number 1 should be 'Pending'

@@ -54,6 +54,11 @@ public class PersistenceImpl implements Persistence {
     }
 
     @Override
+    public List<Unit> getAnalysis(String analysisName) throws PersistenceException {
+        return dbProxy.getAnalysis(analysisName);
+    }
+
+    @Override
     public int createFlow(String studyName, List<Task> tasks) throws PersistenceException {
         return dbProxy.createFlow(studyName, tasks);
     }

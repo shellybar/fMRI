@@ -11,6 +11,7 @@ public class DBConstants {
     public final static String QUERY_CREATE_FLOW = "create_flow";
     public final static String QUERY_START_FLOW = "start_flow";
     public final static String QUERY_CLEAR_TABLES = "clear_tables";
+    public final static String QUERY_CREATE_ANALYSIS = "create_analysis";
 
     public final static String TASKS_TABLE_NAME = "tasks";
     public final static String TASKS_TASK_ID = "task_id";

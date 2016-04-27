@@ -14,7 +14,8 @@ CREATE TABLE units (
   external_unit_id INT UNSIGNED NOT NULL, # unitId from XML configuration file
   insertion_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (analysis_unit_id),
-  UNIQUE INDEX analysis_name_UNIQUE (analysis_name ASC))
+  UNIQUE INDEX unit_serial_UNIQUE (analysis_name ASC, serial ASC),
+  UNIQUE INDEX analysis_unit_id_UNIQUE (analysis_unit_id ASC))
   ENGINE = InnoDB;
 
 # flows table
@@ -78,7 +79,8 @@ CREATE TABLE zz_debug_units (
   external_unit_id INT UNSIGNED NOT NULL, # unitId from XML configuration file
   insertion_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (analysis_unit_id),
-  UNIQUE INDEX zz_debug_analysis_name_UNIQUE (analysis_name ASC))
+  UNIQUE INDEX zz_debug_unit_serial_UNIQUE (analysis_name ASC, serial ASC),
+  UNIQUE INDEX zz_debug_analysis_unit_id_UNIQUE (analysis_unit_id ASC))
   ENGINE = InnoDB;
 
 # flows table
