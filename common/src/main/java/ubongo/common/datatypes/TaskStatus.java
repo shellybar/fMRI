@@ -1,6 +1,7 @@
 package ubongo.common.datatypes;
 
 public enum TaskStatus {
+
     CREATED ("Created"),
     NEW ("New"),
     PENDING ("Pending"),
@@ -12,9 +13,15 @@ public enum TaskStatus {
     STOPPED_FAILURE ("StopFailed");
 
     private final String name;
+    private static final TaskStatus[] finalStatuses =
+            {COMPLETED, FAILED, CANCELED, STOPPED, STOPPED_FAILURE};
 
     TaskStatus(String name) {
         this.name = name;
+    }
+
+    public static TaskStatus[] getFinalStatuses() {
+        return finalStatuses;
     }
 
     @Override

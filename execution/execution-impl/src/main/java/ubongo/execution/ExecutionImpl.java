@@ -108,4 +108,12 @@ public class ExecutionImpl implements Execution {
     public QueueManager getQueueManager() {
         return queueManager;
     }
+
+    public void notifyQueueBeforeCancel(Task task) {
+        queueManager.aboutToCancel(task);
+    }
+
+    public void notifyQueueAfterCancel(Task task) {
+        queueManager.cancelCompleted(task);
+    }
 }

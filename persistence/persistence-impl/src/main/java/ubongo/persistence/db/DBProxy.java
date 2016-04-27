@@ -143,7 +143,14 @@ public class DBProxy {
      *             If the task ID cannot be found in the DB, this method does nothing
      */
     public void updateStatus(Task task) throws DBProxyException {
-        connect();
+        Task taskInDb = getTask(task.getId());
+        for (TaskStatus status : TaskStatus.getFinalStatuses()) {
+            if (taskInDb.getStatus() == status) {
+                logger.warn("Received request to update status of task (taskId=" + task.getId() + ") from "
+                        + taskInDb.getStatus() + " to " + task.getStatus() + ". Request denied.");
+                return;
+            }
+        }
         String tableName = getTableName(DBConstants.TASKS_TABLE_NAME);
         try {
             String sql = Queries.getQuery(DBConstants.QUERY_UPDATE_TASK_STATUS)
@@ -297,14 +304,37 @@ public class DBProxy {
         }
     }
 
-    public List<Task> cancelFlow(int flowId) {
-        // TODO cancel tasks and return tasksToKill
-        return null;
+    public List<Task> cancelFlow(int flowId) throws DBProxyException {
+
+        List<Task> tasks = getTasks(flowId);
+        List<Task> tasksToCancel = tasks.stream().filter(t -> {
+            if (t.getStatus() == TaskStatus.PROCESSING) return false;
+            for (TaskStatus status : TaskStatus.getFinalStatuses())
+                if (status == t.getStatus()) return false;
+            return true;
+        }).collect(Collectors.toList());
+        for (Task task : tasksToCancel) {
+            cancelTask(task);
+        }
+        return tasks.stream()
+                .filter(t -> t.getStatus() == TaskStatus.PROCESSING)
+                .collect(Collectors.toList());
     }
 
-    public boolean cancelTask(Task task) {
-        // TODO if task is processing in DB then need to kill. In queue manager - if want to execute - make sure not canceled
-        return false;
+    public boolean cancelTask(Task task) throws DBProxyException {
+        Task taskFromDb = getTask(task.getId());
+        TaskStatus[] finalStatuses = TaskStatus.getFinalStatuses();
+        if (taskFromDb.getStatus() == TaskStatus.PROCESSING) {
+            logger.info("Tried to cancel task (taskId=" + task.getId() + ") but the task is already executing");
+            return false;
+        }
+        for (TaskStatus status : finalStatuses) {
+            if (taskFromDb.getStatus() == status) {
+                return true;
+            }
+        }
+        updateStatus(task);
+        return true;
     }
 
     public Task getTask(int id) throws DBProxyException {

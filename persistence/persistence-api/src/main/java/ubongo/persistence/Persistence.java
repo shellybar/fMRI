@@ -36,7 +36,7 @@ public interface Persistence {
 
     void startFlow(int flowId) throws PersistenceException;
 
-    List<Task> cancelFlow(int flowId);
+    List<Task> cancelFlow(int flowId) throws PersistenceException;
 
     List<Task> getNewTasks() throws PersistenceException;
 
