@@ -1,6 +1,8 @@
 package ubongo.common.datatypes;
 
-public class Context implements Cloneable {
+import java.io.Serializable;
+
+public class Context implements Serializable, Cloneable {
 
     private String study;
     private String subject;

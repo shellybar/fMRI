@@ -190,7 +190,7 @@ public class Task implements Serializable {
         }
     }
 
-    private enum ContextLevel {
+    private enum ContextLevel implements Serializable{
 
         study ("study"), subject ("subject"), run ("run");
 

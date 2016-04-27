@@ -50,9 +50,17 @@ public class SystemTest {
     public static void runTestFlow() throws PersistenceException {
         Unit unit = analysesServer.getAllUnits().get(0);
         unit.setParameterValues("{\"subject\":\"mySubject\"}");
-        Task task1 = new Task(0, unit, new Context("myStudy", "mySubject", null));
+
+        Context context = new Context("myStudy", "mySubject", "myRuns");
         List<Task> tasks = new ArrayList<>();
-        tasks.add(task1);
+        List<Unit> units = new ArrayList<>();
+
+        try {
+            tasks.addAll(Task.createTasks(unit, context, 0));
+            System.out.println("getInputPath : "+ tasks.get(0).getInputPath());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         int flowId = analysesServer.createFlow("myStudy", tasks);
         analysesServer.runFlow(flowId);
