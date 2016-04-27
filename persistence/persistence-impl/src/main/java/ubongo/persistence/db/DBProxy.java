@@ -69,8 +69,9 @@ public class DBProxy {
         this.debug = debug;
     }
 
-    public void start() throws DBProxyException {
+    public Void start() throws DBProxyException {
         connect();
+        return null;
     }
 
     public void connect() throws DBProxyException {
@@ -96,7 +97,6 @@ public class DBProxy {
                     connection = DriverManager.getConnection(getActualUrl(), getUser(), dbProperties.getPassword());
                 } catch (SQLException e) {
                     String errorMsg = String.format("Failed to connect to the database (url: %s; user: %s)", getUrl(), getUser());
-                    logSqlException(e, errorMsg);
                     throw new DBProxyException(errorMsg, e);
                 } catch (ClassNotFoundException e) {
                     throw new DBProxyException("Database connection cannot be established. " +
@@ -107,12 +107,11 @@ public class DBProxy {
         } catch (SQLException e) {
             String errorMsg =
                     String.format("Failed to connect to the database (url: %s; user: %s).", getUrl(), getUser());
-            logSqlException(e, errorMsg);
             throw new DBProxyException(errorMsg, e);
         }
     }
 
-    public void disconnect() throws DBProxyException {
+    public Void disconnect() throws DBProxyException {
         try {
             boolean alreadyClosed = true;
             if (connection != null && !connection.isClosed()) {
@@ -131,9 +130,9 @@ public class DBProxy {
         } catch (SQLException e) {
             String errorMsg =
                     String.format("Failed to disconnect from the database (url: %s; user: %s).", getUrl(), getUser());
-            logSqlException(e, errorMsg);
             throw new DBProxyException(errorMsg, e);
         }
+        return null;
     }
 
     /**
@@ -173,14 +172,10 @@ public class DBProxy {
                 statement.setNull(3, Types.INTEGER);
             }
             statement.setInt(4, task.getId()); // id of task to update
-            int numRowsUpdated = executeUpdate(statement);
-            if (numRowsUpdated != 1) {
-                // TODO handle update failure
-            }
+            executeUpdate(statement);
         } catch (SQLException e) {
             String errorMsg = "Failed to update task's status in DB (taskId="
                     + task.getId() + ", newStatus=" + task.getStatus() + ")";
-            logSqlException(e, errorMsg);
             throw new DBProxyException(errorMsg, e);
         }
     }
@@ -208,7 +203,6 @@ public class DBProxy {
             executeUpdate(statement);
         } catch (SQLException e) {
             String errorMsg = "Failed to add analysis to DB";
-            logSqlException(e, errorMsg);
             throw new DBProxyException(errorMsg, e);
         }
     }
@@ -230,7 +224,6 @@ public class DBProxy {
                 units.add(unitFetcher.getUnit(unitId));
             }
         } catch (SQLException e) {
-            logSqlException(e, errorMsg);
             throw new DBProxyException(errorMsg, e);
         }
         return units;
@@ -250,7 +243,6 @@ public class DBProxy {
                 analysisNames.add(resultSet.getString(DBConstants.UNITS_ANALYSIS_NAME));
             }
         } catch (SQLException e) {
-            logSqlException(e, errorMsg);
             throw new DBProxyException(errorMsg, e);
         }
         return analysisNames;
@@ -283,7 +275,6 @@ public class DBProxy {
             return results.getInt(1);
         } catch (SQLException e) {
             String errorMsg = "Failed to add tasks to DB";
-            logSqlException(e, errorMsg);
             throw new DBProxyException(errorMsg, e);
         }
     }
@@ -300,7 +291,6 @@ public class DBProxy {
             executeUpdate(statement);
         } catch (SQLException e) {
             String errorMsg = "Failed to start flow in DB";
-            logSqlException(e, errorMsg);
             throw new DBProxyException(errorMsg, e);
         }
     }
@@ -355,7 +345,7 @@ public class DBProxy {
         return getTasks(DBConstants.QUERY_GET_FLOW_TASKS, flowId);
     }
 
-    public void clearAllDebugTables() throws DBProxyException {
+    public Void clearAllDebugTables() throws DBProxyException {
         connect();
         String tasksTableName = getTableName(DBConstants.TASKS_TABLE_NAME, true);
         String flowsTableName = getTableName(DBConstants.FLOWS_TABLE_NAME, true);
@@ -370,9 +360,9 @@ public class DBProxy {
             executeUpdate(statement);
         } catch (SQLException e) {
             String errorMsg = "Failed to clear debug tables";
-            logSqlException(e, errorMsg);
             throw new DBProxyException(errorMsg, e);
         }
+        return null;
     }
 
     private List<Task> getTasks(String queryName) throws DBProxyException {
@@ -398,10 +388,7 @@ public class DBProxy {
             while (resultSet.next()) {
                 tasks.add(taskFromResultSet(resultSet));
             }
-        } catch (SQLException e) {
-            logSqlException(e, errorMsg);
-            throw new DBProxyException(errorMsg, e);
-        } catch (JsonParseException | UnitFetcherException e) {
+        } catch (SQLException | JsonParseException | UnitFetcherException e) {
             throw new DBProxyException(errorMsg, e);
         }
         return tasks;
@@ -524,13 +511,6 @@ public class DBProxy {
             }
         }
         return portNumber;
-    }
-
-    private void logSqlException(SQLException e, String errorMsg) {
-        logger.error(errorMsg +
-                "\n\tSQLException: " + e.getMessage() +
-                "\n\tSQLState: " + e.getSQLState() +
-                "\n\tVendorError: " + e.getErrorCode());
     }
 
     private ResultSet executeQuery(PreparedStatement statement) throws SQLException {
