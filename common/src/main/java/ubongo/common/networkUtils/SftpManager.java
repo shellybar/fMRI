@@ -28,7 +28,7 @@ public class SftpManager {
         this.localDir = localDir;
         this.user = sshProperties.getUser();
         this.password = sshProperties.getPassword();
-        this.sftpUri = "sftp://" + user + ":" + password +  "@" + machine + remoteDir + "/";
+        this.sftpUri = "sftp://" + user + ":" + password +  "@" + machine + remoteDir + File.separator;
 
         logger.info("SftpManager was initiated. Machine=" + this.machine+" remoteDir= "+this.remoteDir+ " localDir = " +this.localDir);
     }
@@ -42,8 +42,8 @@ public class SftpManager {
         List<String> localDirs = new ArrayList<>();
         try {
             String remoteDirPath = remoteDir;
-            if (!remoteDir.endsWith("/")){
-                remoteDirPath = remoteDir.substring(0, remoteDir.lastIndexOf('/'));
+            if (!remoteDir.endsWith(File.separator)){
+                remoteDirPath = remoteDir.substring(0, remoteDir.lastIndexOf(File.separator));
             }
             logger.debug("getting directories for regex " + remoteDirPath);
             getDirectoriesFromRegex(localDirs, remoteDirPath);
@@ -59,23 +59,25 @@ public class SftpManager {
     }
 
     private Optional<String> getFileRegexFromInputDirRegex() {
-        if (remoteDir.endsWith("/"))
+        if (remoteDir.endsWith(File.separator))
             return Optional.empty();
-        String dirParts[] = remoteDir.split("/");
+        String dirParts[] = remoteDir.split(File.separator);
         logger.info("Input files regex : " + dirParts[dirParts.length -1]);
         return Optional.of(dirParts[dirParts.length -1]);
     }
 
     private void getDirectoriesFromRegex(List<String> dirs, String currDir) throws FileSystemException {
         logger.debug("getDirectoriesFromRegex currDir: " + currDir);
-        String dirParts[] = currDir.split("/\\(.*?\\)/");
+        String dirParts[] = currDir.split(File.separator+"\\(.*?\\)"+File.separator);
         String prefixString = dirParts[0];
         if (dirParts.length == 1){
             dirs.add(prefixString);
             return;
         }
+        String currRegex = currDir.substring(dirParts[0].length(), dirParts[1].length()-1);
+        logger.debug("currRegex: " + currRegex);
         String suffixString = currDir.substring(currDir.indexOf(dirParts[1]));
-        String currSftpUri = "sftp://" + user + ":" + password +  "@" + machine + prefixString + "/";
+        String currSftpUri = "sftp://" + user + ":" + password +  "@" + machine + prefixString + File.separator;
         fsManager = VFS.getManager();
 
         // List all the files in that directory.
@@ -89,11 +91,18 @@ public class SftpManager {
             }
         });
         for ( String currSubDir : directories ){
-            String currPath = prefixString + "/" + currSubDir + "/" + suffixString;
-            String currDirSftpUri = "sftp://" + user + ":" + password +  "@" + machine + currPath + "/";
-            FileObject currDirObject =fsManager.resolveFile(currDirSftpUri,opts);
-            if (currDirObject.exists())
-                getDirectoriesFromRegex(dirs,currPath);
+            if (currSubDir.matches(currRegex)) {
+                String currPath = prefixString + File.separator + currSubDir +File.separator + suffixString;
+                String currDirSftpUri = "sftp://" + user + ":" + password + "@" + machine + currPath + File.separator;
+                logger.debug("currDirSftpUri: " + currDirSftpUri);
+                FileObject currDirObject = fsManager.resolveFile(currDirSftpUri, opts);
+                logger.debug("currDirObject: " + currDirObject.getName());
+                logger.debug("currDirObject: " + currDirObject.getURL());
+                if (currDirObject.exists())
+                    getDirectoriesFromRegex(dirs, currPath);
+            } else {
+                logger.debug("Directory " + currSubDir + " doesn't match pattern " + currRegex);
+            }
         }
     }
 
@@ -115,10 +124,10 @@ public class SftpManager {
                     logger.debug("File " + fileName + " doesn't match pattern " + fileRegex.get());
                     continue;
                 }
-                String filepath = currLocalDir + "/" + fileName;
+                String filepath = currLocalDir + File.separator  + fileName;
                 File file = new File(filepath);
                 FileObject localFile = fsManager.resolveFile(file.getAbsolutePath(),opts);
-                FileObject remoteFile = fsManager.resolveFile(currSftpUri+ "/" + fileName, opts);
+                FileObject remoteFile = fsManager.resolveFile(currSftpUri+ File.separator + fileName, opts);
                 localFile.copyFrom(remoteFile, Selectors.SELECT_SELF);
                 logger.info("File downloaded successfully: " + fileName);
             }
@@ -150,7 +159,7 @@ public class SftpManager {
                 }
                 String fileName = fileToUpload.getName();
                 FileObject localFile = fsManager.resolveFile(fileToUpload.getAbsolutePath(),opts);
-                FileObject remoteFile = fsManager.resolveFile(sftpUri+ "/" + fileName, opts);
+                FileObject remoteFile = fsManager.resolveFile(sftpUri+ File.separator + fileName, opts);
                 remoteFile.copyFrom(localFile, Selectors.SELECT_SELF);
                 logger.info("File uploaded successfully: " + fileName);
             }

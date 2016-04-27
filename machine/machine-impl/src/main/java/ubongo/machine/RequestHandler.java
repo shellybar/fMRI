@@ -52,20 +52,24 @@ public class RequestHandler extends Thread {
             sshConnectionProperties = configuration.getSshConnectionProperties();
             Task task = rabbitMessage.getTask();
             logger.info("Parsed request = [" + rabbitMessage.getMessage() + " " + task.getId() +"]");
-
             if (rabbitMessage.getMessage().equals(MachineConstants.BASE_UNIT_REQUEST)){
                 String outputFilesDir = this.baseDir + File.separator  + task.getId() + MachineConstants.OUTPUT_DIR_SUFFIX;
                 String inputFilesDir = this.baseDir + File.separator  + task.getId() + MachineConstants.INPUT_DIR_SUFFIX;
                 handleBaseUnitRequest(inputFilesDir, outputFilesDir, task);
             } else if (rabbitMessage.getMessage().equals(MachineConstants.KILL_TASK_REQUEST)){
                 handleKillRequest(task);
+            } else if (rabbitMessage.getMessage().equals(MachineConstants.GET_MACHINE_PERFORMANCE)) {
+                handlePerformanceRequest();
             }
         } catch (Exception e) {
-            logger.error("Failed handling request: " + e.getMessage());
+            logger.error("Failed handling request: " + e.getMessage(), e);
         }
     }
 
-    private void handleKillRequest(Task task) {
+    private void handlePerformanceRequest() { // TODO !!!!
+    }
+
+    private void handleKillRequest(Task task) {  // TODO !!!!
     }
 
 
@@ -104,7 +108,10 @@ public class RequestHandler extends Thread {
     }
 
     public void handleBaseUnitRequest(String inputFilesDir, String outputFilesDir, Task task){
-        logger.info("handleBaseUnitRequest - start. task ID = " +task.getId() +"]" );
+        logger.info("handleBaseUnitRequest - start. task ID = [" + task.getId() +"]" );
+        logger.info("handleBaseUnitRequest - inputFilesDir = [" + inputFilesDir +"]" );
+        logger.info("handleBaseUnitRequest - task.getInputPath() = [" + task.getInputPath() +"]" );
+
         if (!handleReceiveFiles(inputFilesDir, task.getInputPath())){
             updateTaskFailure(task);
             return;
