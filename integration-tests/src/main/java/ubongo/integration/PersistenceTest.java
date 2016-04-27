@@ -19,22 +19,24 @@ public class PersistenceTest {
     private static final String UNITS_DIR_PATH = "units_path";
     private static final String STUDY = "study_2";
 
-    private static Persistence persistence;
+    protected Persistence persistence;
+    protected Configuration configuration;
 
     public static void main(String[] args) throws Exception {
-        if (!init()) {
+        PersistenceTest persistenceTest = new PersistenceTest();
+        if (!persistenceTest.init()) {
             return;
         }
-        int flowId = createFlow();
-        startFlow(flowId);
-        close();
+        int flowId = persistenceTest.createFlow();
+        persistenceTest.startFlow(flowId);
+        persistenceTest.close();
     }
 
-    private static boolean init() throws UnmarshalException, PersistenceException {
+    protected boolean init() throws UnmarshalException, PersistenceException {
         String configPath = System.getProperty(CONFIG_PATH);
         String unitsDirPath = System.getProperty(UNITS_DIR_PATH);
-        assert(configPath != null && unitsDirPath != null);
-        Configuration configuration = Configuration.loadConfiguration(configPath);
+        assert configPath != null && unitsDirPath != null;
+        configuration = Configuration.loadConfiguration(configPath);
         persistence = new PersistenceImpl(unitsDirPath, configuration.getDbConnectionProperties(),
                 configuration.getSshConnectionProperties(), configuration.getMachines(), DEBUG);
         if (!makeDirs()) {
@@ -68,11 +70,12 @@ public class PersistenceTest {
         return success;
     }
 
-    private static void close() throws PersistenceException {
+    protected void close() throws PersistenceException {
         persistence.stop();
     }
 
-    private static int createFlow() throws Exception {
+    // Important: this method is used by ExecutionTest as well
+    protected int createFlow() throws Exception {
 
         Context context = new Context(STUDY, ".*", ".*");
         List<Task> tasks = new ArrayList<>();
@@ -112,7 +115,7 @@ public class PersistenceTest {
         }
     }
 
-    private static void startFlow(int flowId) throws PersistenceException {
+    private void startFlow(int flowId) throws PersistenceException {
         persistence.startFlow(flowId);
         List<Task> returnedTasks = persistence.getNewTasks();
         assertReturnedTasks(returnedTasks, TaskStatus.NEW);

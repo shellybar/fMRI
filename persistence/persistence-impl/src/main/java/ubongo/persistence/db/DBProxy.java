@@ -178,8 +178,12 @@ public class DBProxy {
         }
     }
 
-    public void updateStatus(Collection<Task> tasks) {
-        //TODO
+    public void updateStatus(Collection<Task> tasks) throws DBProxyException {
+        //TODO do it in one go
+        for (Task task : tasks) {
+            updateStatus(task);
+        }
+
     }
 
     public void createAnalysis(String analysisName, List<Unit> units) {

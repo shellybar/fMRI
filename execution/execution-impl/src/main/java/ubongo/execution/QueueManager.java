@@ -12,8 +12,8 @@ import ubongo.persistence.PersistenceException;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 // TODO instead of notifyFatal make the executionImpl listen on some object
 public class QueueManager {
@@ -27,7 +27,7 @@ public class QueueManager {
     private static Logger logger = LogManager.getLogger(QueueManager.class);
     private final Object consumerLock = new Object();
     private final Object producerLock = new Object();
-    private boolean producerMayWork = false; // lets the producer know whether they may work or not
+    private boolean producerMayWork = true; // lets the producer know whether they may work or not
     private boolean producerUpdatingDatabase = false; // lets the consumers know they need to wait
 
     private BlockingQueue<Task> queue = new ArrayBlockingQueue<>(MAX_QUEUE_CAPACITY, true);
@@ -38,17 +38,14 @@ public class QueueManager {
     private ExecutorService producer;
 
     // dependency verification logic
-    private Map<Set<Integer>, Set<Task>> dependencyMap;
-    private Map<TaskKey, Set<Integer>> setLocatorMap;
-    private final Object taskDependencyLock = new Object();
-    private boolean updatingDependencies;
+    private final Map<Integer, Set<Task>> dependencyMap = new HashMap<>();
+    private final Map<TaskKey, DependencyKey> setLocatorMap = new HashMap<>();
+    private boolean updatingDependencies = false;
 
     QueueManager(Persistence persistence, MachinesManager machinesManager) {
         this.executionProxy = ExecutionProxy.getInstance();
         this.persistence = persistence;
         this.machinesManager = machinesManager;
-        this.setLocatorMap = new HashMap<>();
-        this.dependencyMap = new HashMap<>();
     }
 
     public void start() throws QueueManagementException {
@@ -89,17 +86,18 @@ public class QueueManager {
      */
     synchronized public void updateTaskAfterExecution(Task task) {
         try {
+            persistence.updateTaskStatus(task);
             if (task.getStatus() == TaskStatus.COMPLETED) {
-                synchronized (taskDependencyLock) {
+                synchronized (dependencyMap) {
                     while (updatingDependencies) {
-                        taskDependencyLock.wait();
+                        dependencyMap.wait();
                     }
                     updatingDependencies = true;
                     handleCompletedTask(task);
                     updatingDependencies = false;
+                    dependencyMap.notifyAll();
                 }
             }
-            persistence.updateTaskStatus(task);
         } catch (PersistenceException | InterruptedException e) {
             logger.fatal("Failed to update task in DB");
             ExecutionImpl.notifyFatal(e); // TODO what now?
@@ -108,16 +106,23 @@ public class QueueManager {
 
     synchronized private boolean handleCompletedTask(Task task) throws PersistenceException {
         TaskKey key = new TaskKey(task);
-        Set<Integer> taskIdsMap = setLocatorMap.get(key);
-        if (taskIdsMap != null) {
-            taskIdsMap.remove(task.getId());
-            if (taskIdsMap.isEmpty()) {
-                Set<Task> waitingTasks = dependencyMap.get(taskIdsMap);
-                // send waitingTasks back to DB as NEW so they will be retrieved by the queue
-                // and next time it will be able to run them (this allows orderly dependency verification)
-                waitingTasks.forEach(t -> t.setStatus(TaskStatus.NEW));
-                persistence.updateTasksStatus(waitingTasks);
-                dependencyMap.remove(taskIdsMap);
+        DependencyKey dependencyKey = setLocatorMap.get(key);
+        Set<Integer> taskIdsSet = dependencyKey.getSet();
+        if (taskIdsSet != null) {
+            taskIdsSet.remove(task.getId());
+            if (taskIdsSet.isEmpty()) {
+                Set<Task> pendingTasks = dependencyMap.get(dependencyKey.getId());
+                if (pendingTasks != null) {
+                    // send pendingTasks back to DB as NEW so they will be retrieved by the queue
+                    // and next time it will be able to run them (this allows orderly dependency verification)
+                    pendingTasks.forEach(t -> t.setStatus(TaskStatus.NEW));
+                    persistence.updateTasksStatus(pendingTasks);
+                }
+                synchronized(producerLock) {
+                    producerMayWork = true;
+                    producerLock.notify();
+                }
+                dependencyMap.remove(taskIdsSet);
                 setLocatorMap.remove(key);
                 return true;
             }
@@ -146,11 +151,11 @@ public class QueueManager {
                         while (producerUpdatingDatabase) {
                             consumerLock.wait();
                         }
-                        logger.debug("Retrieved task from queue: taskId=" + currTask.getId()
-                                + ", unitId=" + currTask.getUnit().getId());
-                        if (!taskReadyForExecute(currTask)) {
-                            continue;
-                        }
+                    }
+                    logger.debug("Retrieved task from queue: taskId=" + currTask.getId()
+                            + ", unitId=" + currTask.getUnit().getId());
+                    if (!taskReadyForExecute(currTask)) {
+                        continue;
                     }
                     Machine machine = machinesManager.getAvailableMachine();
                     currTask.setMachine(machine);
@@ -183,17 +188,17 @@ public class QueueManager {
             if (serial < 0) {
                 return true; // there are no predecessors for this task
             }
-            synchronized (taskDependencyLock) {
+            synchronized (dependencyMap) {
                 while (updatingDependencies) {
-                    taskDependencyLock.wait();
+                    dependencyMap.wait();
                 }
                 updatingDependencies = true;
                 // get a list of uncompleted tasks (may be failed/stopped...) with serial smaller by one
-                Stream<Task> taskStream = persistence.getTasks(task.getFlowId()).stream()
+                List<Task> tasks = persistence.getTasks(task.getFlowId()).stream()
                         .filter(t -> t.getSerialNumber() == serial &&
-                                t.getStatus() != TaskStatus.COMPLETED);
-                if (!(ready = taskStream.count() == 0)) { // there are some dependencies
-                    storeDependencies(task, taskStream);
+                                t.getStatus() != TaskStatus.COMPLETED).collect(Collectors.toList());
+                if (!(ready = tasks.isEmpty())) { // there are some dependencies
+                    storeDependencies(task, tasks);
                     // after storing, we need to verify no dependent was completed in the meanwhile
                     // if it were, check if we can run now (return false anyway)
                     List<Task> completedTasks =
@@ -205,24 +210,26 @@ public class QueueManager {
                     }
                 }
                 updatingDependencies = false;
+                dependencyMap.notifyAll();
             }
             return ready;
         }
 
-        synchronized private void storeDependencies(Task task, Stream<Task> taskStream) {
-            TaskKey key = new TaskKey(taskStream.findAny().get()); // representative of set
+        synchronized private void storeDependencies(Task task, List<Task> tasks) {
+            TaskKey key = new TaskKey(tasks.stream().findAny().get()); // representative of set
             Set<Integer> taskIds;
             boolean inserted = false;
             // do we already have tasks depending on retrieved tasks?
             if (setLocatorMap.containsKey(key)) {
-                taskIds = setLocatorMap.get(key);
+                DependencyKey dependencyKey = setLocatorMap.get(key);
+                taskIds = dependencyKey.getSet();
                 if (taskIds == null) {
                     setLocatorMap.remove(key); // false alarm
                 } else {
-                    Set<Task> dependents = dependencyMap.get(taskIds);
+                    Set<Task> dependents = dependencyMap.get(dependencyKey.getId());
                     if (dependents == null) { // false alarm
                         setLocatorMap.remove(key);
-                        dependencyMap.remove(taskIds);
+                        dependencyMap.remove(dependencyKey.getId());
                     } else { // this is not the first task depending on retrieved tasks
                         dependents.add(task);
                         inserted = true;
@@ -230,11 +237,12 @@ public class QueueManager {
                 }
             }
             if (!inserted) {
-                taskIds = taskStream.map(Task::getId).collect(Collectors.toSet());
-                setLocatorMap.put(key, taskIds);
+                taskIds = tasks.stream().map(Task::getId).collect(Collectors.toSet());
+                DependencyKey dependencyKey = new DependencyKey(taskIds);
+                setLocatorMap.put(key, dependencyKey);
                 Set<Task> taskSet = new HashSet<>();
                 taskSet.add(task);
-                dependencyMap.put(taskIds, taskSet);
+                dependencyMap.put(dependencyKey.getId(), taskSet);
             }
         }
     }
@@ -323,7 +331,7 @@ public class QueueManager {
                 return false;
             }
             TaskKey other = (TaskKey) o;
-            return this.flowId != other.flowId || this.serial != other.serial;
+            return this.flowId == other.flowId && this.serial == other.serial;
         }
 
         @Override
@@ -333,6 +341,25 @@ public class QueueManager {
             hash = hash * 31 + serial;
             return hash;
         }
+    }
 
+    private static final class DependencyKey {
+
+        private static AtomicInteger counter = new AtomicInteger(0);
+        private Set<Integer> taskIds;
+        private int id;
+
+        public DependencyKey(Set<Integer> taskIds) {
+            this.taskIds = taskIds;
+            this.id = counter.getAndIncrement();
+        }
+
+        public Set<Integer> getSet() {
+            return taskIds;
+        }
+
+        public int getId() {
+            return id;
+        }
     }
 }

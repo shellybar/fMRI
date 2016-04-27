@@ -103,4 +103,9 @@ public class ExecutionImpl implements Execution {
         };
         channel.basicConsume(queue, true, consumer);
     }
+
+    // used for testing but not part of API
+    public QueueManager getQueueManager() {
+        return queueManager;
+    }
 }
