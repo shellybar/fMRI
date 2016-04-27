@@ -206,14 +206,46 @@ public class DBProxy {
         }
     }
 
-    public List<Unit> getAnalysis(String analysisName) {
-        // TODO add to API
-        return null;
+    public List<Unit> getAnalysis(String analysisName) throws DBProxyException, UnitFetcherException {
+        connect();
+        List<Unit> units = new ArrayList<>();
+        String tableName = getTableName(DBConstants.UNITS_TABLE_NAME);
+        String errorMsg = "Failed to retrieve units from DB";
+        try {
+            String sql = Queries.getQuery(DBConstants.QUERY_GET_UNITS)
+                    .replace("$unitsTable", tableName);
+            PreparedStatement statement = connection.prepareStatement(sql);
+            statement.setString(1, analysisName);
+            ResultSet resultSet = executeQuery(statement);
+            while (resultSet.next()) {
+                int unitId = resultSet.getInt(DBConstants.UNITS_UNIT_ID);
+                units.add(unitFetcher.getUnit(unitId));
+            }
+        } catch (SQLException e) {
+            logSqlException(e, errorMsg);
+            throw new DBProxyException(errorMsg, e);
+        }
+        return units;
     }
 
-    public List<String> getAnalysisNames() {
-        // TODO add to API
-        return null;
+    public List<String> getAnalysisNames() throws DBProxyException {
+        connect();
+        List<String> analysisNames = new ArrayList<>();
+        String tableName = getTableName(DBConstants.UNITS_TABLE_NAME);
+        String errorMsg = "Failed to retrieve analyses from DB";
+        try {
+            String sql = Queries.getQuery(DBConstants.QUERY_GET_ANALYSIS_NAMES)
+                    .replace("$unitsTable", tableName);
+            PreparedStatement statement = connection.prepareStatement(sql);
+            ResultSet resultSet = executeQuery(statement);
+            while (resultSet.next()) {
+                analysisNames.add(resultSet.getString(DBConstants.UNITS_ANALYSIS_NAME));
+            }
+        } catch (SQLException e) {
+            logSqlException(e, errorMsg);
+            throw new DBProxyException(errorMsg, e);
+        }
+        return analysisNames;
     }
 
     public int createFlow(String studyName, List<Task> tasks) throws DBProxyException {
@@ -318,13 +350,13 @@ public class DBProxy {
     private List<Task> getTasks(String queryName, int id) throws DBProxyException {
         connect();
         List<Task> tasks = new ArrayList<>();
-        String tableName = getTableName(DBConstants.TASKS_TABLE_NAME);
+        String tasksTableName = getTableName(DBConstants.TASKS_TABLE_NAME);
         String flowsTableName = getTableName(DBConstants.FLOWS_TABLE_NAME);
         String errorMsg = "Failed to retrieve tasks from DB";
         try {
             String sql = Queries.getQuery(queryName)
                     .replace("$flowsTable", flowsTableName)
-                    .replace("$tasksTable", tableName);
+                    .replace("$tasksTable", tasksTableName);
             PreparedStatement statement = connection.prepareStatement(sql);
             if (queryName.equals(DBConstants.QUERY_GET_FLOW_TASKS) ||
                     queryName.equals(DBConstants.QUERY_GET_TASK_BY_ID)) {
