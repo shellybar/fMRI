@@ -1,5 +1,7 @@
 package ubongo.persistence;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import ubongo.common.datatypes.Machine;
 import ubongo.common.datatypes.Task;
 import ubongo.common.datatypes.Unit;
@@ -17,6 +19,7 @@ import java.util.concurrent.Callable;
 public class PersistenceImpl implements Persistence {
 
     private static final int MAX_NUM_RETRIES = 3;
+    private static final Logger logger = LogManager.getLogger(PersistenceImpl.class);
 
     private DBProxy dbProxy;
     private SQLExceptionHandler sqlExceptionHandler;
@@ -213,6 +216,7 @@ public class PersistenceImpl implements Persistence {
         Throwable t = e.getCause();
         if (numRetries == MAX_NUM_RETRIES || !(t instanceof SQLException)
                 || !sqlExceptionHandler.isRecoverable((SQLException) t)) {
+            logger.error(e.getMessage(), e);
             return e;
         }
         return null;

@@ -97,7 +97,6 @@ public class DBProxy {
                     connection = DriverManager.getConnection(getActualUrl(), getUser(), dbProperties.getPassword());
                 } catch (SQLException e) {
                     String errorMsg = String.format("Failed to connect to the database (url: %s; user: %s)", getUrl(), getUser());
-                    // TODO log errorMsg?
                     throw new DBProxyException(errorMsg, e);
                 } catch (ClassNotFoundException e) {
                     throw new DBProxyException("Database connection cannot be established. " +
@@ -106,7 +105,6 @@ public class DBProxy {
                 logger.info("Connected to DB at " + getUrl());
             }
         } catch (SQLException e) {
-            // TODO connection error
             String errorMsg =
                     String.format("Failed to connect to the database (url: %s; user: %s).", getUrl(), getUser());
             throw new DBProxyException(errorMsg, e);
@@ -130,7 +128,6 @@ public class DBProxy {
                 logger.info("Successfully closed database connection via SSH tunneling");
             }
         } catch (SQLException e) {
-            // TODO disconnect error
             String errorMsg =
                     String.format("Failed to disconnect from the database (url: %s; user: %s).", getUrl(), getUser());
             throw new DBProxyException(errorMsg, e);
@@ -175,12 +172,8 @@ public class DBProxy {
                 statement.setNull(3, Types.INTEGER);
             }
             statement.setInt(4, task.getId()); // id of task to update
-            int numRowsUpdated = executeUpdate(statement);
-            if (numRowsUpdated != 1) {
-                // TODO handle update failure
-            }
+            executeUpdate(statement);
         } catch (SQLException e) {
-            // TODO failed to update task status
             String errorMsg = "Failed to update task's status in DB (taskId="
                     + task.getId() + ", newStatus=" + task.getStatus() + ")";
             throw new DBProxyException(errorMsg, e);
@@ -395,9 +388,7 @@ public class DBProxy {
             while (resultSet.next()) {
                 tasks.add(taskFromResultSet(resultSet));
             }
-        } catch (SQLException e) {
-            throw new DBProxyException(errorMsg, e);
-        } catch (JsonParseException | UnitFetcherException e) {
+        } catch (SQLException | JsonParseException | UnitFetcherException e) {
             throw new DBProxyException(errorMsg, e);
         }
         return tasks;
