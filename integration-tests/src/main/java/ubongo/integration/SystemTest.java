@@ -57,13 +57,24 @@ public class SystemTest {
 
         try {
             tasks.addAll(Task.createTasks(unit, context, 0));
-            System.out.println("getInputPath : "+ tasks.get(0).getInputPath());
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         int flowId = analysesServer.createFlow("myStudy", tasks);
         analysesServer.runFlow(flowId);
+
+        try {
+            Thread.sleep(1500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        Task taskToKill = analysesServer.getTasks(flowId).get(0);
+        int idToKill = taskToKill.getId();
+        System.out.println("Sending request to kill task id " + idToKill);
+        analysesServer.killTask(taskToKill);
+
         while (true); // TODO change to something nicer
     }
 
