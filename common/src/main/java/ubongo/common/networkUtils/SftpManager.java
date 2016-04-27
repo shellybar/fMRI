@@ -52,9 +52,9 @@ public class SftpManager {
             logger.error(error);
             throw new NetworkException(error);
         }
-        for (String currLocalDir : localDirs) {
-            logger.info("Downloading files from : " + currLocalDir);
-            getFilesFromServerByDirectory(currLocalDir, fileRegex);
+        for (String currRemotelDir : localDirs) {
+            logger.info("Downloading files from : " + currRemotelDir);
+            getFilesFromServerByDirectory(currRemotelDir, fileRegex);
         }
     }
 
@@ -71,16 +71,25 @@ public class SftpManager {
         String dirParts[] = currDir.split(File.separator+"\\(.*?\\)"+File.separator);
         String prefixString = dirParts[0];
         if (dirParts.length == 1){
-            dirs.add(prefixString);
+            fsManager = VFS.getManager();
+            FileSystemOptions opts = new FileSystemOptions();
+            String dirToAddSftpUri = "sftp://" + user + ":" + password + "@" + machine + prefixString + File.separator;
+            FileObject currDirObject = fsManager.resolveFile(dirToAddSftpUri, opts);
+            File currDirFile = new File(currDirObject.getName().getPath());
+            if ((currDirFile.list() != null) && (currDirFile.list().length > 0)) {
+                logger.debug("Current path is not empty: " + prefixString);
+                dirs.add(prefixString);
+            } else {
+                logger.debug("Current path is empty, dumping it: " + prefixString);
+            }
             return;
         }
-        String currRegex = currDir.substring(dirParts[0].length(), dirParts[1].length()-1);
+        String currRegex = currDir.substring(dirParts[0].length() + 1, currDir.indexOf(dirParts[1]) - 1);
         logger.debug("currRegex: " + currRegex);
         String suffixString = currDir.substring(currDir.indexOf(dirParts[1]));
         String currSftpUri = "sftp://" + user + ":" + password +  "@" + machine + prefixString + File.separator;
         fsManager = VFS.getManager();
 
-        // List all the files in that directory.
         FileSystemOptions opts = new FileSystemOptions();
         FileObject localFileObject=fsManager.resolveFile(currSftpUri,opts);
         File file = new File(localFileObject.getName().getPath());
@@ -94,20 +103,17 @@ public class SftpManager {
             if (currSubDir.matches(currRegex)) {
                 String currPath = prefixString + File.separator + currSubDir +File.separator + suffixString;
                 String currDirSftpUri = "sftp://" + user + ":" + password + "@" + machine + currPath + File.separator;
-                logger.debug("currDirSftpUri: " + currDirSftpUri);
                 FileObject currDirObject = fsManager.resolveFile(currDirSftpUri, opts);
                 logger.debug("currDirObject: " + currDirObject.getName());
-                logger.debug("currDirObject: " + currDirObject.getURL());
-                if (currDirObject.exists())
-                    getDirectoriesFromRegex(dirs, currPath);
+                getDirectoriesFromRegex(dirs, currPath);
             } else {
                 logger.debug("Directory " + currSubDir + " doesn't match pattern " + currRegex);
             }
         }
     }
 
-    private void getFilesFromServerByDirectory(String currLocalDir, Optional<String> fileRegex) throws NetworkException{
-        String currSftpUri = "sftp://" + user + ":" + password +  "@" + machine + currLocalDir + "/";
+    private void getFilesFromServerByDirectory(String currRemotelDir, Optional<String> fileRegex) throws NetworkException{
+        String currSftpUri = "sftp://" + user + ":" + password +  "@" + machine + currRemotelDir + "/";
         try {
             FileSystemOptions opts = new FileSystemOptions();
             SftpFileSystemConfigBuilder.getInstance().setUserDirIsRoot(opts, false);
@@ -124,10 +130,11 @@ public class SftpManager {
                     logger.debug("File " + fileName + " doesn't match pattern " + fileRegex.get());
                     continue;
                 }
-                String filepath = currLocalDir + File.separator  + fileName;
+                String filepath = localDir + File.separator  + fileName;
                 File file = new File(filepath);
                 FileObject localFile = fsManager.resolveFile(file.getAbsolutePath(),opts);
                 FileObject remoteFile = fsManager.resolveFile(currSftpUri+ File.separator + fileName, opts);
+
                 localFile.copyFrom(remoteFile, Selectors.SELECT_SELF);
                 logger.info("File downloaded successfully: " + fileName);
             }

@@ -33,8 +33,8 @@ public class RequestHandler extends Thread {
     private RabbitData rabbitMessage;
     private SSHConnectionProperties sshConnectionProperties;
 
-    public RequestHandler(RabbitData rabbitMessage, String serverAddress, String baseDir, String unitsDir, String configPath) {
-        super("RequestHandler");
+    public RequestHandler(String threadName, RabbitData rabbitMessage, String serverAddress, String baseDir, String unitsDir, String configPath) {
+        super(threadName);
         this.baseDir = baseDir;
         this.unitsDir = unitsDir;
         this.serverAddress = serverAddress;
@@ -109,9 +109,6 @@ public class RequestHandler extends Thread {
 
     public void handleBaseUnitRequest(String inputFilesDir, String outputFilesDir, Task task){
         logger.info("handleBaseUnitRequest - start. task ID = [" + task.getId() +"]" );
-        logger.info("handleBaseUnitRequest - inputFilesDir = [" + inputFilesDir +"]" );
-        logger.info("handleBaseUnitRequest - task.getInputPath() = [" + task.getInputPath() +"]" );
-
         if (!handleReceiveFiles(inputFilesDir, task.getInputPath())){
             updateTaskFailure(task);
             return;
@@ -122,7 +119,7 @@ public class RequestHandler extends Thread {
             updateTaskFailure(task);
             return;
         }
-        boolean result = false;
+        boolean result;
         try {
             outputDir.mkdir();
             result = true;
@@ -148,7 +145,7 @@ public class RequestHandler extends Thread {
             updateTaskFailure(task);
         }
         // delete local input & output dirs
-        cleanLocalDirectories(inputFilesDir, outputFilesDir); // TODO
+        cleanLocalDirectories(inputFilesDir, outputFilesDir);
     }
 
     private void cleanLocalDirectories(String inputFilesDir, String outputFilesDir) {
@@ -168,7 +165,7 @@ public class RequestHandler extends Thread {
         boolean success = true;
         logger.info("sendOutputFilesToServer - start. filesSourceDir= [" + outputDir +
                 "] to server = [" + serverAddress + "] destination files dir = [" + task.getOutputPath() + "]" );
-        SftpManager filesUploader = null;
+        SftpManager filesUploader;
         try {
             filesUploader = new SftpManager(sshConnectionProperties, serverAddress, task.getOutputPath(), outputDir);
             filesUploader.uploadFilesToServer();
