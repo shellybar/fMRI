@@ -11,16 +11,11 @@ import org.apache.logging.log4j.Logger;
 import com.rabbitmq.client.*;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import org.apache.commons.cli.*;
 
 /**
  * MachineServer run on each machine all the time, and listens to socket requests.
@@ -37,13 +32,12 @@ public class MachineServer {
 
     private static Logger logger = LogManager.getLogger(MachineServer.class);
 
-    private List<Task> runningTasks;
     private MachineStatistics machineStatistics;
     static String serverAddress;
 
     public MachineServer() {
-        runningTasks = new ArrayList<>();
-        this.machineStatistics = new MachineStatistics(runningTasks);
+        unitThreads = new HashMap<>();
+        this.machineStatistics = new MachineStatistics(unitThreads.size());
         serverAddress = MachineConstants.SERVER_FALLBACK;
     }
 
@@ -85,8 +79,11 @@ public class MachineServer {
                     serverAddress = System.getProperty(ARG_SERVER);
                     String configPath = System.getProperty(CONFIG_PATH);
                     logger.info("Server address: [" + serverAddress + "], base directory path: [" + baseDir + "]");
-                    String threadName = getThreadName(message);
+                    String threadName = getThreadName(message.getTask());
                     RequestHandler requestHandler = new RequestHandler(threadName, message, serverAddress, baseDir, unitsDir, configPath);
+                    if ((message.getMessage()).equals(MachineConstants.BASE_UNIT_REQUEST)) {
+                        unitThreads.put(threadName, requestHandler);
+                    }
                     logger.debug("Starting RequestHandler thread...");
                     requestHandler.start();
                 } catch (Exception e){
@@ -97,8 +94,8 @@ public class MachineServer {
         channel.basicConsume(queue, true, consumer);
     }
 
-    private static String getThreadName(RabbitData message) {
-        return message.getMessage() + message.getTask().getId();
+    public static String getThreadName(Task task) {
+        return MachineConstants.BASE_UNIT_REQUEST + task.getId();
     }
 
     private void trackMachinePerformance() {
@@ -108,24 +105,4 @@ public class MachineServer {
 
     }
 
-    private static Properties parseCommandLineArgs(String[] args) throws ParseException {
-        Options options = new Options();
-        options.addOption(buildOption("Server Address", "The IP or host name of the server", ARG_SERVER));
-        options.addOption(buildOption("Base Directory", "The path to the directory where files will be stored", ARG_DIR));
-        options.addOption(buildOption("Units Directory", "The path to the directory where unit scripts will be stored, relative to "+ARG_DIR, ARG_UNITS));
-
-        CommandLineParser parser = new DefaultParser();
-        CommandLine line = parser.parse(options, args);
-
-        Properties result = new Properties();
-        result.setProperty(ARG_SERVER, line.getOptionValue(ARG_SERVER, MachineConstants.SERVER_FALLBACK));
-        result.setProperty(ARG_DIR, line.getOptionValue(ARG_DIR, ""));
-        result.setProperty(ARG_UNITS, line.getOptionValue(ARG_UNITS, "Bash"));
-
-        return result;
-    }
-
-    private static Option buildOption(String argName, String description, String argLabel) {
-        return Option.builder(argLabel).hasArg().argName(argName).desc(description).required(false).build();
-    }
 }
