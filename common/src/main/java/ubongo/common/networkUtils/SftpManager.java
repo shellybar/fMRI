@@ -66,7 +66,7 @@ public class SftpManager {
         if (remoteDir.endsWith(File.separator))
             return Optional.empty();
         String dirParts[] = remoteDir.split(File.separator);
-        logger.info("Input files regex : " + dirParts[dirParts.length -1]);
+        logger.info("Input files regex : " + dirParts[dirParts.length - 1]);
         return Optional.of(dirParts[dirParts.length -1]);
     }
 
@@ -158,6 +158,7 @@ public class SftpManager {
         while (e != null){
             e = e.getCause();
             if ((e instanceof InterruptedException) || (e instanceof InterruptedIOException)) {
+                logger.info("handleIfItCausedByInterrupt - throw");
                 throw new InterruptedException(e.getMessage());
             }
         }
@@ -198,13 +199,9 @@ public class SftpManager {
         return;
     }
 
-
     private void handleStopInterrupt() throws InterruptedException {
-        logger.debug("sftp manager Thread: [" + Thread.currentThread().getName() + "] id = [" +
-                Thread.currentThread().getId() + "] isInterrupted() : " + Thread.currentThread().isInterrupted());
         if (Thread.currentThread().isInterrupted()){
-            logger.info("!!!!!!!!!!!!!!!!!!!!! sftp manage Thread: [" + Thread.currentThread().getName() + "] " +
-                    "isInterrupted. Stopping ...");
+            logger.info("sftp manager - Received interrupt exception.");
             throw new InterruptedException("Received interrupt exception.");
         }
     }

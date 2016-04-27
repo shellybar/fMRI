@@ -24,27 +24,43 @@ public class MachineControllerImpl implements MachineController {
     }
 
     @Override
-    public boolean run(Task task, Path unitsDir, Path baseDir) {
+    public boolean run(Task task, Path unitsDir, Path baseDir) throws InterruptedException {
         String outputDir = task.getId() + MachineConstants.OUTPUT_DIR_SUFFIX;
+        logger.debug("outputDir= " + outputDir);
         Path outputDirectory = Paths.get(baseDir.toString(), outputDir);
-        ProcessBuilder pb = new ProcessBuilder(getProcessCommand(task, baseDir, outputDirectory));
-        pb.directory(new File(unitsDir.toString()));
+
+        Runtime runtime = Runtime.getRuntime();
+        String[] command = getProcessCommand(task, baseDir, outputDirectory);
         Process p = null;
         try {
-            p = pb.start();
+            boolean done = false;
+            p = runtime.exec(command, null, new File(unitsDir.toString()));
+            while (!done) {
+                handleStopInterrupt();
+                try {
+                    p.exitValue();
+                    done = true;
+                } catch (IllegalThreadStateException e) {
+                    // This exception will be thrown only if the process is still running
+                    // because exitValue() will not be a valid method call yet...
+                }
+            }
+            handleStopInterrupt();
             logger.info("Unit "+ task.getUnit().getId()+" completed successfully : " + getUnitOutput(p));
         } catch (IOException e) {
+            handleStopInterrupt();
             if (p != null)
                 logger.error("Failed running unit: " + getUnitErrors(p));
             else
                 logger.error("Failed running unit: " + e.getMessage());
             return false;
         }
+        handleStopInterrupt();
         File outputDirectoryFile = new File(outputDirectory.toString());
-        if(outputDirectoryFile.list().length == 0){
+        handleStopInterrupt();
+        if (outputDirectoryFile.list().length == 0) {
+            handleStopInterrupt();
             logger.error("Unit completed, but output directory is empty : " + outputDirectory.toString());
-            logger.error("outputDirectoryFile.list().length : " + outputDirectoryFile.list().length);
-
             return false;
         }
         return true;
@@ -102,6 +118,14 @@ public class MachineControllerImpl implements MachineController {
             i++;
         }
         return bashCommand;
+    }
+
+
+    private void handleStopInterrupt() throws InterruptedException {
+        if (Thread.currentThread().isInterrupted()){
+            logger.debug("Unit received interrupt exception");
+            throw new InterruptedException("Received interrupt exception.");
+        }
     }
 
 }

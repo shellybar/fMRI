@@ -65,7 +65,7 @@ public class SystemTest {
         analysesServer.runFlow(flowId);
 
         try {
-            Thread.sleep(1500);
+            Thread.sleep(2500);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -73,7 +73,7 @@ public class SystemTest {
         Task taskToKill = analysesServer.getTasks(flowId).get(0);
         int idToKill = taskToKill.getId();
         System.out.println("Sending request to kill task id " + idToKill);
-        analysesServer.killTask(taskToKill);
+       // analysesServer.killTask(taskToKill);
 
         while (true); // TODO change to something nicer
     }
