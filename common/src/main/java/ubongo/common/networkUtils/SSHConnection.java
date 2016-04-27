@@ -67,7 +67,6 @@ public class SSHConnection {
     private static Session connect(Session session, String sshHost, int sshPort) throws JSchException {
         session.setConfig("StrictHostKeyChecking", "no");
         session.setConfig("ConnectionAttempts", "3");
-        logger.info("Establishing SSH Connection to host: " + sshHost + ":" + sshPort + "...");
         try {
             session.connect();
         }

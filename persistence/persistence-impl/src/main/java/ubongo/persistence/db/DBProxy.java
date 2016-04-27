@@ -122,7 +122,6 @@ public class DBProxy {
             }
             if (sshSession != null && sshSession.isConnected()) {
                 alreadyClosed = false;
-                logger.info("Closing SSH Connection to host: " + sshSession.getHost() + ":" + sshSession.getPort() + "...");
                 sshSession.disconnect();
             }
             if (!alreadyClosed) {
