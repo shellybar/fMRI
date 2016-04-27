@@ -19,22 +19,28 @@ public class PersistenceTest {
     private static final String UNITS_DIR_PATH = "units_path";
     private static final String STUDY = "study_2";
 
-    private static Persistence persistence;
+    protected Persistence persistence;
+    protected Configuration configuration;
 
     public static void main(String[] args) throws Exception {
-        if (!init()) {
-            return;
-        }
-        int flowId = createFlow();
-        startFlow(flowId);
-        close();
+
+        // preparations
+        PersistenceTest persistenceTest = new PersistenceTest();
+        if (!persistenceTest.init()) return;
+        List<Unit> units = persistenceTest.prepareUnits();
+
+        // tests
+        units = persistenceTest.createAnalysis(units);
+        int flowId = persistenceTest.createFlow(units);
+        persistenceTest.startFlow(flowId);
+        persistenceTest.close();
     }
 
-    private static boolean init() throws UnmarshalException, PersistenceException {
+    protected boolean init() throws UnmarshalException, PersistenceException {
         String configPath = System.getProperty(CONFIG_PATH);
         String unitsDirPath = System.getProperty(UNITS_DIR_PATH);
-        assert(configPath != null && unitsDirPath != null);
-        Configuration configuration = Configuration.loadConfiguration(configPath);
+        assert configPath != null && unitsDirPath != null;
+        configuration = Configuration.loadConfiguration(configPath);
         persistence = new PersistenceImpl(unitsDirPath, configuration.getDbConnectionProperties(),
                 configuration.getSshConnectionProperties(), configuration.getMachines(), DEBUG);
         if (!makeDirs()) {
@@ -44,6 +50,69 @@ public class PersistenceTest {
         persistence.start();
         ((PersistenceImpl) persistence).clearDebugData();
         return true;
+    }
+
+    protected void close() throws PersistenceException {
+        persistence.stop();
+    }
+
+    protected List<Unit> prepareUnits() throws PersistenceException {
+        List<Unit> units = new ArrayList<>();
+        units.add(persistence.getUnit(88));
+        units.add(persistence.getUnit(99));
+        return units;
+    }
+
+    protected List<Unit> createAnalysis(List<Unit> units) throws PersistenceException {
+        String analysis = "analysis1";
+        persistence.createAnalysis(analysis, units);
+        List<Unit> retrievedUnits = persistence.getAnalysis(analysis);
+        // TODO assert
+        return retrievedUnits;
+    }
+
+    // Important: this method is used by ExecutionTest as well
+    protected int createFlow(List<Unit> units) throws Exception {
+
+        Context context = new Context(STUDY, ".*", ".*");
+        List<Task> tasks = new ArrayList<>();
+
+        int i = 0;
+        for (Unit unit : units) {
+            tasks.addAll(Task.createTasks(unit, context, i++));
+        }
+
+        int flowId = persistence.createFlow(STUDY, tasks);
+
+        // assertions
+        List<Task> returnedTasks = persistence.getTasks(flowId);
+        assertReturnedTasks(returnedTasks, TaskStatus.CREATED);
+        return flowId;
+    }
+
+    private void startFlow(int flowId) throws PersistenceException {
+        persistence.startFlow(flowId);
+        List<Task> returnedTasks = persistence.getNewTasks();
+        assertReturnedTasks(returnedTasks, TaskStatus.NEW);
+    }
+
+    private static void assertReturnedTasks(List<Task> returnedTasks, TaskStatus status) {
+        String regex = "(.*)\\{(.*)\\}(.*)";
+        assert returnedTasks.size() == 6; // 6 total tasks (2 + 4)
+        // only two distinct tasks
+        assert returnedTasks.stream().map(Task::getSerialNumber).distinct().count() == 2;
+        for (Task task : returnedTasks) {
+            assert !task.getInputPath().matches(regex); // no variables in input
+            assert !task.getOutputPath().matches(regex); // no variables in output
+            // subject in context and in params is the same
+            task.getUnit().getParameters().forEach(param -> {
+                if ("subject".equals(param.getName())) {
+                    assert task.getContext().getSubject().equals(param.getValue());
+                }
+            });
+            assert STUDY.equals(task.getContext().getStudy()); // the STUDY is as expected
+            assert task.getStatus() == status; // all tasks are in status 'Created'
+        }
     }
 
     private static boolean makeDirs() {
@@ -66,56 +135,6 @@ public class PersistenceTest {
             }
         }
         return success;
-    }
-
-    private static void close() throws PersistenceException {
-        persistence.stop();
-    }
-
-    private static int createFlow() throws Exception {
-
-        Context context = new Context(STUDY, ".*", ".*");
-        List<Task> tasks = new ArrayList<>();
-        List<Unit> units = new ArrayList<>();
-        units.add(persistence.getUnit(88));
-        units.add(persistence.getUnit(99));
-
-        int i = 0;
-        for (Unit unit : units) {
-            tasks.addAll(Task.createTasks(unit, context, i++));
-        }
-
-        int flowId = persistence.createFlow(STUDY, tasks);
-
-        // assertions
-        List<Task> returnedTasks = persistence.getTasks(flowId);
-        assertReturnedTasks(returnedTasks, TaskStatus.CREATED);
-        return flowId;
-    }
-
-    private static void assertReturnedTasks(List<Task> returnedTasks, TaskStatus status) {
-        String regex = "(.*)\\{(.*)\\}(.*)";
-        assert returnedTasks.size() == 6; // 6 total tasks (2 + 4)
-        // only two distinct tasks
-        assert returnedTasks.stream().map(Task::getSerialNumber).distinct().count() == 2;
-        for (Task task : returnedTasks) {
-            assert !task.getInputPath().matches(regex); // no variables in input
-            assert !task.getOutputPath().matches(regex); // no variables in output
-            // subject in context and in params is the same
-            task.getUnit().getParameters().forEach(param -> {
-                if ("subject".equals(param.getName())) {
-                    assert task.getContext().getSubject().equals(param.getValue());
-                }
-            });
-            assert STUDY.equals(task.getContext().getStudy()); // the STUDY is as expected
-            assert task.getStatus() == status; // all tasks are in status 'Created'
-        }
-    }
-
-    private static void startFlow(int flowId) throws PersistenceException {
-        persistence.startFlow(flowId);
-        List<Task> returnedTasks = persistence.getNewTasks();
-        assertReturnedTasks(returnedTasks, TaskStatus.NEW);
     }
 
 }

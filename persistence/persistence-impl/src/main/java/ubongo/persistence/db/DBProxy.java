@@ -178,12 +178,32 @@ public class DBProxy {
         }
     }
 
-    public void updateStatus(Collection<Task> tasks) {
-        //TODO
+    public void updateStatus(Collection<Task> tasks) throws DBProxyException {
+        for (Task task : tasks) {
+            updateStatus(task);
+        }
     }
 
-    public void createAnalysis(String analysisName, List<Unit> units) {
-        // TODO
+    public void createAnalysis(String analysisName, List<Unit> units) throws DBProxyException {
+        connect();
+        String unitsTableName = getTableName(DBConstants.UNITS_TABLE_NAME);
+        try {
+            String values = getUnitsAsValueList(analysisName, units);
+            if (values == null) {
+                String errMsg = "System tried to add an empty list of units to the database";
+                logger.warn(errMsg);
+                throw new DBProxyException(errMsg);
+            }
+            String sql = Queries.getQuery(DBConstants.QUERY_CREATE_ANALYSIS)
+                    .replace("$unitsTable", unitsTableName)
+                    .replace("$values", values);
+            PreparedStatement statement = connection.prepareStatement(sql);
+            executeUpdate(statement);
+        } catch (SQLException e) {
+            String errorMsg = "Failed to add analysis to DB";
+            logSqlException(e, errorMsg);
+            throw new DBProxyException(errorMsg, e);
+        }
     }
 
     public List<Unit> getAnalysis(String analysisName) {
@@ -342,6 +362,20 @@ public class DBProxy {
                 context,
                 TaskStatus.valueOf(resultSet.getString(DBConstants.TASKS_TASK_STATUS).toUpperCase())
         );
+    }
+
+    private String getUnitsAsValueList(String analysisName, List<Unit> units) {
+        // (analysis_name, serial, external_unit_id)
+        List<String> valuesList = new ArrayList<>();
+        int serial = 0;
+        for (Unit unit : units) {
+            valuesList.add(Utils.concatStrings(
+                    "('", analysisName, "', ",
+                    Integer.toString(serial++), ", ",
+                    Integer.toString(unit.getId()) , ")"
+            ));
+        }
+        return StringUtils.join(valuesList, ',');
     }
 
     private String getTasksAsValueList(List<Task> tasks) {

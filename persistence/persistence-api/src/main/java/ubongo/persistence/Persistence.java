@@ -21,6 +21,8 @@ public interface Persistence {
      */
     void createAnalysis(String analysisName, List<Unit> units) throws PersistenceException;
 
+    List<Unit> getAnalysis(String analysisName) throws PersistenceException;
+
     /**
      * Creates a new flow in Flows table
      * @param studyName is the name of the study
