@@ -22,8 +22,10 @@ public class MachinePerformanceSampler implements Runnable {
             double totalCpuUsagePercent = sigar.getCpuPerc().getCombined();
             machineStatistics.updateCpuUsage(totalCpuUsagePercent);
             machineStatistics.updateMemoryUsage(sigar.getMem().getUsedPercent() / 100.0);
-            logger.debug("CPU: " + Math.round(machineStatistics.getCpuUsage() * 10000.0) / 100.0 + "%" +
-                    " Mem: " + Math.round(machineStatistics.getMemoryUsage() * 10000.0) / 100.0 + "%");
+            if (logger.isDebugEnabled()) {
+                logger.debug("CPU: " + Math.round(machineStatistics.getCpuUsage() * 10000.0) / 100.0 + "%" +
+                        " Mem: " + Math.round(machineStatistics.getMemoryUsage() * 10000.0) / 100.0 + "%");
+            }
         } catch (SigarException e) {
             logger.error("Failed to sample machine performance. Details: " + e.getMessage());
         } finally {

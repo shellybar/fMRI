@@ -30,7 +30,6 @@ public class Configuration {
     static public Configuration loadConfiguration(String path) throws UnmarshalException {
         Configuration configuration;
         File file = new File(path);
-        logger.debug("Loading SSH Connection configuration details from " + file.getAbsolutePath() + "...");
         try {
             JAXBContext jaxbContext = JAXBContext.newInstance(Configuration.class);
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();

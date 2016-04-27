@@ -52,7 +52,9 @@ public enum ExecutionProxy {
             channel.queueDeclare(queue, false, false, false, null);
             RabbitData message = new RabbitData(task, request);
             channel.basicPublish("", queue, null, message.getBytes());
-            logger.debug(" [x] Sent '" + message.getMessage() + "'");
+            if (logger.isDebugEnabled()) {
+                logger.debug(" [x] Sent '" + message.getMessage() + "'");
+            }
             channel.close();
             connection.close();
         } catch (Exception e){

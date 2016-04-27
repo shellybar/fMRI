@@ -92,14 +92,16 @@ public class MachineControllerImpl implements MachineController {
         bashCommand[0] = unitExecutable;
         bashCommand[1] = inputDirectory.toString();
         bashCommand[2] = outputDirectory.toString();
-        logger.debug("Unit information: Executable = " + unitExecutable + " InputDir = " + inputDirectory.toString() +
-                " OutputDir = "+ outputDirectory.toString());
-        logger.debug("Unit arguments:");
-        int i = 3;
-        for (UnitParameter unitParam : params){
-            bashCommand[i] = unitParam.getValue();
-            logger.debug(bashCommand[i]);
-            i++;
+        if (logger.isDebugEnabled()) {
+            logger.debug("Unit information: Executable = " + unitExecutable + " InputDir = " + inputDirectory.toString() +
+                    " OutputDir = " + outputDirectory.toString());
+            logger.debug("Unit arguments:");
+            int i = 3;
+            for (UnitParameter unitParam : params) {
+                bashCommand[i] = unitParam.getValue();
+                logger.debug(bashCommand[i]);
+                i++;
+            }
         }
         return bashCommand;
     }

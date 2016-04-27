@@ -143,6 +143,10 @@ public class DBProxy {
      *             If the task ID cannot be found in the DB, this method does nothing
      */
     public void updateStatus(Task task) throws DBProxyException {
+        if (logger.isDebugEnabled()) {
+            logger.debug("Updating status in DB to " + task.getStatus() + " for taskId=" +
+                    task.getId());
+        }
         Task taskInDb = getTask(task.getId());
         for (TaskStatus status : TaskStatus.getFinalStatuses()) {
             if (taskInDb.getStatus() == status) {
@@ -506,7 +510,6 @@ public class DBProxy {
     }
 
     private int getFreeLocalPort() {
-        logger.debug("Searching for available local port for SSH tunneling...");
         ServerSocket serverSocket = null;
         int portNumber;
         try {
@@ -534,12 +537,10 @@ public class DBProxy {
     }
 
     private ResultSet executeQuery(PreparedStatement statement) throws SQLException {
-        logger.debug("Executing: " + statement.toString());
         return statement.executeQuery();
     }
 
     private int executeUpdate(PreparedStatement statement) throws SQLException {
-        logger.debug("Executing: " + statement.toString());
         return statement.executeUpdate();
     }
 

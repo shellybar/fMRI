@@ -45,7 +45,9 @@ public class SftpManager {
             if (!remoteDir.endsWith(File.separator)){
                 remoteDirPath = remoteDir.substring(0, remoteDir.lastIndexOf(File.separator));
             }
-            logger.debug("getting directories for regex " + remoteDirPath);
+            if (logger.isDebugEnabled()) {
+                logger.debug("getting directories for regex " + remoteDirPath);
+            }
             getDirectoriesFromRegex(localDirs, remoteDirPath);
         } catch (FileSystemException e) {
             String error = "Failed getting input files directories from regex";
@@ -67,7 +69,9 @@ public class SftpManager {
     }
 
     private void getDirectoriesFromRegex(List<String> dirs, String currDir) throws FileSystemException {
-        logger.debug("getDirectoriesFromRegex currDir: " + currDir);
+        if (logger.isDebugEnabled()) {
+            logger.debug("getDirectoriesFromRegex currDir: " + currDir);
+        }
         String dirParts[] = currDir.split(File.separator+"\\(.*?\\)"+File.separator);
         String prefixString = dirParts[0];
         if (dirParts.length == 1){
@@ -77,15 +81,21 @@ public class SftpManager {
             FileObject currDirObject = fsManager.resolveFile(dirToAddSftpUri, opts);
             File currDirFile = new File(currDirObject.getName().getPath());
             if ((currDirFile.list() != null) && (currDirFile.list().length > 0)) {
-                logger.debug("Current path is not empty: " + prefixString);
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Current path is not empty: " + prefixString);
+                }
                 dirs.add(prefixString);
             } else {
-                logger.debug("Current path is empty, dumping it: " + prefixString);
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Current path is empty, dumping it: " + prefixString);
+                }
             }
             return;
         }
         String currRegex = currDir.substring(dirParts[0].length() + 1, currDir.indexOf(dirParts[1]) - 1);
-        logger.debug("currRegex: " + currRegex);
+        if (logger.isDebugEnabled()) {
+            logger.debug("currRegex: " + currRegex);
+        }
         String suffixString = currDir.substring(currDir.indexOf(dirParts[1]));
         String currSftpUri = "sftp://" + user + ":" + password +  "@" + machine + prefixString + File.separator;
         fsManager = VFS.getManager();
@@ -104,9 +114,11 @@ public class SftpManager {
                 String currPath = prefixString + File.separator + currSubDir +File.separator + suffixString;
                 String currDirSftpUri = "sftp://" + user + ":" + password + "@" + machine + currPath + File.separator;
                 FileObject currDirObject = fsManager.resolveFile(currDirSftpUri, opts);
-                logger.debug("currDirObject: " + currDirObject.getName());
+                if (logger.isDebugEnabled()) {
+                    logger.debug("currDirObject: " + currDirObject.getName());
+                }
                 getDirectoriesFromRegex(dirs, currPath);
-            } else {
+            } else if (logger.isDebugEnabled()) {
                 logger.debug("Directory " + currSubDir + " doesn't match pattern " + currRegex);
             }
         }
@@ -127,7 +139,9 @@ public class SftpManager {
             for ( int i = 0; i < children.length; i++ ){
                 String fileName = children[ i ].getName().getBaseName();
                 if ((fileRegex.isPresent()) && !(fileName.matches(fileRegex.get()))) {
-                    logger.debug("File " + fileName + " doesn't match pattern " + fileRegex.get());
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("File " + fileName + " doesn't match pattern " + fileRegex.get());
+                    }
                     continue;
                 }
                 String filepath = localDir + File.separator  + fileName;
@@ -157,7 +171,9 @@ public class SftpManager {
 
             File folder = new File(localDir);
             File[] listOfToUploadFiles = folder.listFiles();
-            logger.debug("localDir = " + localDir);
+            if (logger.isDebugEnabled()) {
+                logger.debug("localDir = " + localDir);
+            }
 
             for (File fileToUpload : listOfToUploadFiles) {
                 if (!fileToUpload.exists()) {
