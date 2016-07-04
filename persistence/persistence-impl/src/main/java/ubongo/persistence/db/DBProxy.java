@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.sql.*;
 import java.util.*;
+import java.util.Date;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -139,6 +140,7 @@ public class DBProxy {
      *             If the task ID cannot be found in the DB, this method does nothing
      */
     public void updateStatus(Task task) throws DBProxyException {
+        connect();
         if (logger.isDebugEnabled()) {
             logger.debug("Updating status in DB to " + task.getStatus() + " for taskId=" +
                     task.getId());
@@ -179,6 +181,7 @@ public class DBProxy {
                     + task.getId() + ", newStatus=" + task.getStatus() + ")";
             throw new DBProxyException(errorMsg, e);
         }
+        updateFlowStatus(task.getId());
     }
 
     public void updateStatus(Collection<Task> tasks) throws DBProxyException {
@@ -327,6 +330,7 @@ public class DBProxy {
             }
         }
         updateStatus(task);
+        updateFlowStatus(task.getId());
         return true;
     }
 
@@ -344,6 +348,49 @@ public class DBProxy {
 
     public List<Task> getTasks(int flowId) throws DBProxyException {
         return getTasks(DBConstants.QUERY_GET_FLOW_TASKS, flowId);
+    }
+
+    public List<Task> getAllTasks(int limit) throws DBProxyException {
+        return getTasks(DBConstants.QUERY_GET_ALL_TASKS, limit);
+    }
+
+    public List<FlowData> getAllFlows(int limit) throws DBProxyException {
+        connect();
+        List<FlowData> flows = new ArrayList<>();
+        String flowsTableName = getTableName(DBConstants.FLOWS_TABLE_NAME);
+        String errorMsg = "Failed to retrieve flows from DB";
+        try {
+            String sql = Queries.getQuery(DBConstants.QUERY_GET_ALL_FLOWS)
+                    .replace("$flowsTable", flowsTableName);
+            PreparedStatement statement = connection.prepareStatement(sql);
+            statement.setInt(1, limit);
+            ResultSet resultSet = executeQuery(statement);
+            while (resultSet.next()) {
+                flows.add(flowFromResultSet(resultSet));
+            }
+        } catch (SQLException | JsonParseException e) {
+            throw new DBProxyException(errorMsg, e);
+        }
+        return flows;
+    }
+
+    public void resumeTask(Task task) throws DBProxyException {
+        connect();
+        if (logger.isDebugEnabled()) {
+            logger.debug("Updating status in DB to " + TaskStatus.NEW + " for taskId=" +
+                    task.getId());
+        }
+        String tableName = getTableName(DBConstants.TASKS_TABLE_NAME);
+        try {
+            String sql = Queries.getQuery(DBConstants.QUERY_RESUME_TASK)
+                    .replace("$tasksTable", tableName);
+            PreparedStatement statement = connection.prepareStatement(sql);
+            statement.setInt(1, task.getId()); // id of task to resume
+            executeUpdate(statement);
+        } catch (SQLException e) {
+            throw new DBProxyException("Failed to resume task (taskId=" + task.getId() + ")", e);
+        }
+        updateFlowStatus(task.getId());
     }
 
     public Void clearAllDebugTables() throws DBProxyException {
@@ -370,7 +417,7 @@ public class DBProxy {
         return getTasks(queryName, 0);
     }
 
-    private List<Task> getTasks(String queryName, int id) throws DBProxyException {
+    private List<Task> getTasks(String queryName, int arg) throws DBProxyException {
         connect();
         List<Task> tasks = new ArrayList<>();
         String tasksTableName = getTableName(DBConstants.TASKS_TABLE_NAME);
@@ -383,7 +430,9 @@ public class DBProxy {
             PreparedStatement statement = connection.prepareStatement(sql);
             if (queryName.equals(DBConstants.QUERY_GET_FLOW_TASKS) ||
                     queryName.equals(DBConstants.QUERY_GET_TASK_BY_ID)) {
-                statement.setInt(1, id);
+                statement.setInt(1, arg);
+            } else if (queryName.equals(DBConstants.QUERY_GET_ALL_TASKS)) {
+                statement.setInt(1, arg);
             }
             ResultSet resultSet = executeQuery(statement);
             while (resultSet.next()) {
@@ -430,6 +479,113 @@ public class DBProxy {
         return StringUtils.join(valuesList, ',');
     }
 
+    /**
+     * this method should be called after every task status update. It updates the flow's status according to the
+     * status of its constituent tasks.
+     * @param taskId is used to find the flowId which corresponds to this task.
+     * @throws DBProxyException
+     */
+    private void updateFlowStatus(int taskId) throws DBProxyException {
+        List<Task> flowTasks = getAllTasksWithSameFlowId(taskId);
+        if (flowTasks == null || flowTasks.isEmpty()) {
+            throw new DBProxyException("Failed to update flow for taskId=" + taskId);
+        }
+        FlowStatus status = computeFlowStatus(flowTasks);
+        updateFlowStatus(flowTasks.get(0).getFlowId(), status);
+    }
+
+    private void updateFlowStatus(int flowId, FlowStatus status) throws DBProxyException {
+        connect();
+        if (logger.isDebugEnabled()) {
+            logger.debug("Updating flow status in DB to " + status + " for flowId=" + flowId);
+        }
+        String tableName = getTableName(DBConstants.FLOWS_TABLE_NAME);
+        try {
+            String sql = Queries.getQuery(DBConstants.QUERY_UPDATE_FLOW_STATUS)
+                    .replace("$flowsTable", tableName);
+            PreparedStatement statement = connection.prepareStatement(sql);
+            statement.setString(1, status.toString());
+            statement.setInt(2, flowId);
+            executeUpdate(statement);
+        } catch (SQLException e) {
+            String errorMsg = "Failed to update flow's status in DB (flowId="
+                    + flowId + ", newStatus=" + status + ")";
+            throw new DBProxyException(errorMsg, e);
+        }
+    }
+
+    /**
+     * Computes the status of the flow corresponding to the given list of tasks, based on their statuses.
+     * @param flowTasks composing flow for which we compute the status.
+     * @return FlowStatus for this flow.
+     */
+    private FlowStatus computeFlowStatus(List<Task> flowTasks) {
+        FlowStatus flowStatus = FlowStatus.NEW;
+        int completedCount = 0;
+        boolean cancelled = false;
+        loop: for (Task task : flowTasks) {
+            cancelled = false;
+            switch (task.getStatus()) {
+                case PENDING:
+                case PROCESSING:
+                    if (flowStatus == FlowStatus.NEW) {
+                        flowStatus = FlowStatus.IN_PROGRESS;
+                    }
+                    break;
+                case COMPLETED:
+                    completedCount++;
+                    break;
+                case ON_HOLD:
+                case FAILED:
+                    flowStatus = FlowStatus.STUCK;
+                    break loop;
+                case STOPPED:
+                    flowStatus = FlowStatus.STOPPED;
+                    break loop;
+                case STOPPED_FAILURE:
+                    flowStatus = FlowStatus.ERROR;
+                    break loop;
+                case CANCELED:
+                    cancelled = true;
+                    break;
+                case CREATED:
+                case NEW:
+                    break;
+            }
+        }
+        if (cancelled) {
+            flowStatus = FlowStatus.CANCELED;
+        }
+        else if (completedCount == flowTasks.size()) {
+            flowStatus = FlowStatus.COMPLETED;
+        }
+        return flowStatus;
+    }
+
+    private FlowData flowFromResultSet(ResultSet resultSet) throws SQLException {
+        return new FlowData(
+                resultSet.getInt(DBConstants.FLOWS_FLOW_ID),
+                resultSet.getString(DBConstants.FLOWS_STUDY_NAME),
+                timestampToDate(resultSet.getTimestamp(DBConstants.FLOWS_INSERTION_TIME)),
+                FlowStatus.valueOf(resultSet.getString(DBConstants.FLOWS_STATUS).toUpperCase())
+        );
+    }
+
+    private static Date timestampToDate(Timestamp timestamp) {
+        if (timestamp == null) return null;
+        long milliseconds = timestamp.getTime() + (timestamp.getNanos() / 1000000);
+        return new Date(milliseconds);
+    }
+
+    private List<Task> getAllTasksWithSameFlowId(int taskId) throws DBProxyException {
+        Task representative = getTask(taskId);
+        if (representative == null) {
+            throw new DBProxyException("Cannot update flow for taskId=" + taskId +
+                    ". Looks like there is no such task in the DB.");
+        }
+        return getTasks(representative.getFlowId());
+    }
+
     private String getTasksAsValueList(List<Task> tasks) {
         // (status, flow_id, serial_in_flow, unit_id, unit_params, subject, run, machine_id)
         List<String> valuesList = new ArrayList<>();
@@ -460,7 +616,7 @@ public class DBProxy {
     }
 
     private String getStatusString(TaskStatus status) {
-        return StringUtils.capitalize(status.toString().toLowerCase());
+        return status.toString(); // StringUtils.capitalize(status.toString().toLowerCase());
     }
 
     @NotNull

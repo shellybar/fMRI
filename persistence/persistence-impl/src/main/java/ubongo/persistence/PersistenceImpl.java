@@ -213,18 +213,46 @@ public class PersistenceImpl implements Persistence {
     }
 
     @Override
-    public List<Task> getAllTasks(int limit) {
-        return null; // TODO
+    public List<Task> getAllTasks(int limit) throws PersistenceException {
+        int numRetries = 0;
+        while (numRetries++ < MAX_NUM_RETRIES) {
+            try {
+                return dbProxy.getAllTasks(limit);
+            } catch (DBProxyException e) {
+                DBProxyException ret;
+                if ((ret = handleDbProxyException(e, numRetries)) != null) throw ret;
+            }
+        }
+        throw new PersistenceException("Unknown reason"); // not possible
     }
 
     @Override
-    public List<FlowData> getAllFlows(int limit) {
-        return null; // TODO
+    public List<FlowData> getAllFlows(int limit) throws PersistenceException {
+        int numRetries = 0;
+        while (numRetries++ < MAX_NUM_RETRIES) {
+            try {
+                return dbProxy.getAllFlows(limit);
+            } catch (DBProxyException e) {
+                DBProxyException ret;
+                if ((ret = handleDbProxyException(e, numRetries)) != null) throw ret;
+            }
+        }
+        throw new PersistenceException("Unknown reason"); // not possible
     }
 
     @Override
-    public void resumeTask(Task task) {
-        // TODO
+    public void resumeTask(Task task) throws PersistenceException {
+        int numRetries = 0;
+        while (numRetries++ < MAX_NUM_RETRIES) {
+            try {
+                dbProxy.resumeTask(task);
+                return;
+            } catch (DBProxyException e) {
+                DBProxyException ret;
+                if ((ret = handleDbProxyException(e, numRetries)) != null) throw ret;
+            }
+        }
+        throw new PersistenceException("Unknown reason"); // not possible
     }
 
     public void clearDebugData() throws PersistenceException {
@@ -241,6 +269,13 @@ public class PersistenceImpl implements Persistence {
         return null;
     }
 
+    /**
+     * This class is used to manage execution and error handling of different persistence methods. It enables invoking
+     * function calls with an exception handler that catches the exception thrown by the function, checks if it is
+     * recoverable, and if so, tries to recover from it (by retrying and/or restarting DB connection). It only
+     * encapsulates calls to methods with no arguments.
+     * @param <T> is the return value of the invoked method.
+     */
     private class DBMethodInvoker<T> {
 
         private Callable<T> callable;

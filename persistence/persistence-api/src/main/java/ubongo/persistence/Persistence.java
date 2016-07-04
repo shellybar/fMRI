@@ -152,20 +152,23 @@ public interface Persistence {
      * Retrieves all tasks from the DB upto the given limit (most recent tasks first).
      * @param limit for query results (corresponds to the SQL word 'LIMIT')
      * @return list of all tasks in DB upto limit.
+     * @throws PersistenceException if the query failed.
      */
-    List<Task> getAllTasks(int limit);
+    List<Task> getAllTasks(int limit) throws PersistenceException;
 
     /**
      * Retrieves all flows from the DB upto the given limit (most recent flows first).
      * @param limit for query results (corresponds to the SQL word 'LIMIT')
      * @return list of all flows in DB upto limit.
+     * @throws PersistenceException if the query failed.
      */
-    List<FlowData> getAllFlows(int limit);
+    List<FlowData> getAllFlows(int limit) throws PersistenceException;
 
     /**
-     * Resumes the given task; namely, changes a task status from 'Paused' to 'New'.
-     * If the old status is not 'Paused', this method has no effect.
+     * Resumes the given task; namely, changes a task status from 'On Hold' to 'New'.
+     * If the old status is not 'On Hold', this method has no effect.
      * @param task to resume - only taskId is used.
+     * @throws PersistenceException if the update failed.
      */
-    void resumeTask(Task task);
+    void resumeTask(Task task) throws PersistenceException;
 }

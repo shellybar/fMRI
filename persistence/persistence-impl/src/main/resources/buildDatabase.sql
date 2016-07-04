@@ -23,6 +23,7 @@ CREATE TABLE flows (
   flow_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   study_name VARCHAR(50) NOT NULL,
   insertion_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  status VARCHAR(20) NOT NULL DEFAULT 'New',
   PRIMARY KEY (flow_id),
   UNIQUE INDEX flow_id_UNIQUE (flow_id ASC),
   UNIQUE INDEX study_name_UNIQUE (study_name ASC))
@@ -90,6 +91,7 @@ CREATE TABLE zz_debug_flows (
   flow_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   study_name VARCHAR(50) NOT NULL,
   insertion_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  status VARCHAR(20) NOT NULL DEFAULT 'New',
   PRIMARY KEY (flow_id),
   UNIQUE INDEX zz_debug_flow_id_UNIQUE (flow_id ASC),
   UNIQUE INDEX zz_debug_study_name_UNIQUE (study_name ASC))

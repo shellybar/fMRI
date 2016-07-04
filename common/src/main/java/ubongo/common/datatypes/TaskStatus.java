@@ -10,7 +10,8 @@ public enum TaskStatus {
     FAILED ("Failed"),
     CANCELED ("Canceled"),
     STOPPED ("Stopped"),
-    STOPPED_FAILURE ("StopFailed");
+    STOPPED_FAILURE ("Stop Failed"),
+    ON_HOLD ("On Hold");
 
     private final String name;
     private static final TaskStatus[] finalStatuses =
