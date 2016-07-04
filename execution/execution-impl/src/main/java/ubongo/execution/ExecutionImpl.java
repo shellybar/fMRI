@@ -40,12 +40,8 @@ public class ExecutionImpl implements Execution {
 
     @Override
     public void start() {
-        try {
-            machinesManager.start();
-            queueManager.start();
-        } catch (QueueManagementException e) {
-            // TODO handle QueueManagementException on dispatcher start
-        }
+        machinesManager.start();
+        queueManager.start();
     }
 
     @Override

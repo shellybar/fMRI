@@ -2,6 +2,7 @@ package ubongo.persistence;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import ubongo.common.datatypes.FlowData;
 import ubongo.common.datatypes.Machine;
 import ubongo.common.datatypes.Task;
 import ubongo.common.datatypes.Unit;
@@ -18,6 +19,11 @@ import java.util.concurrent.Callable;
 
 public class PersistenceImpl implements Persistence {
 
+    /**
+     * In some cases, failing queries or updates to the DB may produce successful results
+     * given another chance (i.e. SQLTransientException).
+     * MAX_NUM_RETRIES defines the number of retries in case of such errors.
+     */
     private static final int MAX_NUM_RETRIES = 3;
     private static final Logger logger = LogManager.getLogger(PersistenceImpl.class);
 
@@ -40,11 +46,9 @@ public class PersistenceImpl implements Persistence {
         unitFetcher = new UnitFetcher(unitSettingsDirPath);
 
         // Database
-        if (sshConnectionProperties != null) {
-            dbProxy = new DBProxy(unitFetcher, dbConnectionProperties, sshConnectionProperties, machines, debug);
-        } else {
-            dbProxy = new DBProxy(unitFetcher, dbConnectionProperties, machines, debug);
-        }
+        dbProxy = sshConnectionProperties != null ?
+                new DBProxy(unitFetcher, dbConnectionProperties, sshConnectionProperties, machines, debug) :
+                new DBProxy(unitFetcher, dbConnectionProperties, machines, debug);
         sqlExceptionHandler = new SQLExceptionHandler(dbProxy);
     }
 
@@ -206,6 +210,21 @@ public class PersistenceImpl implements Persistence {
     @Override
     public List<Unit> getAllUnits() throws PersistenceException {
         return new DBMethodInvoker<>(sqlExceptionHandler, unitFetcher::getAllUnits).invoke();
+    }
+
+    @Override
+    public List<Task> getAllTasks(int limit) {
+        return null; // TODO
+    }
+
+    @Override
+    public List<FlowData> getAllFlows(int limit) {
+        return null; // TODO
+    }
+
+    @Override
+    public void resumeTask(Task task) {
+        // TODO
     }
 
     public void clearDebugData() throws PersistenceException {

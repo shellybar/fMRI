@@ -1,54 +1,171 @@
 package ubongo.persistence;
 
+import ubongo.common.datatypes.FlowData;
 import ubongo.common.datatypes.Task;
 import ubongo.common.datatypes.Unit;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
+/**
+ * The Persistence module encapsulates the DB, Unit persistence and any other sub-module whose aim is to
+ * save and persist the system state.
+ */
 public interface Persistence {
 
+    /**
+     * This method is responsible to start all constituent parts of the Persistence object, such as DB connection.
+     * All configuration is expected to be done in the constructor.
+     * @throws PersistenceException in case of failure in starting any of the parts,
+     * such as establishing DB connection.
+     */
     void start() throws PersistenceException;
 
+    /**
+     * Stops all parts of the Persistence module. In particular, this procedure closes all connections
+     * (e.g. DB, SSH tunneling).
+     * @throws PersistenceException in case a connection could not be closed or if stopping the module
+     * will cause inconsistent system state.
+     */
     void stop() throws PersistenceException;
 
     /**
-     * Adds units to the Units table with the given analysis name
-     * @param analysisName unique identifier
-     * @param units list of units to include in the analysis in order
-     * @throws PersistenceException
+     * Adds units to the Units table under the given analysis name.
+     * @param analysisName unique identifier.
+     * @param units list of units to include in the analysis in order of appearance.
+     * @throws PersistenceException if creation was unsuccessful due to DB error or problem with the units.
      */
     void createAnalysis(String analysisName, List<Unit> units) throws PersistenceException;
 
+    /**
+     * Retrieves all analysis names from the DB for future queries. Note that Analysis names are unique identifiers.
+     * @return a list of analysis names.
+     * @throws PersistenceException if retrieval from DB failed, most probably because of DB connection problem.
+     */
     List<String> getAnalysisNames() throws PersistenceException;
 
+    /**
+     * Retrieves the units comprising an analysis identified by analysisName.
+     * @param analysisName unique identifier for a list of units comprising an analysis.
+     * @return list of units corresponding to analysisName. If the analysisName does not correspond to an
+     * existing analysis in the DB, an empty list of units will be returned.
+     * @throws PersistenceException if retrieval from DB failed, most probably because of DB connection problem.
+     */
     List<Unit> getAnalysis(String analysisName) throws PersistenceException;
 
     /**
-     * Creates a new flow in Flows table
-     * @param studyName is the name of the study
-     * @param tasks to execute in this flow
-     * @return flowId in DB
-     * @throws PersistenceException
+     * Creates a new flow in Flows table.
+     * @param studyName is the name of the study.
+     * @param tasks to execute in this flow.
+     * @return flowId in DB.
+     * @throws PersistenceException if creation failed, usually due to DB connection error or a
+     * data problem with tasks.
      */
     int createFlow(String studyName, List<Task> tasks) throws PersistenceException;
 
+    /**
+     * Updates the status of the tasks of the given flow to allow the Execution module {@link ubongo.execution}
+     * to retrieve the flow's tasks and execute them when possible.
+     * @param flowId uniquely identifies the flow to start.
+     * @throws PersistenceException if update failed, usually due to DB connection error.
+     */
     void startFlow(int flowId) throws PersistenceException;
 
+    /**
+     * This method updates the status of tasks corresponding to the given flowId such that they will not be executed.
+     * However, if tasks were already sent for execution, they can't be canceled and must be stopped/killed -
+     * this is a different action that can be performed by the user.
+     * Only tasks that have not been executed already and are not executing at the moment of cancellation request
+     * will be cancelled by this method. If some of the tasks of a flow were not sent to execution they will be
+     * cancelled even if not all flow tasks can be currently cancelled. This means that a call to this function
+     * may affect all tasks of a flow, none of the tasks or a strict subset of them.
+     * @param flowId to identify the set of tasks to cancl.
+     * @return a list of tasks that are currently being processed and therefore cannot be cancelled.
+     * This list may be used to send a stop signal to the machines on which the tasks are running.
+     * @throws PersistenceException in case a DB error has occurred which caused the cancellation to fail
+     * partially or altogether. Only query to the DB can clear the state of the data after such failure.
+     */
     List<Task> cancelFlow(int flowId) throws PersistenceException;
 
+    /**
+     * Retrieves all tasks in the DB which are new and have not been processed yet.
+     * This is used internally by the Execution module {@link ubongo.execution} which is responsible to
+     * execute new tasks.
+     * @return list of tasks in status 'New'.
+     * @throws PersistenceException if query failed.
+     */
     List<Task> getNewTasks() throws PersistenceException;
 
+    /**
+     * Updates the status field of the task in the DB according to the status stored in the task object.
+     * @param task with taskId and status for update.
+     * @throws PersistenceException if update failed, most probably because of a DB connection error.
+     */
     void updateTaskStatus(Task task) throws PersistenceException;
 
+    /**
+     * This method enables updating the status field of a collection of tasks in one go instead of calling
+     * updateTaskStatus on each task {@link #updateTaskStatus(Task)}. The main use of this method is by the Execution
+     * module {@link ubongo.execution} which needs to update status for tasks that await execution {@see QueueManager}.
+     * @param waitingTasks is a collection of tasks, whose status should be updated in the DB.
+     * @throws PersistenceException if update failed, most probably because of a DB connection error. In case of such
+     * error, there is no guarantee that none of the tasks has been updated - some of the tasks may have already been
+     * updated, none of them might have, or all of them.
+     */
     void updateTasksStatus(Collection<Task> waitingTasks) throws PersistenceException;
 
+    /**
+     * Retrieves all tasks that belong to a given flow.
+     * @param flowId to identify the flow.
+     * @return list of Tasks corresponding to that flowId. The order of the list corresponds to the order of the tasks
+     * in the flow.
+     * @throws PersistenceException in case the query failed.
+     */
     List<Task> getTasks(int flowId) throws PersistenceException;
 
+    /**
+     * Cancels a task in the DB; namely, changes its status to 'Cancelled'.
+     * @param task to cancel.
+     * @return true iff the task was cancelled successfully or is in some final state already (e.g. completed or failed).
+     * This method returns false in case the task is currently executing and therefore cannot be simply cancelled and
+     * must be killed in the machine in order to stop it from running.
+     * @throws PersistenceException if the update to the DB was unsuccessful.
+     */
     boolean cancelTask(Task task) throws PersistenceException;
 
+    /**
+     * Retrieves a unit object from XML serialized file by unitId.
+     * @param unitId to retrieve by.
+     * @return unit object corresponding to unitId.
+     * @throws PersistenceException if unit with unitId does not exist or cannot be deserialized.
+     */
     Unit getUnit(int unitId) throws PersistenceException;
 
+    /**
+     * Retrieves all units from XML serialized files.
+     * @return list of units in the system.
+     * @throws PersistenceException if one or more of the units cannot be deserialized (bad format).
+     */
     List<Unit> getAllUnits() throws PersistenceException;
+
+    /**
+     * Retrieves all tasks from the DB upto the given limit (most recent tasks first).
+     * @param limit for query results (corresponds to the SQL word 'LIMIT')
+     * @return list of all tasks in DB upto limit.
+     */
+    List<Task> getAllTasks(int limit);
+
+    /**
+     * Retrieves all flows from the DB upto the given limit (most recent flows first).
+     * @param limit for query results (corresponds to the SQL word 'LIMIT')
+     * @return list of all flows in DB upto limit.
+     */
+    List<FlowData> getAllFlows(int limit);
+
+    /**
+     * Resumes the given task; namely, changes a task status from 'Paused' to 'New'.
+     * If the old status is not 'Paused', this method has no effect.
+     * @param task to resume - only taskId is used.
+     */
+    void resumeTask(Task task);
 }

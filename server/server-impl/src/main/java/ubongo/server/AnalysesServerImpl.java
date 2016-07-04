@@ -98,6 +98,11 @@ public class AnalysesServerImpl implements AnalysesServer {
     }
 
     @Override
+    public List<FlowData> getAllFlows(int limit) {
+        return persistence.getAllFlows(limit);
+    }
+
+    @Override
     public void killTask(Task task) {
         execution.killTask(task);
     }
@@ -123,6 +128,11 @@ public class AnalysesServerImpl implements AnalysesServer {
     }
 
     @Override
+    public List<Task> getAllTasks(int limit) {
+        return persistence.getAllTasks(limit);
+    }
+
+    @Override
     public List<Task> getTasks(int flowId) {
         try {
             return persistence.getTasks(flowId);
@@ -144,6 +154,21 @@ public class AnalysesServerImpl implements AnalysesServer {
         } finally {
             ((ExecutionImpl) execution).notifyQueueAfterCancel(task);
         }
+    }
+
+    @Override
+    public void resumeTask(Task task) {
+        persistence.resumeTask(task);
+    }
+
+    @Override
+    public List<String> showTaskLogs(int taskId) {
+        return null; // TODO
+    }
+
+    @Override
+    public List<String> showServerLog() {
+        return null; // TODO
     }
 
     @Override
