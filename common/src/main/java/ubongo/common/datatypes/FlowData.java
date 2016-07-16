@@ -1,11 +1,16 @@
 package ubongo.common.datatypes;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import ubongo.common.JsonDateSerializer;
+
 import java.util.Date;
 
 public class FlowData {
 
     private int flowId;
     private String studyName;
+
+    @JsonSerialize(using=JsonDateSerializer.class)
     private Date creationDate;
     private FlowStatus status;
 

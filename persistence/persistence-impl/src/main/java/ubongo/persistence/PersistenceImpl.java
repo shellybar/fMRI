@@ -2,10 +2,7 @@ package ubongo.persistence;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import ubongo.common.datatypes.FlowData;
-import ubongo.common.datatypes.Machine;
-import ubongo.common.datatypes.Task;
-import ubongo.common.datatypes.Unit;
+import ubongo.common.datatypes.*;
 import ubongo.common.networkUtils.SSHConnectionProperties;
 import ubongo.persistence.db.DBConnectionProperties;
 import ubongo.persistence.db.DBProxy;

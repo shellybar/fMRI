@@ -1,8 +1,8 @@
 package ubongo.persistence;
 
+import ubongo.common.datatypes.Unit;
 import ubongo.common.datatypes.FlowData;
 import ubongo.common.datatypes.Task;
-import ubongo.common.datatypes.Unit;
 
 import java.util.Collection;
 import java.util.List;

@@ -1,6 +1,5 @@
 package ubongo.persistence;
 
-import ubongo.common.datatypes.BaseUnit;
 import ubongo.common.datatypes.Unit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,11 +41,11 @@ public class UnitFetcher {
     }
 
     private Unit getUnit(File file, int unitId) throws UnitFetcherException {
-        BaseUnit unit = null;
+        Unit unit = null;
         try {
-            JAXBContext jaxbContext = JAXBContext.newInstance(BaseUnit.class);
+            JAXBContext jaxbContext = JAXBContext.newInstance(Unit.class);
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-            unit = (BaseUnit) unmarshaller.unmarshal(file);
+            unit = (Unit) unmarshaller.unmarshal(file);
         } catch (JAXBException e) {
             String originalMsg = e.getMessage();
             String msg = "Failed to parse unit settings file for unit " + unitId +

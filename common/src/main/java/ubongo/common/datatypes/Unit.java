@@ -1,42 +1,129 @@
 package ubongo.common.datatypes;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonParseException;
+import com.google.gson.reflect.TypeToken;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import javax.xml.bind.annotation.*;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Unit is the basic fMRI service that runs on a machine.
  * It contains all the information required to run an fMRI script/program.
  */
-public interface Unit extends Cloneable {
+@XmlRootElement(name = "unit")
+@XmlAccessorType(XmlAccessType.FIELD)
+public class Unit implements Serializable, Cloneable {
 
-    int getId();
+    private static Logger logger = LogManager.getLogger(Unit.class);
 
-    void setId(int id);
+    @XmlElement
+    private String name;
 
-    String getDescription();
+    @XmlElement
+    private String description;
 
-    void setDescription(String description);
+    @XmlAttribute
+    private int id;
 
-    List<UnitParameter> getParameters();
+    @XmlElement (name = "input-files")
+    private String inputPaths;
 
-    void setParameters(List<UnitParameter> unitParameters);
+    @XmlElement (name = "output-dir")
+    private String outputDir;
 
-    void setParameterValues(String json);
+    @XmlElementWrapper (name = "parameters")
+    @XmlElements({
+            @XmlElement (name = "string-parameter", type = StringUnitParameter.class),
+            @XmlElement (name = "file-parameter", type = FileUnitParameter.class)
+    })
+    private List<UnitParameter> parameters = new ArrayList<>();
 
-    String getInputPaths();
+    public Unit(int id) {
+        this.id = id;
+    }
 
-    void setInputPaths(String inputPath);
+    public Unit() {}
 
-    String getName();
+    public int getId() {
+        return id;
+    }
 
-    void setName(String name);
+    public void setId(int id) {
+        this.id = id;
+    }
 
-    String getOutputDir();
+    public String getDescription() {
+        return description;
+    }
 
-    void setOutputDir(String outputDir);
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-    Object clone() throws CloneNotSupportedException;
+    public String getName() {
+        return name;
+    }
 
-    static String getUnitFileName(long unitId, String suffix) {
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getOutputDir() {
+        return outputDir;
+    }
+
+    public void setOutputDir(String outputDir) {
+        this.outputDir = outputDir;
+    }
+
+    public List<UnitParameter> getParameters() {
+        return parameters;
+    }
+
+    public String getInputPaths() {
+        return inputPaths;
+    }
+
+    public void setInputPaths(String inputPaths) {
+        this.inputPaths = inputPaths;
+    }
+
+    public void setParameters(List<UnitParameter> parameters) {
+        this.parameters = parameters;
+    }
+
+    public void setParameterValues(String json) throws JsonParseException {
+        try {
+            Map<String, String> jsonMap =
+                    new Gson().fromJson(json, new TypeToken<HashMap<String, String>>(){}.getType());
+            for (UnitParameter param : parameters) {
+                param.setValue(jsonMap.get(param.getName()));
+            }
+        } catch (RuntimeException e) {
+            logger.fatal("Failed to set parameter values for unit from JSON: " + json);
+            throw new JsonParseException(e.getMessage());
+        }
+    }
+
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        Unit unit = (Unit) super.clone();
+        List<UnitParameter> newParams = new ArrayList<>();
+        for (UnitParameter param : unit.parameters) {
+            newParams.add((UnitParameter) param.clone());
+        }
+        unit.parameters = newParams;
+        return unit;
+    }
+
+    public static String getUnitFileName(long unitId, String suffix) {
         String pattern = "unit_%03d" + suffix;
         return String.format(pattern, unitId);
     }

@@ -1,6 +1,6 @@
 package ubongo.peristence;
 
-import ubongo.common.datatypes.BaseUnit;
+import ubongo.common.datatypes.Unit;
 import ubongo.common.datatypes.FileUnitParameter;
 import ubongo.common.datatypes.StringUnitParameter;
 import org.junit.Before;
@@ -30,7 +30,7 @@ public class UnitFetcherTest {
 
     @Test
     public void testGetUnit() throws UnitFetcherException {
-        BaseUnit unit = (BaseUnit) unitFetcher.getUnit(TEST_UNIT_ID);
+        Unit unit = (Unit) unitFetcher.getUnit(TEST_UNIT_ID);
         assertNotNull("Failed to unmarshal XML to Unit Object", unit);
         assertEquals("Unit created but with wrong ID", TEST_UNIT_ID, unit.getId());
         assertEquals("Unit created but with wrong description", "Unit-test unit", unit.getDescription());
@@ -44,7 +44,7 @@ public class UnitFetcherTest {
 
     @Test(expected=UnitFetcherException.class)
     public void testGetNonexistentUnit() throws UnitFetcherException {
-        BaseUnit unit = (BaseUnit) unitFetcher.getUnit(TEST_UNIT_ID + 1);
+        Unit unit = (Unit) unitFetcher.getUnit(TEST_UNIT_ID + 1);
     }
 
 }

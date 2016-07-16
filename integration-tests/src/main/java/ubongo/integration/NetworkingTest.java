@@ -20,7 +20,7 @@ public class NetworkingTest {
         machine.setPort(1234);
         String inputPath= "unit7Inputs";
         String outputPath = "unit7Outputs";
-        Unit unit = new BaseUnit(7);
+        Unit unit = new Unit(7);
 
 
         Task taskToExec = new Task(id, unit, machine, TaskStatus.PROCESSING, inputPath, outputPath);

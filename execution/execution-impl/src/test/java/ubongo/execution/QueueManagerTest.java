@@ -1,30 +1,9 @@
 package ubongo.execution;
 
-import ubongo.common.datatypes.BaseUnit;
-import ubongo.common.datatypes.Machine;
-import ubongo.common.datatypes.Task;
-import ubongo.common.datatypes.Unit;
-import ubongo.execution.exceptions.QueueManagementException;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Matchers;
-import org.powermock.api.mockito.PowerMockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-import org.powermock.reflect.Whitebox;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.mockito.Mockito.*;
-import static org.powermock.api.mockito.PowerMockito.doAnswer;
-import static org.junit.Assert.*;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({QueueManager.class, MachinesManager.class, ExecutionProxy.class})
@@ -91,7 +70,7 @@ public class QueueManagerTest {
 
         unitList = new ArrayList<>();
         for (int i = 1; i <= N_UNITS; i++) {
-            BaseUnit unit = new BaseUnit();
+            Unit unit = new Unit();
             unit.setId(i);
             unitList.add(unit);
         }

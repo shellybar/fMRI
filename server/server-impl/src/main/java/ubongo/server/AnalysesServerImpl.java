@@ -23,7 +23,7 @@ public class AnalysesServerImpl implements AnalysesServer {
 
     private Persistence persistence;
     private Execution execution;
-    private boolean debug;
+    private boolean debug; // TODO use debug field?
 
     public AnalysesServerImpl(Configuration configuration, String unitSettingsDirPath) {
         this(configuration, unitSettingsDirPath, false);

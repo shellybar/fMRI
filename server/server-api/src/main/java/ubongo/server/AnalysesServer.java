@@ -1,9 +1,6 @@
 package ubongo.server;
 
-import ubongo.common.datatypes.FlowData;
-import ubongo.common.datatypes.Machine;
-import ubongo.common.datatypes.Task;
-import ubongo.common.datatypes.Unit;
+import ubongo.common.datatypes.*;
 
 import java.util.List;
 
