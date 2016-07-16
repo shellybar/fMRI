@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="validation-api-1.1.0">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/lib/validation-api-1.1.0.Final" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+    <jarDirectory url="file://$PROJECT_DIR$/lib/validation-api-1.1.0.Final" recursive="false" />
+  </library>
+</component>

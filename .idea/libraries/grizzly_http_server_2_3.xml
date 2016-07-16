@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="grizzly-http-server-2.3">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/lib/grizzly-http-server-2.3.21" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+    <jarDirectory url="file://$PROJECT_DIR$/lib/grizzly-http-server-2.3.21" recursive="false" />
+  </library>
+</component>

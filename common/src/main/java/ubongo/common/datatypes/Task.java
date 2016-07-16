@@ -11,8 +11,18 @@ import java.util.regex.Pattern;
 public class Task implements Serializable, Cloneable {
 
     private int id;
+
+    /**
+     * Every task is a part of a flow., identified by a flowId.
+     */
     private int flowId;
+
+    /**
+     * This number located the task within a flow. A flow is comprised of a list of tasks with some order,
+     * which defines a numbering for all the flow's tasks.
+     */
     private int serialNumber;
+
     private Unit unit;
     private Machine machine;
     private TaskStatus status;

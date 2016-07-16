@@ -98,6 +98,16 @@ public class AnalysesServerImpl implements AnalysesServer {
     }
 
     @Override
+    public List<FlowData> getAllFlows(int limit) {
+        try {
+            return persistence.getAllFlows(limit);
+        } catch (PersistenceException e) {
+            // TODO handle exception in getAllFlows
+            return null;
+        }
+    }
+
+    @Override
     public void killTask(Task task) {
         execution.killTask(task);
     }
@@ -123,6 +133,16 @@ public class AnalysesServerImpl implements AnalysesServer {
     }
 
     @Override
+    public List<Task> getAllTasks(int limit) {
+        try {
+            return persistence.getAllTasks(limit);
+        } catch (PersistenceException e) {
+            // TODO handle exception in getAllTasks
+            return null;
+        }
+    }
+
+    @Override
     public List<Task> getTasks(int flowId) {
         try {
             return persistence.getTasks(flowId);
@@ -144,6 +164,25 @@ public class AnalysesServerImpl implements AnalysesServer {
         } finally {
             ((ExecutionImpl) execution).notifyQueueAfterCancel(task);
         }
+    }
+
+    @Override
+    public void resumeTask(Task task) {
+        try {
+            persistence.resumeTask(task);
+        } catch (PersistenceException e) {
+            // TODO handle exception in resumeTask
+        }
+    }
+
+    @Override
+    public List<String> showTaskLogs(int taskId) {
+        return null; // TODO
+    }
+
+    @Override
+    public List<String> showServerLog() {
+        return null; // TODO
     }
 
     @Override
