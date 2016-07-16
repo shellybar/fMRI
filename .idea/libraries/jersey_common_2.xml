@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="jersey-common-2">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/lib/jersey-common-2.19" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+    <jarDirectory url="file://$PROJECT_DIR$/lib/jersey-common-2.19" recursive="false" />
+  </library>
+</component>

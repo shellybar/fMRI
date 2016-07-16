@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="hk2-locator-2.4">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/lib/hk2-locator-2.4.0-b25" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+    <jarDirectory url="file://$PROJECT_DIR$/lib/hk2-locator-2.4.0-b25" recursive="false" />
+  </library>
+</component>

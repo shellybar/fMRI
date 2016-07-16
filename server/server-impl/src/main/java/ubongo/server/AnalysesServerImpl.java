@@ -99,7 +99,12 @@ public class AnalysesServerImpl implements AnalysesServer {
 
     @Override
     public List<FlowData> getAllFlows(int limit) {
-        return persistence.getAllFlows(limit);
+        try {
+            return persistence.getAllFlows(limit);
+        } catch (PersistenceException e) {
+            // TODO handle exception in getAllFlows
+            return null;
+        }
     }
 
     @Override
@@ -129,7 +134,12 @@ public class AnalysesServerImpl implements AnalysesServer {
 
     @Override
     public List<Task> getAllTasks(int limit) {
-        return persistence.getAllTasks(limit);
+        try {
+            return persistence.getAllTasks(limit);
+        } catch (PersistenceException e) {
+            // TODO handle exception in getAllTasks
+            return null;
+        }
     }
 
     @Override
@@ -158,7 +168,11 @@ public class AnalysesServerImpl implements AnalysesServer {
 
     @Override
     public void resumeTask(Task task) {
-        persistence.resumeTask(task);
+        try {
+            persistence.resumeTask(task);
+        } catch (PersistenceException e) {
+            // TODO handle exception in resumeTask
+        }
     }
 
     @Override

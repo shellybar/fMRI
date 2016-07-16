@@ -22,5 +22,31 @@
     <orderEntry type="module" module-name="persistence-impl" />
     <orderEntry type="library" name="log4j-api-2.4.1" level="project" />
     <orderEntry type="library" name="log4j-core-2.4.1" level="project" />
+    <orderEntry type="library" name="javax.ws.rs-api-2.0" level="project" />
+    <orderEntry type="library" name="grizzly-http-server-2.3" level="project" />
+    <orderEntry type="library" name="jersey-server-2" level="project" />
+    <orderEntry type="library" name="jersey-container-grizzly2-http-2" level="project" />
+    <orderEntry type="library" name="jersey-common-2" level="project" />
+    <orderEntry type="library" name="hk2-api-2.4" level="project" />
+    <orderEntry type="library" name="hk2-locator-2.4" level="project" />
+    <orderEntry type="library" name="hk2-utils-2.4" level="project" />
+    <orderEntry type="library" name="javax.inject-2.4" level="project" />
+    <orderEntry type="library" name="jersey-guava-2" level="project" />
+    <orderEntry type="library" name="javax.annotation-api-1" level="project" />
+    <orderEntry type="library" name="grizzly-framework-2.3" level="project" />
+    <orderEntry type="library" name="jackson-jaxrs-json-provider-2.5" level="project" />
+    <orderEntry type="library" name="jackson-jaxrs-base-2.5" level="project" />
+    <orderEntry type="library" name="jackson-core-2.5" level="project" />
+    <orderEntry type="library" name="jersey-entity-filtering-2" level="project" />
+    <orderEntry type="library" name="jackson-databind-2.5" level="project" />
+    <orderEntry type="library" name="validation-api-1.1.0" level="project" />
+    <orderEntry type="library" name="grizzly-http-2.3" level="project" />
+    <orderEntry type="library" name="jersey-client-2" level="project" />
+    <orderEntry type="library" name="jersey-media-jaxb-2" level="project" />
+    <orderEntry type="library" name="jsr311-api-1.1" level="project" />
+    <orderEntry type="library" name="jackson-annotations-2.5" level="project" />
+    <orderEntry type="library" name="jersey-media-json-jackson-2" level="project" />
+    <orderEntry type="library" name="osgi-resource-locator-1.0" level="project" />
+    <orderEntry type="library" name="aopalliance-repackaged-2.4" level="project" />
   </component>
 </module>
