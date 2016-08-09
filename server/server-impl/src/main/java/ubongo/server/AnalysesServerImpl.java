@@ -1,7 +1,5 @@
 package ubongo.server;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import ubongo.common.datatypes.*;
 
 import java.util.List;
@@ -19,8 +17,6 @@ public class AnalysesServerImpl implements AnalysesServer {
     private static final String CONFIG_PATH = "config";
     private static final String UNITS_DIR_PATH = "units_path";
 
-    private static Logger logger = LogManager.getLogger(AnalysesServerImpl.class);
-
     private Persistence persistence;
     private Execution execution;
     private boolean debug; // TODO use debug field?
@@ -37,6 +33,7 @@ public class AnalysesServerImpl implements AnalysesServer {
         execution = new ExecutionImpl(persistence, configuration.getMachines(), debug);
     }
 
+    // TODO remove main and validateSystemVariables - this is done by the UbongoHTTPServer
     public static void main(String[] args) throws ParseException {
 
         // initialize analysis server
@@ -50,7 +47,7 @@ public class AnalysesServerImpl implements AnalysesServer {
             System.out.println(e.getMessage());
             return;
         }
-        AnalysesServer analysesServer = new AnalysesServerImpl(configuration, unitsDirPath);
+        new AnalysesServerImpl(configuration, unitsDirPath);
     }
 
     private static boolean validateSystemVariables(String configPath, String unitsDirPath) {
@@ -93,18 +90,13 @@ public class AnalysesServerImpl implements AnalysesServer {
     }
 
     @Override
-    public void runFlow(int flowId) {
+    public void runFlow(int flowId) throws PersistenceException {
         execution.runFlow(flowId);
     }
 
     @Override
-    public List<FlowData> getAllFlows(int limit) {
-        try {
-            return persistence.getAllFlows(limit);
-        } catch (PersistenceException e) {
-            // TODO handle exception in getAllFlows
-            return null;
-        }
+    public List<FlowData> getAllFlows(int limit) throws PersistenceException {
+        return persistence.getAllFlows(limit);
     }
 
     @Override
@@ -113,66 +105,54 @@ public class AnalysesServerImpl implements AnalysesServer {
     }
 
     @Override
-    public int createFlow(String studyName, List<Task> tasks) {
-        try {
-            return persistence.createFlow(studyName, tasks);
-        } catch (PersistenceException e) {
-            // TODO handle PersistenceException in createFlow
-            return 42;
-        }
+    public int createFlow(String studyName, List<Task> tasks) throws PersistenceException {
+        return persistence.createFlow(studyName, tasks);
     }
 
     @Override
-    public void cancelFlow(int flowId) {
+    public void cancelFlow(int flowId) throws PersistenceException {
+        List<Task> flowTasks = getTasks(flowId);
         try {
+            flowTasks.forEach(((ExecutionImpl) execution)::notifyQueueBeforeCancel);
             List<Task> tasksToKill = persistence.cancelFlow(flowId);
-            tasksToKill.forEach(task -> execution.killTask(task));
-        } catch (PersistenceException e) {
-            // TODO handle PersistenceException in cancelFlow
+            tasksToKill.forEach(execution::killTask);
+        }
+        finally {
+            flowTasks.forEach(((ExecutionImpl) execution)::notifyQueueAfterCancel);;
         }
     }
 
     @Override
-    public List<Task> getAllTasks(int limit) {
-        try {
-            return persistence.getAllTasks(limit);
-        } catch (PersistenceException e) {
-            // TODO handle exception in getAllTasks
-            return null;
-        }
+    public List<Task> getAllTasks(int limit) throws PersistenceException {
+        return persistence.getAllTasks(limit);
     }
 
     @Override
-    public List<Task> getTasks(int flowId) {
-        try {
-            return persistence.getTasks(flowId);
-        } catch (PersistenceException e) {
-            // TODO handle exception in getTasks
-            return null;
-        }
+    public List<Task> getTasks(int flowId) throws PersistenceException {
+        return persistence.getTasks(flowId);
     }
 
     @Override
-    public void cancelTask(Task task) {
+    public Task getTask(int taskId) throws PersistenceException {
+        return persistence.getTask(taskId);
+    }
+
+    @Override
+    public void cancelTask(Task task) throws PersistenceException {
         try {
             ((ExecutionImpl) execution).notifyQueueBeforeCancel(task);
             if (!persistence.cancelTask(task)) {
                 killTask(task); // task could not be canceled - need to be killed
             }
-        } catch (PersistenceException e) {
-            // TODO handle exception in cancelTask
-        } finally {
+        }
+        finally {
             ((ExecutionImpl) execution).notifyQueueAfterCancel(task);
         }
     }
 
     @Override
-    public void resumeTask(Task task) {
-        try {
-            persistence.resumeTask(task);
-        } catch (PersistenceException e) {
-            // TODO handle exception in resumeTask
-        }
+    public void resumeTask(Task task) throws PersistenceException {
+        persistence.resumeTask(task);
     }
 
     @Override
@@ -186,13 +166,8 @@ public class AnalysesServerImpl implements AnalysesServer {
     }
 
     @Override
-    public List<Unit> getAllUnits() {
-        try {
-            return persistence.getAllUnits();
-        } catch (PersistenceException e) {
-            // TODO handle exception in getAllUnits
-            return null;
-        }
+    public List<Unit> getAllUnits() throws PersistenceException {
+        return persistence.getAllUnits();
     }
 
     public void clearDebugData() {

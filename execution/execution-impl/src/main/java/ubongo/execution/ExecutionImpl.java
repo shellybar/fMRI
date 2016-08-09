@@ -51,12 +51,8 @@ public class ExecutionImpl implements Execution {
     }
 
     @Override
-    public void runFlow(int flowId) {
-        try {
-            queueManager.startFlow(flowId);
-        } catch (PersistenceException e) {
-            // TODO handle PersistenceException in runFlow
-        }
+    public void runFlow(int flowId) throws PersistenceException {
+        queueManager.startFlow(flowId);
     }
 
     @Override

@@ -10,6 +10,11 @@ public enum ResourceAction {
         this.name = name;
     }
 
+    // required by Jersey
+    public static ResourceAction fromString(final String s) {
+        return ResourceAction.valueOf(s.toUpperCase());
+    }
+
     @Override
     public String toString() {
         return name;
