@@ -157,12 +157,12 @@ public class AnalysesServerImpl implements AnalysesServer {
 
     @Override
     public List<String> showTaskLogs(int taskId) {
-        return null; // TODO
+        return null; // TODO showTaskLogs
     }
 
     @Override
     public List<String> showServerLog() {
-        return null; // TODO
+        return null; // TODO showServerLog
     }
 
     @Override

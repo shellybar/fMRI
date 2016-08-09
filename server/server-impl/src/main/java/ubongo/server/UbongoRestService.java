@@ -237,7 +237,19 @@ public final class UbongoRestService {
         if (analysesServer == null) {
             throw new UbongoHttpException(500, FAILURE_MSG);
         }
-        return "{}"; // TODO getTaskLogs from analysesServer
+        ObjectMapper mapper = new ObjectMapper();
+        String response;
+        try {
+            List<String> logs = analysesServer.showTaskLogs(taskId);
+            if (logs == null) {
+                throw new UbongoHttpException(500, "Failed to retrieve task logs.");
+            }
+            response = mapper.writeValueAsString(logs);
+        }
+        catch (JsonProcessingException e) {
+            throw new UbongoHttpException(500, "Failed to serialize logs to JSON.");
+        }
+        return response;
     }
 
     @GET
@@ -247,7 +259,19 @@ public final class UbongoRestService {
         if (analysesServer == null) {
             throw new UbongoHttpException(500, FAILURE_MSG);
         }
-        return "{}"; // TODO getServerLog from analysesServer
+        ObjectMapper mapper = new ObjectMapper();
+        String response;
+        try {
+            List<String> logs = analysesServer.showServerLog();
+            if (logs == null) {
+                throw new UbongoHttpException(500, "Failed to retrieve server log.");
+            }
+            response = mapper.writeValueAsString(logs);
+        }
+        catch (JsonProcessingException e) {
+            throw new UbongoHttpException(500, "Failed to serialize server log to JSON.");
+        }
+        return response;
     }
 
     @GET
