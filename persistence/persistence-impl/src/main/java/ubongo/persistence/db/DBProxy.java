@@ -292,7 +292,10 @@ public class DBProxy {
             PreparedStatement statement =
                     connection.prepareStatement(sql);
             statement.setInt(1, flowId);
-            executeUpdate(statement);
+            int affectedRows = executeUpdate(statement);
+            if (affectedRows <= 0) {
+                throw new DBProxyException("Failed to start flow: there were no tasks in status 'CREATED' in flow=" + flowId);
+            }
         } catch (SQLException e) {
             String errorMsg = "Failed to start flow in DB";
             throw new DBProxyException(errorMsg, e);
@@ -302,6 +305,10 @@ public class DBProxy {
     public List<Task> cancelFlow(int flowId) throws DBProxyException {
 
         List<Task> tasks = getTasks(flowId);
+        if (tasks == null || tasks.isEmpty()) {
+            throw new DBProxyException("Could not find tasks with flowId=" + flowId +
+                    ": no such flow in DB.");
+        }
         List<Task> tasksToCancel = tasks.stream().filter(t -> {
             if (t.getStatus() == TaskStatus.PROCESSING) return false;
             for (TaskStatus status : TaskStatus.getFinalStatuses())
@@ -329,8 +336,8 @@ public class DBProxy {
                 return true;
             }
         }
+        task.setStatus(TaskStatus.CANCELED);
         updateStatus(task);
-        updateFlowStatus(task.getId());
         return true;
     }
 

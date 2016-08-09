@@ -83,7 +83,8 @@ public interface Persistence {
      * @return a list of tasks that are currently being processed and therefore cannot be cancelled.
      * This list may be used to send a stop signal to the machines on which the tasks are running.
      * @throws PersistenceException in case a DB error has occurred which caused the cancellation to fail
-     * partially or altogether. Only query to the DB can clear the state of the data after such failure.
+     * partially or altogether, or if there was no flow corresponding to the given id in the DB.
+     * In case of failure, the state of the tasks in the flow is undetermined.
      */
     List<Task> cancelFlow(int flowId) throws PersistenceException;
 
@@ -113,6 +114,15 @@ public interface Persistence {
      * updated, none of them might have, or all of them.
      */
     void updateTasksStatus(Collection<Task> waitingTasks) throws PersistenceException;
+
+    /**
+     * Retrieves task object by task id.
+     * @param taskId to identify the task.
+     * @return Task corresponding to that flowId. The order of the list corresponds to the order of the tasks
+     * in the flow.
+     * @throws PersistenceException in case the query failed.
+     */
+    Task getTask(int taskId) throws PersistenceException;
 
     /**
      * Retrieves all tasks that belong to a given flow.
