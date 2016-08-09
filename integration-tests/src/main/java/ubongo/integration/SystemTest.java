@@ -1,5 +1,6 @@
 package ubongo.integration;
 
+import com.google.gson.JsonParseException;
 import ubongo.common.datatypes.*;
 import ubongo.persistence.PersistenceException;
 import ubongo.server.AnalysesServer;
@@ -47,7 +48,7 @@ public class SystemTest {
     }
 
 
-    public static void runTestFlow() throws PersistenceException {
+    public static void runTestFlow() throws PersistenceException, JsonParseException {
         Unit unit = analysesServer.getAllUnits().get(0);
         unit.setParameterValues("{\"subject\":\"mySubject\"}");
 

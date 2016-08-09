@@ -17,5 +17,6 @@
     <orderEntry type="module" module-name="machine-impl" />
     <orderEntry type="module" module-name="server-api" />
     <orderEntry type="module" module-name="server-impl" />
+    <orderEntry type="library" name="gson-2.6" level="project" />
   </component>
 </module>
