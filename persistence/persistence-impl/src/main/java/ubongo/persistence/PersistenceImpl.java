@@ -172,6 +172,20 @@ public class PersistenceImpl implements Persistence {
     }
 
     @Override
+    public Task getTask(int taskId) throws PersistenceException {
+        int numRetries = 0;
+        while (numRetries++ < MAX_NUM_RETRIES) {
+            try {
+                return dbProxy.getTask(taskId);
+            } catch (DBProxyException e) {
+                DBProxyException ret;
+                if ((ret = handleDbProxyException(e, numRetries)) != null) throw ret;
+            }
+        }
+        throw new PersistenceException("Unknown reason"); // not possible
+    }
+
+    @Override
     public List<Task> getTasks(int flowId) throws PersistenceException {
         int numRetries = 0;
         while (numRetries++ < MAX_NUM_RETRIES) {

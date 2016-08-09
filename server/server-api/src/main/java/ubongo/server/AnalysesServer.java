@@ -1,42 +1,70 @@
 package ubongo.server;
 
 import ubongo.common.datatypes.*;
+import ubongo.persistence.PersistenceException;
 
 import java.util.List;
 
 public interface AnalysesServer {
 
-    List<Machine> getAllMachines(); // TODO support this with rabbit call to machine
+    List<Machine> getAllMachines();
 
-    void runFlow(int flowId);
+    /**
+     * Executes the flow - changes the status in the DB for the flow tasks and starts to process them.
+     * @param flowId to execute.
+     * @throws PersistenceException if the update in the DB failed.
+     */
+    void runFlow(int flowId) throws PersistenceException;
 
-    // return all flows and studyNames . filter in UI by study name.
-    List<FlowData> getAllFlows(int limit);
+    /**
+     * Retrieves all flows stored in the DB.
+     * @param limit for the SQL query
+     * @return all latest flows in the DB up to limit.
+     * @throws PersistenceException if the flows could not be fetched from the DB.
+     */
+    List<FlowData> getAllFlows(int limit) throws PersistenceException;
 
     void killTask(Task task);
 
-    // Convert units to tasks in javacript (add context)
-    int createFlow(String studyName, List<Task> tasks);
+    /**
+     * Creates a flow in the DB.
+     * @param studyName of the flow.
+     * @param tasks composed of the units and the flow context.
+     * @return flow id.
+     * @throws PersistenceException if the creation of the flow in the DB failed.
+     */
+    int createFlow(String studyName, List<Task> tasks) throws PersistenceException;
 
-    void cancelFlow(int flowId);
+    void cancelFlow(int flowId) throws PersistenceException;
 
-    // limit the sql query to 1000 results. add comment in UI. (show all tasks and status to user)
-    // enable killing running task, or canceling task.
-    List<Task> getAllTasks(int limit);
+    /**
+     * Retrieves all the tasks from the DB up to given limit.
+     * @param limit for SQL query.
+     * @return list of tasks from the DB.
+     * @throws PersistenceException in case the query failed.
+     */
+    List<Task> getAllTasks(int limit) throws PersistenceException;
 
-    List<Task> getTasks(int flowId);
+    List<Task> getTasks(int flowId) throws PersistenceException;
 
-    void cancelTask(Task task);
+    Task getTask(int taskId) throws PersistenceException;
+
+    void cancelTask(Task task) throws PersistenceException;
 
     // used for re-run a task that has failed (and now on hold), or killed\canceled - or if it is on hold because of previous failed task.
-    void resumeTask(Task task);
+    void resumeTask(Task task) throws PersistenceException;
 
-    // Will show task log from machine combined with server log (with grep on taskId)
+    // TODO show task log from machine combined with server log (with grep on taskId)
     List<String> showTaskLogs(int taskId);
 
     List<String> showServerLog();
 
-    List<Unit> getAllUnits();
+    /**
+     * Retrieves all the execution units in the system.
+     * @return list of units (may be empty if no units re found).
+     * @throws PersistenceException if one or more units is malformed and cannot be read.
+     */
+    List<Unit> getAllUnits() throws PersistenceException;
 
     void start();
 
