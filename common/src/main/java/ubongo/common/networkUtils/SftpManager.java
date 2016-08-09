@@ -72,10 +72,16 @@ public class SftpManager {
 
     private void getDirectoriesFromRegex(List<String> dirs, String currDir) throws FileSystemException, InterruptedException {
         handleStopInterrupt();
+        boolean endWithReg = false;
         logger.debug("getDirectoriesFromRegex currDir: " + currDir);
+        if (currDir.matches(".*?\\(.*?\\)$")) {
+            endWithReg = true;
+            logger.debug("currDir: " + currDir + " ends With Reg");
+
+        }
         String dirParts[] = currDir.split(File.separator+"\\(.*?\\)"+File.separator);
         String prefixString = dirParts[0];
-        if (dirParts.length == 1){
+        if ((dirParts.length == 1) && (!endWithReg)){
             fsManager = VFS.getManager();
             FileSystemOptions opts = new FileSystemOptions();
             String dirToAddSftpUri = "sftp://" + user + ":" + password + "@" + machine + prefixString + File.separator;
@@ -89,9 +95,27 @@ public class SftpManager {
             }
             return;
         }
-        String currRegex = currDir.substring(dirParts[0].length() + 1, currDir.indexOf(dirParts[1]) - 1);
+        String dirSuffix = "";
+        for (int i = 1; i < dirParts.length; i++){
+            dirSuffix += dirParts[i] + File.separator;
+        }
+        if (dirSuffix!="")
+            dirSuffix = dirSuffix.substring(0, dirSuffix.lastIndexOf(File.separator));
+
+        logger.debug("currDir: " + currDir);
+        logger.debug("dirSuffix: " + dirSuffix);
+
+        String currRegex = "";
+        if (dirSuffix == ""){ // end with regex
+            prefixString = currDir.substring(0, currDir.indexOf("(") - 1);
+            currRegex = currDir.substring(currDir.indexOf("("), currDir.length());
+        } else {
+            currRegex = currDir.substring(dirParts[0].length() + 1, currDir.lastIndexOf(dirSuffix));
+        }
+        if (currRegex.endsWith(File.separator))
+            currRegex = currRegex.substring(0, currRegex.lastIndexOf(File.separator));
         logger.debug("currRegex: " + currRegex);
-        String suffixString = currDir.substring(currDir.indexOf(dirParts[1]));
+        String suffixString = currDir.substring(currDir.lastIndexOf(dirSuffix));
         String currSftpUri = "sftp://" + user + ":" + password +  "@" + machine + prefixString + File.separator;
         fsManager = VFS.getManager();
         handleStopInterrupt();
@@ -104,16 +128,24 @@ public class SftpManager {
                 return new File(current, name).isDirectory();
             }
         });
-        for ( String currSubDir : directories ){
-            handleStopInterrupt();
-            if (currSubDir.matches(currRegex)) {
-                String currPath = prefixString + File.separator + currSubDir +File.separator + suffixString;
-                String currDirSftpUri = "sftp://" + user + ":" + password + "@" + machine + currPath + File.separator;
-                FileObject currDirObject = fsManager.resolveFile(currDirSftpUri, opts);
-                logger.debug("currDirObject: " + currDirObject.getName());
-                getDirectoriesFromRegex(dirs, currPath);
-            } else {
-                logger.debug("Directory " + currSubDir + " doesn't match pattern " + currRegex);
+        if (directories != null) {
+            for (String currSubDir : directories) {
+                logger.debug("currSubDir: " + currSubDir);
+                handleStopInterrupt();
+                if (currSubDir.matches(currRegex)) {
+                    if ((currSubDir.contains("%")||(currSubDir.contains(".")))) {
+                        continue;
+                    }
+                    String seperator = (suffixString == "") ? "" :  File.separator;
+                    String currPath = prefixString + File.separator + currSubDir + seperator + suffixString;
+                    logger.debug("currPath: " + currPath);
+                    String currDirSftpUri = "sftp://" + user + ":" + password + "@" + machine + currPath + File.separator;
+                    FileObject currDirObject = fsManager.resolveFile(currDirSftpUri, opts);
+                    logger.debug("currDirObject: " + currDirObject.getName());
+                    getDirectoriesFromRegex(dirs, currPath);
+                } else {
+                    logger.debug("Directory " + currSubDir + " doesn't match pattern " + currRegex);
+                }
             }
         }
     }
@@ -134,6 +166,9 @@ public class SftpManager {
             for ( int i = 0; i < children.length; i++ ){
                 handleStopInterrupt();
                 String fileName = children[ i ].getName().getBaseName();
+                if ((fileName.contains("%"))) {
+                    continue;
+                }
                 if ((fileRegex.isPresent()) && !(fileName.matches(fileRegex.get()))) {
                     logger.debug("File " + fileName + " doesn't match pattern " + fileRegex.get());
                     continue;
