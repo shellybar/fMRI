@@ -2,6 +2,7 @@ package ubongo.server;
 
 import ubongo.common.datatypes.*;
 
+import java.io.File;
 import java.util.List;
 import org.apache.commons.cli.*;
 import ubongo.execution.Execution;
@@ -15,7 +16,8 @@ import javax.xml.bind.UnmarshalException;
 public class AnalysesServerImpl implements AnalysesServer {
 
     private static final String CONFIG_PATH = "config";
-    private static final String UNITS_DIR_PATH = "units_path";
+    private static final String UNITS_CONF_DIR_PATH = "units_path";
+    private static final String UNITS_BASH_DIR_PATH = "units_bash_path";
 
     private Persistence persistence;
     private Execution execution;
@@ -38,7 +40,7 @@ public class AnalysesServerImpl implements AnalysesServer {
 
         // initialize analysis server
         String configPath = System.getProperty(CONFIG_PATH);
-        String unitsDirPath = System.getProperty(UNITS_DIR_PATH);
+        String unitsDirPath = System.getProperty(UNITS_CONF_DIR_PATH);
         if (validateSystemVariables(configPath, unitsDirPath)) return;
         Configuration configuration;
         try {
@@ -57,7 +59,7 @@ public class AnalysesServerImpl implements AnalysesServer {
                 System.out.format(pattern, "configuration", CONFIG_PATH);
             }
             if (unitsDirPath == null) {
-                System.out.format(pattern, "units directory", UNITS_DIR_PATH);
+                System.out.format(pattern, "units directory", UNITS_CONF_DIR_PATH);
             }
             return true;
         }
@@ -175,6 +177,26 @@ public class AnalysesServerImpl implements AnalysesServer {
             ((PersistenceImpl) persistence).clearDebugData();
         } catch (PersistenceException e) {
             // do nothing - it is only relevant for tests and the exception is already logged
+        }
+    }
+
+    @Override
+    public void generateBashFileForNewBaseUnit(int unitId) throws PersistenceException {
+        List<Unit> allUnits = getAllUnits();
+        if (allUnits.size() < unitId) {
+            throw new PersistenceException("Configuration file was not found for unit " + unitId);
+        }
+        Unit unit = allUnits.get(unitId - 1);
+        String unitsDirPath = System.getProperty(UNITS_BASH_DIR_PATH);
+        String unitBashPath = unitsDirPath + File.separator + Unit.getUnitBashFileName(unit.getId());
+        try {
+            AddNewBaseUnit.generateBashFile(unit, unitBashPath);
+            File file = new File(unitBashPath);
+            file.setExecutable(true);
+        } catch (Exception e) {
+            File file = new File(unitBashPath);
+            file.delete();
+            throw new PersistenceException(e.getMessage(), e);
         }
     }
 }

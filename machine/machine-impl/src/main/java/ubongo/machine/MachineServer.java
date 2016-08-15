@@ -25,11 +25,6 @@ public class MachineServer {
 
     public static Map<String, Thread> unitThreads;
 
-    public static final String ARG_SERVER = "server";
-    public static final String ARG_DIR = "base_dir";
-    public static final String ARG_UNITS = "units_dir";
-    private static final String CONFIG_PATH = "config";
-
     private static Logger logger = LogManager.getLogger(MachineServer.class);
 
     private MachineStatistics machineStatistics;
@@ -73,11 +68,11 @@ public class MachineServer {
                     throws IOException {
                 try {
                     RabbitData message = RabbitData.fromBytes(body);
-                    System.out.println(" ["+actionSign+"] Received '" + message.getMessage() + "'");
-                    String baseDir = System.getProperty(ARG_DIR);
-                    String unitsDir = System.getProperty(ARG_UNITS);
-                    serverAddress = System.getProperty(ARG_SERVER);
-                    String configPath = System.getProperty(CONFIG_PATH);
+                    logger.info(" ["+actionSign+"] Received '" + message.getMessage() + "'");
+                    String baseDir = System.getProperty(MachineConstants.ARG_DIR);
+                    String unitsDir = System.getProperty(MachineConstants.ARG_UNITS);
+                    serverAddress = System.getProperty(MachineConstants.ARG_SERVER);
+                    String configPath = System.getProperty(MachineConstants.CONFIG_PATH);
                     logger.info("Server address: [" + serverAddress + "], base directory path: [" + baseDir + "]");
                     String threadName = getThreadName(message.getTask());
                     RequestHandler requestHandler = new RequestHandler(threadName, message, serverAddress, baseDir, unitsDir, configPath);

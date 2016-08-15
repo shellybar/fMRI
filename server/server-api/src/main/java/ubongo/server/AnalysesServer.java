@@ -70,4 +70,6 @@ public interface AnalysesServer {
 
     void stop();
 
+    void generateBashFileForNewBaseUnit(int unitId) throws PersistenceException;
+
 }

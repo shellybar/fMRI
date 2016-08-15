@@ -49,20 +49,16 @@ public class SystemTest {
 
 
     public static void runTestFlow() throws PersistenceException, JsonParseException {
-        Unit unit = analysesServer.getAllUnits().get(0);
-        unit.setParameterValues("{\"subject\":\"mySubject\"}");
 
-        Context context = new Context("myStudy", "mySubject", "myRuns");
+        analysesServer.generateBashFileForNewBaseUnit(1);
+        analysesServer.generateBashFileForNewBaseUnit(2);
+
         List<Task> tasks = new ArrayList<>();
-        List<Unit> units = new ArrayList<>();
 
-        try {
-            tasks.addAll(Task.createTasks(unit, context, 0));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        addTasksForUnit1(tasks);
+        addTasksForUnit2(tasks);
 
-        int flowId = analysesServer.createFlow("myStudy", tasks);
+        int flowId = analysesServer.createFlow("Kinemes", tasks);
         analysesServer.runFlow(flowId);
 
         try {
@@ -71,12 +67,37 @@ public class SystemTest {
             e.printStackTrace();
         }
 
-        Task taskToKill = analysesServer.getTasks(flowId).get(0);
-        int idToKill = taskToKill.getId();
-        System.out.println("Sending request to kill task id " + idToKill);
+        //Task taskToKill = analysesServer.getTasks(flowId).get(0);
+       // int idToKill = taskToKill.getId();
+        //System.out.println("Sending request to kill task id " + idToKill);
        // analysesServer.killTask(taskToKill);
 
         while (true); // TODO change to something nicer
+    }
+
+    private static void addTasksForUnit1(List<Task> tasks) {
+        Unit unit1 = null;
+        try {
+            unit1 = analysesServer.getAllUnits().get(0);
+            Context contextUnit1 = new Context("Kinemes", "Subject1", "myRuns");
+            tasks.addAll(Task.createTasks(unit1, contextUnit1, 0));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
+    }
+
+    private static void addTasksForUnit2(List<Task> tasks) {
+        Unit unit2 = null;
+        try {
+            unit2 = analysesServer.getAllUnits().get(1);
+            unit2.setParameterValues("{\"hicutoff\":\"45\"}");
+            Context contextUnit2 = new Context("Kinemes", "Subject1", "myRuns");
+            tasks.addAll(Task.createTasks(unit2, contextUnit2, 1));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
     }
 
 }

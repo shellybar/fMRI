@@ -12,4 +12,9 @@ public class MachineConstants {
 
     public static final String INPUT_DIR_SUFFIX = "_ubongo_in";
     public static final String OUTPUT_DIR_SUFFIX = "_ubongo_out";
+
+    public static final String ARG_SERVER = "server";
+    public static final String ARG_DIR = "base_dir";
+    public static final String ARG_UNITS = "units_dir";
+    public static final String CONFIG_PATH = "config";
 }

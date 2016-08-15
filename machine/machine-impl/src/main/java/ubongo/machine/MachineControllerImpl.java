@@ -24,19 +24,20 @@ public class MachineControllerImpl implements MachineController {
     }
 
     @Override
-    public boolean run(Task task, Path unitsDir, Path baseDir) throws InterruptedException {
-        String outputDir = task.getId() + MachineConstants.OUTPUT_DIR_SUFFIX;
-        logger.debug("outputDir= " + outputDir);
+    public boolean run(Task task, Path unitsDir, Path baseDir, String machineWorkspaceDir) throws InterruptedException {
+        String outputDir = machineWorkspaceDir + File.separator + task.getId() + MachineConstants.OUTPUT_DIR_SUFFIX;
+
+        logger.debug("[Study = " + task.getContext().getStudy() + "] outputDir= " + outputDir);
         Path outputDirectory = Paths.get(baseDir.toString(), outputDir);
 
         Runtime runtime = Runtime.getRuntime();
-        String[] command = getProcessCommand(task, baseDir, outputDirectory);
+        String[] command = getProcessCommand(task, baseDir, outputDirectory, machineWorkspaceDir);
         Process p = null;
         try {
             boolean done = false;
             p = runtime.exec(command, null, new File(unitsDir.toString()));
             while (!done) {
-                handleStopInterrupt();
+                handleStopInterrupt(task);
                 try {
                     p.exitValue();
                     done = true;
@@ -45,28 +46,29 @@ public class MachineControllerImpl implements MachineController {
                     // because exitValue() will not be a valid method call yet...
                 }
             }
-            handleStopInterrupt();
-            logger.info("Unit "+ task.getUnit().getId()+" completed successfully : " + getUnitOutput(p));
+            handleStopInterrupt(task);
+            logger.info("[Study = " + task.getContext().getStudy() + "] Unit "+ task.getUnit().getId()+" completed successfully : " + getUnitOutput(p,task));
         } catch (IOException e) {
-            handleStopInterrupt();
+            handleStopInterrupt(task);
             if (p != null)
-                logger.error("Failed running unit: " + getUnitErrors(p));
+                logger.error("[Study = " + task.getContext().getStudy() + "] Failed running unit: " + getUnitErrors(p, task));
             else
-                logger.error("Failed running unit: " + e.getMessage());
+                logger.error("[Study = " + task.getContext().getStudy() + "] Failed running unit: " + e.getMessage());
             return false;
         }
-        handleStopInterrupt();
+        handleStopInterrupt(task);
         File outputDirectoryFile = new File(outputDirectory.toString());
-        handleStopInterrupt();
+        handleStopInterrupt(task);
         if (outputDirectoryFile.list().length == 0) {
-            handleStopInterrupt();
-            logger.error("Unit completed, but output directory is empty : " + outputDirectory.toString());
+            handleStopInterrupt(task);
+            logger.error("[Study = " + task.getContext().getStudy() + "] Unit completed, but output directory is empty : " + outputDirectory.toString());
+            logger.error("[Study = " + task.getContext().getStudy() + "] Bash Errors: " + getUnitErrors(p, task));
             return false;
         }
         return true;
     }
 
-    private String getUnitOutput(Process process) {
+    private String getUnitOutput(Process process, Task task) {
         BufferedReader reader =
                 new BufferedReader(new InputStreamReader(process.getInputStream()));
         StringBuilder builder = new StringBuilder();
@@ -77,12 +79,12 @@ public class MachineControllerImpl implements MachineController {
                 builder.append(System.getProperty("line.separator"));
             }
         } catch (IOException e) {
-            logger.error("Failed receiving unit output : " + e.getMessage());
+            logger.error("[Study = " + task.getContext().getStudy() + "] Failed receiving unit output : " + e.getMessage());
         }
         return builder.toString();
     }
 
-    private String getUnitErrors(Process process) {
+    private String getUnitErrors(Process process, Task task) {
         BufferedReader reader =
                 new BufferedReader(new InputStreamReader(process.getErrorStream()));
         StringBuilder builder = new StringBuilder();
@@ -93,29 +95,30 @@ public class MachineControllerImpl implements MachineController {
                 builder.append(System.getProperty("line.separator"));
             }
         } catch (IOException e) {
-            logger.error("Failed receiving unit errors : " + e.getMessage());
+            logger.error("[Study = " + task.getContext().getStudy() + "] Failed receiving unit errors : " + e.getMessage());
         }
         return builder.toString();
     }
 
-    private String[] getProcessCommand(Task task, Path baseDir, Path outputDirectory) {
-        String inputDir = task.getId() + MachineConstants.INPUT_DIR_SUFFIX;
+    private String[] getProcessCommand(Task task, Path baseDir, Path outputDirectory, String machineWorkspaceDir) {
+        String inputDir = machineWorkspaceDir + File.separator + task.getId() + MachineConstants.INPUT_DIR_SUFFIX;
         Path inputDirectory = Paths.get(baseDir.toString(), inputDir);
-        String unitExecutable = Unit.getUnitFileName(task.getUnit().getId(), ".sh");
+        String unitExecutable = Unit.getUnitBashFileName(task.getUnit().getId());
         List<UnitParameter> params = task.getUnit().getParameters();
         int paramsNum = 1 + 2 + params.size();
-        String[] bashCommand = new String[paramsNum];
+        String[] bashCommand = new String[paramsNum+1]; // extra param is TASK_ID
         bashCommand[0] = unitExecutable;
-        bashCommand[1] = inputDirectory.toString();
-        bashCommand[2] = outputDirectory.toString();
+        bashCommand[1] = Integer.toString(task.getId());
+        bashCommand[2] = inputDirectory.toString();
+        bashCommand[3] = outputDirectory.toString();
         if (logger.isDebugEnabled()) {
-            logger.debug("Unit information: Executable = " + unitExecutable + " InputDir = " + inputDirectory.toString() +
+            logger.debug("[Study = " + task.getContext().getStudy() + "] Unit information: Executable = " + unitExecutable + " InputDir = " + inputDirectory.toString() +
                     " OutputDir = " + outputDirectory.toString());
-            logger.debug("Unit arguments:");
-            int i = 3;
+            logger.debug("[Study = " + task.getContext().getStudy() + "] Unit arguments:");
+            int i = 4;
             for (UnitParameter unitParam : params) {
                 bashCommand[i] = unitParam.getValue();
-                logger.debug(bashCommand[i]);
+                logger.debug("[Study = " + task.getContext().getStudy() + "] Arg = [" + bashCommand[i] + "]");
                 i++;
             }
         }
@@ -123,9 +126,9 @@ public class MachineControllerImpl implements MachineController {
     }
 
 
-    private void handleStopInterrupt() throws InterruptedException {
+    private void handleStopInterrupt(Task task) throws InterruptedException {
         if (Thread.currentThread().isInterrupted()){
-            logger.debug("Unit received interrupt exception");
+            logger.debug("[Study = " + task.getContext().getStudy() + "] Unit received interrupt exception");
             throw new InterruptedException("Received interrupt exception.");
         }
     }

@@ -104,7 +104,8 @@ public class Unit implements Serializable, Cloneable {
             Map<String, String> jsonMap =
                     new Gson().fromJson(json, new TypeToken<HashMap<String, String>>(){}.getType());
             for (UnitParameter param : parameters) {
-                param.setValue(jsonMap.get(param.getName()));
+                if (jsonMap.get(param.getName()) != null)
+                    param.setValue(jsonMap.get(param.getName()));
             }
         } catch (RuntimeException e) {
             logger.fatal("Failed to set parameter values for unit from JSON: " + json);
@@ -126,5 +127,13 @@ public class Unit implements Serializable, Cloneable {
     public static String getUnitFileName(long unitId, String suffix) {
         String pattern = "unit_%03d" + suffix;
         return String.format(pattern, unitId);
+    }
+
+    public static String getUnitMatlabFileName(long unitId) {
+        return getUnitFileName(unitId, ".m");
+    }
+
+    public static String getUnitBashFileName(long unitId) {
+        return getUnitFileName(unitId, ".sh");
     }
 }

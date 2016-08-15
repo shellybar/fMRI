@@ -26,8 +26,9 @@ public interface MachineController {
      * @param task is the task for which the running request was sent.
      *             It includes all the settings the specific unit may require to run.
      * @param unitsDir is the directory where the unit files are stored on the machine
+     * @param machineWorkspaceDir
      * @return true iff run ended successfully
      */
-    boolean run(Task task, Path unitsDir, Path baseDir) throws InterruptedException;
+    boolean run(Task task, Path unitsDir, Path baseDir, String machineWorkspaceDir) throws InterruptedException;
 
 }

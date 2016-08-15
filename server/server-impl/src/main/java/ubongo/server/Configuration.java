@@ -33,6 +33,13 @@ public class Configuration {
     @XmlElement(name = "machines")
     private MachinesList machinesList;
 
+    @XmlElement(name = "units")
+    private UnitsMainProperties unitsMainProperties;
+
+    public UnitsMainProperties getUnitsMainProperties() {
+        return unitsMainProperties;
+    }
+
     public DBConnectionProperties getDbConnectionProperties() {
         return dbConnectionProperties;
     }

@@ -33,8 +33,8 @@ public class RequestHandler extends Thread {
     private RabbitData rabbitMessage;
     private SSHConnectionProperties sshConnectionProperties;
 
-    private String inputFilesDir = "";
-    private String outputFilesDir = "";
+    private String tmpInputFilesDir = "";
+    private String tmpOutputFilesDir = "";
 
     private Task task;
 
@@ -55,13 +55,14 @@ public class RequestHandler extends Thread {
     public void run() {
         try {
             Configuration configuration = Configuration.loadConfiguration(configPath);
+            String machineWorkDir = "machineWorkspace";// TODO configuration.getUnitsMainProperties().getMachineWorkspaceDir();
             sshConnectionProperties = configuration.getSshConnectionProperties();
             this.task = rabbitMessage.getTask();
-            logger.info("Parsed request = [" + rabbitMessage.getMessage() + " " + task.getId() + "]");
+            logger.info("[Study = " + task.getContext().getStudy() + "] Parsed request = [" + rabbitMessage.getMessage() + " " + task.getId() + "]");
             if (rabbitMessage.getMessage().equals(MachineConstants.BASE_UNIT_REQUEST)) {
-                this.outputFilesDir = this.baseDir + File.separator + task.getId() + MachineConstants.OUTPUT_DIR_SUFFIX;
-                this.inputFilesDir = this.baseDir + File.separator + task.getId() + MachineConstants.INPUT_DIR_SUFFIX;
-                handleBaseUnitRequest();
+                this.tmpOutputFilesDir = this.baseDir + File.separator + machineWorkDir + File.separator + task.getId() + MachineConstants.OUTPUT_DIR_SUFFIX;
+                this.tmpInputFilesDir = this.baseDir + File.separator + machineWorkDir + File.separator + task.getId() + MachineConstants.INPUT_DIR_SUFFIX;
+                handleBaseUnitRequest(machineWorkDir);
                 removeThreadFromCollection();
             } else if (rabbitMessage.getMessage().equals(MachineConstants.KILL_TASK_REQUEST)) {
                 handleKillRequest();
@@ -70,16 +71,16 @@ public class RequestHandler extends Thread {
             }
         } catch (InterruptedException ie) {
             try {
-                logger.debug("InterruptedException - calling handleStopInterrupt");
+                logger.debug("[Study = " + task.getContext().getStudy() + "] InterruptedException - calling handleStopInterrupt");
                 handleStopInterrupt(true);
             } catch (HandledInterruptedException e) {
-                logger.debug("HandledInterruptedException");
+                logger.debug("[Study = " + task.getContext().getStudy() + "] HandledInterruptedException");
                 // do nothing :)
             }
         } catch (HandledInterruptedException hie) {
             // do nothing :)
         } catch (Exception e) {
-            logger.error("Failed handling request: " + e.getMessage(), e);
+            logger.error("[Study = " + task.getContext().getStudy() + "] Failed handling request: " + e.getMessage(), e);
         } catch (Throwable throwable) {
             if (throwable instanceof InterruptedException) {
                 logger.debug("(throwable instanceof InterruptedException");
@@ -89,7 +90,7 @@ public class RequestHandler extends Thread {
                     // do nothing :)
                 }
             } else {
-                logger.error("Failed handling request: " + throwable.getMessage(), throwable);
+                logger.error("[Study = " + task.getContext().getStudy() + "] Failed handling request: " + throwable.getMessage(), throwable);
             }
         }
     }
@@ -108,22 +109,22 @@ public class RequestHandler extends Thread {
         if (MachineServer.unitThreads.containsKey(threadName)){
             Thread currTaskThread = MachineServer.unitThreads.get(threadName);
             currTaskThread.interrupt();
-            logger.info("Thread [" + currTaskThread.getName() + "] " +
+            logger.info("[Study = " + task.getContext().getStudy() + "] Thread [" + currTaskThread.getName() + "] " +
                     " with id = [" +currTaskThread.getId() + "] was interrupted.");
         } else {
-            logger.info("Thread " + threadName + " is not running on the machine.");
+            logger.info("[Study = " + task.getContext().getStudy() + "] Thread " + threadName + " is not running on the machine.");
         }
     }
 
     private boolean handleReceiveFiles(String filesSourceDir) throws Throwable {
         boolean success = true;
         handleStopInterrupt();
-        logger.info("handleReceiveFiles - start. filesSourceDir= [" + filesSourceDir +
-                "] from server = [" + serverAddress + "] inputFilesDir = [" + inputFilesDir + "]" );
+        logger.debug("[Study = " + task.getContext().getStudy() + "] handleReceiveFiles - start. filesSourceDir= [" + filesSourceDir +
+                "] from server = [" + serverAddress + "] tmpInputFilesDir = [" + tmpInputFilesDir + "]");
 
-        File inputDir = new File(this.inputFilesDir);
+        File inputDir = new File(this.tmpInputFilesDir);
         if (inputDir.exists()) {
-            logger.error("input Dir already exists...");
+            logger.error("[Study = " + task.getContext().getStudy() + "] task input Dir already exists...");
             return false;
         }
         handleStopInterrupt();
@@ -132,37 +133,37 @@ public class RequestHandler extends Thread {
             inputDir.mkdir();
             result = true;
         } catch(SecurityException se){
-            logger.error("Failed to create input Dir " + inputFilesDir);
+            logger.error("[Study = " + task.getContext().getStudy() + "] Failed to create task input Dir " + tmpInputFilesDir);
             return false;
         }
         if(!result) {
-            logger.error("Failed to create input Dir " + inputFilesDir);
+            logger.error("[Study = " + task.getContext().getStudy() + "] Failed to create task input Dir " + tmpInputFilesDir);
             return false;
         }
         handleStopInterrupt();
         SftpManager filesClient = null;
         try {
-            filesClient = new SftpManager(sshConnectionProperties, serverAddress, filesSourceDir, inputFilesDir);
+            filesClient = new SftpManager(sshConnectionProperties, serverAddress, filesSourceDir, tmpInputFilesDir);
             filesClient.getFilesFromServer();
         } catch (NetworkException e) {
-            logger.error("Failed receiving files from server " + e.getMessage(), e);
+            logger.error("[Study = " + task.getContext().getStudy() + "] Failed receiving files from server " + e.getMessage(), e);
             return false;
         }
         return success;
     }
 
-    private void handleBaseUnitRequest() throws Throwable {
-        logger.info("handleBaseUnitRequest - start. task ID = [" + task.getId() +"]" );
+    private void handleBaseUnitRequest(String machineWorkspaceDir) throws Throwable {
+        logger.debug("[Study = " + task.getContext().getStudy() + "] handleBaseUnitRequest - start. task ID = [" + task.getId() +"]" );
         handleStopInterrupt();
         if (!handleReceiveFiles(task.getInputPath())){
             handleStopInterrupt();
             updateTaskFailure(task);
             return;
         }
-        File outputDir = new File(outputFilesDir);
+        File outputDir = new File(tmpOutputFilesDir);
         if (outputDir.exists()) {
             handleStopInterrupt();
-            logger.error("output Dir already exists... " + outputFilesDir);
+            logger.error("[Study = " + task.getContext().getStudy() + "] task output Dir already exists... " + tmpOutputFilesDir);
             updateTaskFailure(task);
             return;
         }
@@ -173,19 +174,19 @@ public class RequestHandler extends Thread {
             result = true;
         } catch (SecurityException se){
             handleStopInterrupt();
-            logger.error("Failed to create output Dir " + outputFilesDir);
+            logger.error("[Study = " + task.getContext().getStudy() + "] Failed to create task output Dir " + tmpOutputFilesDir);
             updateTaskFailure(task);
             return;
         }
         if(!result) {
             handleStopInterrupt();
-            logger.error("Failed to create output Dir " + outputFilesDir);
+            logger.error("[Study = " + task.getContext().getStudy() + "] Failed to create task output Dir " + tmpOutputFilesDir);
             updateTaskFailure(task);
             return;
         }
         handleStopInterrupt();
         MachineController machineController = new MachineControllerImpl();
-        boolean success = machineController.run(task, Paths.get(baseDir, unitsDir), Paths.get(baseDir));
+        boolean success = machineController.run(task, Paths.get(baseDir, unitsDir), Paths.get(baseDir), machineWorkspaceDir);
         if (success){
             handleStopInterrupt();
             // need to send the output files to the server.
@@ -201,34 +202,34 @@ public class RequestHandler extends Thread {
             updateTaskFailure(task);
         }
         // delete local input & output dirs
-        cleanLocalDirectories();
+        cleanLocalTempDirectories();
     }
 
     private void handleStopInterrupt() throws HandledInterruptedException {
         if (Thread.currentThread().isInterrupted()){
-            logger.info("Thread: [" + Thread.currentThread().getName() + "] " +
+            logger.info("[Study = " + task.getContext().getStudy() + "] Thread: [" + Thread.currentThread().getName() + "] " +
                     "isInterrupted. Stopping ...");
             removeThreadFromCollection();
-            cleanLocalDirectories();
+            cleanLocalTempDirectories();
             updateTaskStopped(task);
-            throw new HandledInterruptedException("Safely stopped thread of task " + task.getId());
+            throw new HandledInterruptedException("[Study = " + task.getContext().getStudy() + "] Safely stopped thread of task " + task.getId());
         }
     }
 
     private void handleStopInterrupt(boolean wasThrown) throws HandledInterruptedException {
-        logger.info("Thread: [" + Thread.currentThread().getName() + "] " +
+        logger.info("[Study = " + task.getContext().getStudy() + "] Thread: [" + Thread.currentThread().getName() + "] " +
                     "isInterrupted. Stopping ...");
         removeThreadFromCollection();
-        cleanLocalDirectories();
+        cleanLocalTempDirectories();
         updateTaskStopped(task);
-        logger.info("Safely stopped thread of task " + task.getId());
+        logger.info("[Study = " + task.getContext().getStudy() + "] Safely stopped thread of task " + task.getId());
     }
 
-    private void cleanLocalDirectories() {
-        if (!inputFilesDir.equals(""))
-            cleanLocalDir(inputFilesDir);
-        if (!outputFilesDir.equals(""))
-            cleanLocalDir(outputFilesDir);
+    private void cleanLocalTempDirectories() {
+        if (!tmpInputFilesDir.equals(""))
+            cleanLocalDir(tmpInputFilesDir);
+        if (!tmpOutputFilesDir.equals(""))
+            cleanLocalDir(tmpOutputFilesDir);
     }
 
     private void cleanLocalDir(String dir) {
@@ -241,13 +242,13 @@ public class RequestHandler extends Thread {
 
     private boolean sendOutputFilesToServer() throws Throwable {
         boolean success = true;
-        logger.info("sendOutputFilesToServer - start. filesSourceDir= [" + this.outputFilesDir +
+        logger.info("sendOutputFilesToServer - start. filesSourceDir= [" + this.tmpOutputFilesDir +
                 "] to server = [" + serverAddress + "] destination files dir = [" + task.getOutputPath() + "]" );
         handleStopInterrupt();
         SftpManager filesUploader;
         try {
             handleStopInterrupt();
-            filesUploader = new SftpManager(sshConnectionProperties, serverAddress, task.getOutputPath(), outputFilesDir);
+            filesUploader = new SftpManager(sshConnectionProperties, serverAddress, task.getOutputPath(), tmpOutputFilesDir);
             handleStopInterrupt();
             filesUploader.uploadFilesToServer();
         } catch (NetworkException e) {
@@ -270,7 +271,7 @@ public class RequestHandler extends Thread {
     }
 
     private void updateTaskStatus(TaskStatus status) {
-        logger.info("Sending task update to server. Task id = [" + task.getId() + "] status = ["+status.toString()+"]");
+        logger.info("[Study = " + task.getContext().getStudy() + "] Sending task update to server. Task id = [" + task.getId() + "] status = ["+status.toString()+"]");
         final String QUEUE_NAME =  SystemConstants.UBONGO_SERVER_TASKS_STATUS_QUEUE;
         try {
             ConnectionFactory factory = new ConnectionFactory();
@@ -287,7 +288,7 @@ public class RequestHandler extends Thread {
             channel.close();
             connection.close();
         } catch (Exception e){
-            logger.error("Failed sending task status to server. Task id = [" + task.getId() + "] Status = [" +
+            logger.error("[Study = " + task.getContext().getStudy() + "] Failed sending task status to server. Task id = [" + task.getId() + "] Status = [" +
                     status.toString() + "] error: " + e.getMessage(), e);
         }
     }
